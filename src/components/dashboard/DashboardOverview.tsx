@@ -41,35 +41,40 @@ export function DashboardOverview({
           </p>
         </div>
       </section>
-      <ContinueLearning course={active} />
-      <section className="d2-panel" aria-labelledby="my-courses-title">
-        <div className="d2-section-heading">
-          <div>
-            <p className="dashboard-eyebrow">Explore & learn</p>
-            <h2 id="my-courses-title">My Courses</h2>
+      <div className="dashboard-overview-primary">
+        <ContinueLearning course={active} />
+        <section className="d2-panel" aria-labelledby="my-courses-title">
+          <div className="d2-section-heading">
+            <div>
+              <p className="dashboard-eyebrow">Explore & learn</p>
+              <h2 id="my-courses-title">My Courses</h2>
+            </div>
+            <Link
+              prefetch={false}
+              className="d2-text-action"
+              href="/dashboard/courses"
+            >
+              View My Courses <span aria-hidden="true">→</span>
+            </Link>
           </div>
-          <Link
-            prefetch={false}
-            className="d2-text-action"
-            href="/dashboard/courses"
-          >
-            View My Courses <span aria-hidden="true">→</span>
-          </Link>
-        </div>
-        {preview.length ? (
-          <div className="d2-course-grid">
-            {preview.map((course) => (
-              <CourseCard key={`${course.kind}-${course.id}`} course={course} />
-            ))}
-          </div>
-        ) : (
-          <CourseEmptyState
-            compact
-            heading="Your course space starts here."
-            description="Courses you view or enroll in will appear here."
-          />
-        )}
-      </section>
+          {preview.length ? (
+            <div className="d2-course-grid">
+              {preview.map((course) => (
+                <CourseCard
+                  key={`${course.kind}-${course.id}`}
+                  course={course}
+                />
+              ))}
+            </div>
+          ) : (
+            <CourseEmptyState
+              compact
+              heading="Your course space starts here."
+              description="Courses you view or enroll in will appear here."
+            />
+          )}
+        </section>
+      </div>
       <section className="d2-shortcuts" aria-labelledby="shortcuts-title">
         <h2 id="shortcuts-title">Useful shortcuts</h2>
         <div className="d2-shortcut-grid">

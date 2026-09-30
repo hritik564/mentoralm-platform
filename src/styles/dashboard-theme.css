@@ -1,12 +1,12 @@
 /* Only the protected Dashboard owns these tokens; public tokens stay untouched. */
 .dashboard-shell {
-  --dash-bg: #f5f6fb;
+  --dash-bg: #eef1f8;
   --dash-text: #15213d;
   --dash-muted: #53627b;
   --dash-surface: #ffffff;
-  --dash-soft: #f8f9fd;
+  --dash-soft: #f4f6fc;
   --dash-tint: #eef1fa;
-  --dash-border: #dce1ec;
+  --dash-border: #d0d8e8;
   --dash-border-strong: #c0cbe0;
   --dash-accent: #5b439c;
   --dash-accent-soft: #f0edf9;
@@ -19,13 +19,13 @@
   color-scheme: light;
 }
 .dashboard-shell[data-dashboard-theme='dark'] {
-  --dash-bg: #0c1423;
+  --dash-bg: #0b1322;
   --dash-text: #eff3fc;
   --dash-muted: #b3bfd5;
-  --dash-surface: #162238;
+  --dash-surface: #19273e;
   --dash-soft: #111d31;
   --dash-tint: #202e46;
-  --dash-border: #36445f;
+  --dash-border: #3c4d68;
   --dash-border-strong: #657694;
   --dash-accent: #c0b2f6;
   --dash-accent-soft: #2b2c49;
