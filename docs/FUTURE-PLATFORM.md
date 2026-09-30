@@ -1,6 +1,6 @@
 # Future platform responsibilities
 
-Everything in this document is deferred context, not current implementation scope. Dashboard, LMS, and Admin must not be built during the website phase unless explicitly requested.
+D1 explicitly authorizes Dashboard identity/shell; D2 authorizes Overview, My Courses presentation and the learning handoff contract. Other responsibilities below remain deferred. LMS and Admin are not implemented.
 
 ## Student Dashboard / Portal
 
@@ -31,3 +31,7 @@ Admin is a control plane. Backend permissions must protect actions; sensitive mu
 ## Shared foundation
 
 All surfaces must remain compatible with unified identity and shared backend, database, storage, authorization, and domain models. Shared identity does not imply identical permissions. See [Architecture](ARCHITECTURE.md) and [Security](SECURITY.md).
+
+## D2 integration seam
+
+Viewed/Enrolled course snapshots and a controlled learning destination resolver now exist as presentation contracts. Runtime arrays and the LMS destination registry remain empty. D4 will provide authorized per-student business data; future LMS deployment must provide trusted configuration and enforce learning access. D2 has no lesson state, enrollment purchasing, certificates, reports or resource records. See [D2](D2.md).

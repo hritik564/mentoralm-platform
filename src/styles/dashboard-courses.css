@@ -336,13 +336,19 @@
     height: auto;
   }
   .d2-resource-boundary {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
   }
   .d2-resource-boundary > div {
     flex: 1;
   }
   .d2-resource-boundary .dashboard-state-label {
-    margin-left: 40px;
+    grid-column: 2;
+    justify-self: start;
+    margin-left: 0;
+  }
+  .d2-shortcut-grid {
+    grid-template-columns: 1fr;
   }
   .d2-shortcut-grid a {
     font-size: 12px;

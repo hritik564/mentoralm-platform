@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- This isolated CJS harness installs a synchronous TypeScript require hook for React SSR. */
 // Isolated Node renderer: Playwright transforms JSX into component-test objects,
 // while these tests need actual React SSR. No preview route enters the app.
 const ts = require('typescript');

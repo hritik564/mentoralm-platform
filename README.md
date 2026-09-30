@@ -55,3 +55,11 @@ Use one Clerk instance for the public Website and Student Dashboard. Configure `
 Routes: `/dashboard`, `/dashboard/courses`, `/dashboard/resources`, `/dashboard/support`, `/dashboard/referral`, `/dashboard/profile`. All require server-verified identity. The six pages contain foundations and honest development states; no LMS, ticketing, referral rules or profile editing is implemented. See [D1 report](docs/D1.md).
 
 Run `npm run test:d1` after building for focused desktop/mobile validation. With Clerk development keys, this suite creates temporary `+clerk_test` accounts through signup, exercises real login/session/logout and deletes only those exact accounts. It never mutates a production instance. Authentication traces/storage files are not captured. The existing marketing suite remains available through `npm test`; D1 tests run separately.
+
+## Student Dashboard (D2)
+
+Overview now provides Continue Learning, a My Courses preview, four shortcuts and a future resource boundary. My Courses has Enrolled (default) and Viewed tabs. Normal runtime has no course records, browsing history or invented progress. Explore Programs links to the existing `/#programs` section.
+
+Typed presentation contracts prepare D4 integration without a database. Learning targets are deployment-controlled identifiers resolved centrally; no LMS destination is configured yet. The LMS remains responsible for authorization and learning state. See [D2 report](docs/D2.md) and [Architecture](docs/ARCHITECTURE.md).
+
+After building, run `npm run test:d2` for focused 1440px/390px coverage. Development Clerk keys enable temporary test users with real provider names, removed after each test. Fixtures render only in the test harness; no development fixture route ships with the app. D1 and marketing suites remain separate.

@@ -78,3 +78,13 @@ The existing `Journey` entry point delegates to `home/journey/JourneySection`. S
 The Next.js `skipProxyUrlNormalize` flag preserves the request URL for Clerk's internal rewrite, avoiding loopback-host changes on local production previews. Dashboard and sign-in/up routes are dynamic and excluded from indexing; the public page remains statically prerendered.
 
 `components/dashboard` separates route navigation, shell, provider sign-out adapter, Overview and empty states. `content/dashboard.ts` defines the six destinations and honest D1 presentation. Every route reuses the server identity boundary; business/learning state is absent. Dashboard does not become a progress owner. No minimal profile mapping is required.
+
+## D2 course presentation and learning handoff
+
+The two protected route pages continue requiring D1 server identity. Overview composes a welcome using the provider first name, Continue Learning, course preview, four shortcuts and a D3 resource boundary. My Courses owns only local Enrolled/Viewed tab selection. D1 shell, auth and public scenes are unchanged; D2 styles are isolated in `dashboard-courses.css`.
+
+`lib/dashboard/courses.ts` defines discriminated Viewed/Enrolled snapshots and an empty source seam. D4 must replace that source with an authenticated, per-student domain adapter, including ownership checks and validation of metadata, image sources and timestamps. The adapter owns ordering; presentation does not calculate learning progress, save viewing history or create enrollment records. Status names describe display states, not an enrollment lifecycle policy. Course cards show validated supplied progress and timestamps without creating missing values.
+
+`LearningLaunchTarget` contains a destination identifier, never a student-supplied URL. `learning-launch.ts` maps it through deployment-owned configuration, allowing strict local paths or exact trusted HTTPS origins. Unknown identifiers, protocol-relative paths, credentials, encoded/traversal paths and query/fragment redirects fail closed. The runtime registry is empty until an LMS deployment is approved; unavailable destinations render explanatory text without a launch link. Changing deployment configuration can relocate LMS without changing presentation components. Public course links have a separate local discovery-path validator.
+
+Resolving a link is not authorization. The future LMS must verify identity, course ownership/enrollment and applicable access policy at its own server boundary. Dashboard receives progress snapshots only; lesson, quiz, assignment, assessment and attendance state remain in the learning domain. No LMS, launch endpoint, token exchange, business persistence or tracking API is introduced in D2.
