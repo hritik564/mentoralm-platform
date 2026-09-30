@@ -89,7 +89,7 @@ test('mobile navigation contains focus, unlocks on close/resize, and cooperates 
   const login = nav.getByRole('button', { name: /Login/ });
   await login.click();
   const dialog = page.getByRole('dialog', {
-    name: 'One account. A connected future.',
+    name: 'One account. A world of possibilities.',
   });
   await expect(dialog).toBeVisible();
   await page.keyboard.press('Escape');

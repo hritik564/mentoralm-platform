@@ -68,3 +68,13 @@ The existing `Journey` entry point delegates to `home/journey/JourneySection`. S
 `JourneyExperience` receives the server-rendered composition. It owns only local hover, focus, toggle emphasis and an independent pause control. Milestone buttons become available after hydration and expose selection with `aria-pressed`; this is visual emphasis, not saved progress or an onboarding flow. A section-local ResizeObserver retargets the exact existing Menti pupils through the existing bounded `mentiGazeToward` helper. Observer subscriptions and eye variables are cleaned up; reduced motion and pause reset gaze. Menti source and default rendering are unchanged.
 
 `journey.css` scopes the airy environment, rising six-column desktop route, three-column tablet route with a row-return connection, and vertical mobile journey. The existing page MotionObserver handles heading/guide reveals. No JavaScript means readable static content, a static character and disabled enhancement controls. No new runtime dependency, raster asset, API, route, persistence or assistant service is introduced. Validation and owner evidence are recorded in `R4-VALIDATION.md`.
+
+## D1 identity and Student Dashboard
+
+`components/auth` owns the conditional Clerk provider, public auth sheet, dedicated sign-in/up presentation, avatar and compact account disclosure. `NavActions` integrates this into the existing account slot; marketing section components and CSS remain unchanged. The official Brand gains an optional destination for reuse outside homepage fragments.
+
+`src/proxy.ts` runs Clerk session verification and redirects all unauthenticated Dashboard requests to the internal `/sign-in` entry point. `lib/auth/session.ts` independently checks `auth()` and `currentUser()` at server layout/page boundaries and projects only name, first name, email and optional image for presentation. No user-id query or client state grants access. `lib/auth/redirects.ts` accepts only the six exact internal routes. Missing configuration never supplies a synthetic identity.
+
+The Next.js `skipProxyUrlNormalize` flag preserves the request URL for Clerk's internal rewrite, avoiding loopback-host changes on local production previews. Dashboard and sign-in/up routes are dynamic and excluded from indexing; the public page remains statically prerendered.
+
+`components/dashboard` separates route navigation, shell, provider sign-out adapter, Overview and empty states. `content/dashboard.ts` defines the six destinations and honest D1 presentation. Every route reuses the server identity boundary; business/learning state is absent. Dashboard does not become a progress owner. No minimal profile mapping is required.

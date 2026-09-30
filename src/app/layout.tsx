@@ -8,6 +8,9 @@ import '@/styles/tokens.css';
 import '@/styles/global.css';
 import '@/styles/foundation.css';
 import '@/styles/navigation.css';
+import '@/styles/auth.css';
+import { AuthProvider } from '@/components/auth/AuthProvider';
+import { isAuthConfigured } from '@/lib/auth/config';
 import { getSiteOrigin } from '@/lib/site';
 const origin = getSiteOrigin();
 const description =
@@ -40,7 +43,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <AuthProvider enabled={isAuthConfigured()}>{children}</AuthProvider>
+      </body>
     </html>
   );
 }

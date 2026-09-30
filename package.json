@@ -13,9 +13,11 @@
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:d1": "playwright test --config=playwright.d1.config.ts"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.9.8",
     "@fontsource/dm-sans": "^5.2.0",
     "@fontsource/newsreader": "^5.2.0",
     "next": "^16.3.7",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
+    "@clerk/testing": "^2.2.40",
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.3.7",
     "@playwright/test": "^1.56.0",

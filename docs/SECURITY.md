@@ -32,3 +32,11 @@ Identity provider, session design, privacy/retention requirements, tenant model,
 ## Public frontend boundary
 
 The current homepage uses local editorial content and assets. Native dialogs communicate future availability; they do not submit information or simulate backend success. The only form uses `method="dialog"` to close a dialog locally. No secrets or personal records are needed. `NEXT_PUBLIC_SITE_URL` is explicitly public configuration and is validated as an origin before canonical metadata is emitted. No external fonts, third-party analytics, tracking scripts, or remote image hosts are used. Production security headers and privacy policy must be designed with the eventual hosting and integrations before launch.
+
+## D1 identity boundary
+
+Clerk now owns authentication, credentials, verification and recovery. The secret stays server-only; only the publishable key enters the browser. The proxy verifies the provider session before Dashboard requests; each server page/layout also requires the matching current provider user. Client hooks control presentation only. Missing keys deny Dashboard access. No local credential/session fallback, user-id parameter authorization, database, ownership assumptions or Admin privileges are added.
+
+Post-login redirects are constrained to six exact internal Dashboard routes. Logout uses Clerk session invalidation and returns to `/`. Provider forms supply field validation and recovery; application-level logout failures show a generic retry message. Future protected business resources must add ownership/permission checks at their data boundary.
+
+Focused tests use owner-provided development keys and Clerk test addresses. They delete only their own exact temporary accounts. Tests never mutate production Clerk instances; auth traces and persisted session snapshots are disabled. Production deployment remains unapproved and requires production keys, domain/provider settings, privacy/policy review and hosting security configuration.

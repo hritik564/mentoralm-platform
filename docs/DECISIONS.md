@@ -87,3 +87,15 @@ The owner explicitly authorized technology selection and homepage implementation
 ### ADR-012 — Brand and assets
 
 **Status:** Accepted for W1/W2; imagery/copy subject to owner review before launch. **Context:** Owner supplied authoritative logo and directional concept. **Decision:** Use the original official logo pixels, controlled brand accents, and three original generated editorial images hosted locally. **Consequences:** The mockup’s fabricated example metrics/testimonial and other pages are not copied. Generated scenes are illustrative, not evidence of participants, outcomes, or partner universities. No external image/font hotlinks, invented addresses, or social URLs. See [Assets](ASSETS.md) for prompts and replacements.
+
+## D1 implementation decisions
+
+### ADR-013 — Clerk unified identity foundation
+
+**Status:** Accepted by explicit D1 owner instruction. **Decision:** Use `@clerk/nextjs` for one account across Website and Student Dashboard, retaining compatibility with future LMS identity. Clerk owns credentials, verification, recovery and session lifecycle. Next.js proxy verifies sessions, and Dashboard server layout/pages independently require the current provider user. No MentoraLM password store or business database is introduced. This supersedes ADR-011's unavailable-login presentation for account access only; other future-feature notices remain.
+
+**Consequences:** Owner keys and provider configuration are required. Missing credentials fail closed. Custom MentoraLM sheets contain the provider forms; identity/business profile collection stays separate. Future learning/resource authorization must still verify ownership and policy. D1 does not grant Admin or enrollment access.
+
+### ADR-014 — Student Dashboard shell and navigation
+
+**Status:** Accepted for D1. **Decision:** Exactly Overview, My Courses, Resources, Support, Referral and Profile share a dark-sidebar/light-workspace shell under `/dashboard`. Settings belongs within Profile; Courses reserves Viewed/Enrolled presentation boundaries. Pages currently use explicit development states. No progress, course records, ticketing, referral business rules or editable profiles exist.

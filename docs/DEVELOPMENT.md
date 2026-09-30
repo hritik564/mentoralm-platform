@@ -66,3 +66,9 @@ The Playwright matrix now also includes 320×740 and 1024×768, alongside the or
 ## R2 hero workflow
 
 Compose hero-specific server components through `HeroExperience`; keep editorial content outside the client interaction boundary. Import `hero.css` from `Hero` and `menti.css` from `Menti`. Keep the existing content models and navigation untouched. `tests/hero.spec.ts` adds geometry/readability, real destination, honest Menti dialog, pause/resume, reduced-motion tracking-reset and staged/focus screenshot checks to the existing six-width production browser suite. Owner screenshots and final executed results are recorded in `R2-VALIDATION.md`. Menti is a visual character only; no assistant service is connected.
+
+## D1 authentication/dashboard workflow
+
+D1 explicitly authorizes Clerk identity and the Student Dashboard shell. Use the two keys from `.env.example` in ignored `.env.local`; missing keys keep account submission unavailable and Dashboard protected. Rebuild/restart after changing Clerk keys because the publishable key and root provider availability enter the public build. Clerk owns credentials and recovery; business data, LMS and Admin remain deferred.
+
+`npm run test:d1` runs a focused 1440px/390px suite after a production build. Development keys enable real UI signup/login/logout with temporary Clerk test accounts, deleted by exact test email in `finally`. Production instances are never mutated. Auth traces and persisted session files are disabled. The existing marketing suite is separate; no huge screenshot matrix is required for D1.

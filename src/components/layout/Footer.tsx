@@ -3,6 +3,7 @@ import { programs } from '@/content/programs';
 import { notices } from '@/content/home';
 import { NoticeButton } from '@/components/ui/NoticeButton';
 import { Icon } from '@/components/ui/Icon';
+import Link from 'next/link';
 export function Footer() {
   return (
     <footer className="footer">
@@ -50,9 +51,9 @@ export function Footer() {
               <NoticeButton {...notices.support}>
                 Support & contact
               </NoticeButton>
-              <NoticeButton {...notices.login}>
-                Login <small>Coming soon</small>
-              </NoticeButton>
+              <Link href="/sign-in" prefetch={false}>
+                Login
+              </Link>
               <span className="footer__unavailable">
                 Social channels
                 <br />

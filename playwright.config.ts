@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
+  testIgnore: 'auth-dashboard.spec.ts',
   fullyParallel: true,
   forbidOnly: true,
   retries: 0,

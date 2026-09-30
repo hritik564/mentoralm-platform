@@ -1,8 +1,8 @@
 import Image from 'next/image';
 // Both crops display the original official JPEG, without replacement lettering or recoloring.
-export function Brand() {
+export function Brand({ href = '#top' }: { href?: string }) {
   return (
-    <a href="#top" className="brand" aria-label="MentoraLM home">
+    <a href={href} className="brand" aria-label="MentoraLM home">
       <span className="brand__mark" aria-hidden="true">
         <Image
           src="/brand/mentoralm-logo.jpeg"
