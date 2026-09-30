@@ -107,3 +107,13 @@ The owner explicitly authorized technology selection and homepage implementation
 **Status:** Accepted under explicit D2 owner scope. **Decision:** Overview and My Courses consume typed Viewed/Enrolled snapshots with an empty runtime source. Enrolled is the default accessible tab. Deployment-owned destination identifiers resolve centrally to strict internal paths or exact trusted HTTPS origins; no learning destination is configured in D2. Fixtures stay exclusively in tests.
 
 **Consequences:** D4 must supply authorized per-student records. LMS still owns progress and verifies every learning access; a presentation link is not permission. No enrollment lifecycle, database, LMS implementation or external learning provider is selected. D1 identity/shell and unrelated public sections remain locked.
+
+## D3 implementation decisions
+
+### ADR-016 — Student consumption and service seams
+
+**Status:** Accepted under explicit D3 scope. **Decision:** Student Resources is consumption-only with typed snapshots, controlled target IDs and browser-safe preview. Support/Referral/Profile use narrow presentation/service contracts and honest empty/unavailable states until D4. Clerk owns account editing/security. **Consequences:** Admin resource management, per-student business authorization, persistence, referral policy and profile business fields remain deferred. No fake local database, reward policy or certificate generation is introduced.
+
+### ADR-017 — Dashboard-scoped device theme
+
+**Status:** Accepted under D3 theme scope. **Decision:** Semantic Dashboard variables plus a server-read, validated `/dashboard` preference cookie implement Light/Dark without a library or reload flash. Initial default is Light. **Consequences:** Theme is device-local and unrelated to auth; public marketing appearance stays unchanged. D4 account preference synchronization requires a later policy.

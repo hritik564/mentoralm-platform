@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "test": "playwright test",
     "test:d1": "playwright test --config=playwright.d1.config.ts",
-    "test:d2": "playwright test --config=playwright.d2.config.ts"
+    "test:d2": "playwright test --config=playwright.d2.config.ts",
+    "test:d3": "playwright test --config=playwright.d3.config.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",

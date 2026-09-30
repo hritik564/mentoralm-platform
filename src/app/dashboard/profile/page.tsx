@@ -1,7 +1,6 @@
-import { DashboardEmptyState } from '@/components/dashboard/DashboardEmptyState';
-import { requireStudentIdentity } from '@/lib/auth/session';
+import { StudentProfilePage } from '@/components/dashboard/profile/StudentProfilePage';
+import { requireStudentProfile } from '@/lib/dashboard/profile-server';
 export const metadata = { title: 'Profile' };
 export default async function Page() {
-  await requireStudentIdentity();
-  return <DashboardEmptyState area="profile" />;
+  return <StudentProfilePage profile={await requireStudentProfile()} />;
 }

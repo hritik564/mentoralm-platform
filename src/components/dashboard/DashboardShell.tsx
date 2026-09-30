@@ -7,6 +7,10 @@ import { UserAvatar, type AccountIdentity } from '@/components/auth/UserAvatar';
 import { Brand } from '@/components/layout/Brand';
 import { Icon } from '@/components/ui/Icon';
 import { dashboardNavigation } from '@/content/dashboard';
+import {
+  DashboardThemeToggle,
+  useDashboardTheme,
+} from './theme/DashboardTheme';
 import { DashboardNav } from './DashboardNav';
 
 export function DashboardShell({
@@ -20,6 +24,7 @@ export function DashboardShell({
   onSignOut: () => Promise<void>;
   children: React.ReactNode;
 }) {
+  const { theme } = useDashboardTheme();
   const title =
     dashboardNavigation.find((item) => item.href === pathname)?.label ||
     'Dashboard';
@@ -71,7 +76,7 @@ export function DashboardShell({
     </div>
   );
   return (
-    <div className="dashboard-shell">
+    <div className="dashboard-shell" data-dashboard-theme={theme}>
       <a href="#dashboard-content" className="skip-link">
         Skip to dashboard content
       </a>
@@ -107,6 +112,7 @@ export function DashboardShell({
             <span className="dashboard-breadcrumb">Your MentoraLM</span>
             <p>{title}</p>
           </div>
+          <DashboardThemeToggle />
           <Link
             href="/dashboard/profile"
             className="dashboard-top-avatar"

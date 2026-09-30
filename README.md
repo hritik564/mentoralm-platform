@@ -63,3 +63,11 @@ Overview now provides Continue Learning, a My Courses preview, four shortcuts an
 Typed presentation contracts prepare D4 integration without a database. Learning targets are deployment-controlled identifiers resolved centrally; no LMS destination is configured yet. The LMS remains responsible for authorization and learning state. See [D2 report](docs/D2.md) and [Architecture](docs/ARCHITECTURE.md).
 
 After building, run `npm run test:d2` for focused 1440px/390px coverage. Development Clerk keys enable temporary test users with real provider names, removed after each test. Fixtures render only in the test harness; no development fixture route ships with the app. D1 and marketing suites remain separate.
+
+## Student Dashboard (D3)
+
+Resources now provides student-only search/filter and safe preview/download presentation. Support has a validated ticket composer plus reusable list/conversation/detail components, with explicit unavailable submission. Referral has controlled copy/share contracts and no invented rewards. Profile displays actual Clerk identity and launches provider account management; education, notifications and privacy preferences remain future boundaries.
+
+A top-bar Light/Dark toggle applies only to Dashboard semantic tokens. A validated device cookie scoped to `/dashboard` is read on the server, avoiding a theme flash on reload. Light is the initial default. The sidebar stays dark in both modes; public website styling is unchanged.
+
+Run `npm run test:d3` after building. Tests create/delete exact temporary development users and bundle fixture components through Next's existing Webpack and TypeScript dependencies; no fixture route or new dependency ships. Runtime resource/ticket/referral records stay empty until D4. See [D3 report](docs/D3.md).

@@ -1,3 +1,11 @@
+import { cookies } from 'next/headers';
+import { DashboardTheme } from '@/components/dashboard/theme/DashboardTheme';
+import {
+  dashboardThemeCookie,
+  parseDashboardTheme,
+} from '@/lib/dashboard/theme';
+import '@/styles/dashboard-theme.css';
+import '@/styles/dashboard-features.css';
 import type { Metadata } from 'next';
 import { requireStudentIdentity } from '@/lib/auth/session';
 import { DashboardSession } from '@/components/dashboard/DashboardSession';
@@ -15,5 +23,12 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await requireStudentIdentity();
-  return <DashboardSession user={user}>{children}</DashboardSession>;
+  const theme = parseDashboardTheme(
+    (await cookies()).get(dashboardThemeCookie)?.value,
+  );
+  return (
+    <DashboardTheme initialTheme={theme}>
+      <DashboardSession user={user}>{children}</DashboardSession>
+    </DashboardTheme>
+  );
 }
