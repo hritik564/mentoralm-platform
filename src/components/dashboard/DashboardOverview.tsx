@@ -1,85 +1,118 @@
 import Link from 'next/link';
 import type { AccountIdentity } from '@/components/auth/UserAvatar';
 import { Menti } from '@/components/menti/Menti';
+import {
+  exploreProgramsDestination,
+  type DashboardCourses,
+} from '@/lib/dashboard/courses';
 import { DashboardIcon } from './DashboardIcon';
+import { ContinueLearning } from './courses/ContinueLearning';
+import { CourseCard } from './courses/CourseCard';
+import { CourseEmptyState } from './courses/CourseEmptyState';
 
-export function DashboardOverview({ user }: { user: AccountIdentity }) {
+export function DashboardOverview({
+  user,
+  courses,
+}: {
+  user: AccountIdentity;
+  courses: DashboardCourses;
+}) {
+  // Preserve the domain adapter's ordering; Dashboard does not calculate recency/progress.
+  const active = courses.enrolled.find(
+    (course) => course.status === 'in-progress' && course.progress !== null,
+  );
+  const preview = [...courses.enrolled, ...courses.viewed].slice(0, 2);
   return (
     <>
       <section className="dashboard-welcome" aria-labelledby="welcome-title">
         <div>
-          <p className="dashboard-eyebrow">
-            A little clarity. A little momentum.
-          </p>
+          <p className="dashboard-eyebrow">Your workspace</p>
           <h1 id="welcome-title">
             Welcome back{user.firstName ? `, ${user.firstName}` : ''}.
           </h1>
-          <p>Your next chapter starts with a clear space to move forward.</p>
+          <p>Explore your next step and pick up where you left off.</p>
         </div>
         <div className="dashboard-menti">
           <Menti />
           <p>
-            Good to see you.
+            Ready when you are.
             <br />
             <span>Menti · Your future AI guide</span>
           </p>
         </div>
       </section>
-      <div className="dashboard-development-note">
-        <span aria-hidden="true" />
-        <p>
-          Your workspace is taking shape. These areas are in development; no
-          learning activity or progress is shown yet.
-        </p>
-      </div>
+      <ContinueLearning course={active} />
+      <section className="d2-panel" aria-labelledby="my-courses-title">
+        <div className="d2-section-heading">
+          <div>
+            <p className="dashboard-eyebrow">Explore & learn</p>
+            <h2 id="my-courses-title">My Courses</h2>
+          </div>
+          <Link
+            prefetch={false}
+            className="d2-text-action"
+            href="/dashboard/courses"
+          >
+            View My Courses <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+        {preview.length ? (
+          <div className="d2-course-grid">
+            {preview.map((course) => (
+              <CourseCard key={`${course.kind}-${course.id}`} course={course} />
+            ))}
+          </div>
+        ) : (
+          <CourseEmptyState
+            compact
+            heading="Your course space starts here."
+            description="Courses you view or enroll in will appear here."
+          />
+        )}
+      </section>
+      <section className="d2-shortcuts" aria-labelledby="shortcuts-title">
+        <h2 id="shortcuts-title">Useful shortcuts</h2>
+        <div className="d2-shortcut-grid">
+          {(
+            [
+              {
+                label: 'Explore Programs',
+                href: exploreProgramsDestination,
+                icon: 'overview',
+              },
+              {
+                label: 'My Courses',
+                href: '/dashboard/courses',
+                icon: 'courses',
+              },
+              {
+                label: 'Resources',
+                href: '/dashboard/resources',
+                icon: 'resources',
+              },
+              { label: 'Support', href: '/dashboard/support', icon: 'support' },
+            ] as const
+          ).map((item) => (
+            <Link key={item.label} prefetch={false} href={item.href}>
+              <DashboardIcon name={item.icon} />
+              <span>{item.label}</span>
+              <span aria-hidden="true">↗</span>
+            </Link>
+          ))}
+        </div>
+      </section>
       <section
-        className="dashboard-overview-grid"
-        aria-label="Your workspace areas"
+        className="d2-resource-boundary"
+        aria-labelledby="resource-boundary-title"
       >
-        <Link
-          prefetch={false}
-          href="/dashboard/courses"
-          className="dashboard-area-card"
-        >
-          <DashboardIcon name="courses" />
-          <span className="dashboard-state-label">In development</span>
-          <h2>My Courses</h2>
-          <p>A home for the courses you explore and enroll in.</p>
-          <span className="dashboard-card-link">View course space →</span>
-        </Link>
-        <article className="dashboard-area-card">
-          <DashboardIcon name="overview" />
-          <span className="dashboard-state-label">In development</span>
-          <h2>Continue Learning</h2>
+        <DashboardIcon name="resources" />
+        <div>
+          <h2 id="resource-boundary-title">A place for useful resources</h2>
           <p>
-            Your learning will continue here when courses and the LMS are ready.
+            Learning tools and recommendations will arrive in a future update.
           </p>
-          <span className="dashboard-card-footnote">
-            Learning is not available yet.
-          </span>
-        </article>
-        <Link
-          prefetch={false}
-          href="/dashboard/resources"
-          className="dashboard-area-card"
-        >
-          <DashboardIcon name="resources" />
-          <span className="dashboard-state-label">In development</span>
-          <h2>Resources</h2>
-          <p>Useful tools for learning, discovery and your next step.</p>
-          <span className="dashboard-card-link">View resource space →</span>
-        </Link>
-        <Link
-          prefetch={false}
-          href="/dashboard/support"
-          className="dashboard-area-card"
-        >
-          <DashboardIcon name="support" />
-          <span className="dashboard-state-label">In development</span>
-          <h2>Support</h2>
-          <p>A clear place to find help as your journey grows.</p>
-          <span className="dashboard-card-link">View support space →</span>
-        </Link>
+        </div>
+        <span className="dashboard-state-label">In development</span>
       </section>
     </>
   );
