@@ -171,8 +171,9 @@ test('seven centralized modules have readable responsive geometry and reuse the 
         ),
       ),
     );
-  expect(shapes).toHaveLength(2);
+  expect(shapes).toHaveLength(3);
   expect(shapes[0]).toEqual(shapes[1]);
+  expect(shapes[0]).toEqual(shapes[2]);
   const ids = await page
     .locator('.menti-character [id]')
     .evaluateAll((elements) => elements.map((element) => element.id));

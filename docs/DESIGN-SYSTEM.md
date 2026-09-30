@@ -133,3 +133,21 @@ The desktop stage now uses the existing 1240px content width, versus the earlier
 ### R3.1 connecting-thread clearance
 
 The next owner comment moves desktop position 01 upward by 16px and positions 06/07 downward by 24px relative to the orbital stage. The heading gap increases by 8px to preserve supporting-copy clearance; the stage grows from 630px to 654px to contain the bottom cards and controls naturally. The three curved connections and their midpoint nodes follow the moved cards. Menti, the other four cards, card sizes and the tablet/mobile rail remain unchanged. At 1440×900 all seven pathway titles remain visible; 1440×1000 contains the complete card borders. The small increase in natural section height provides visible threads above and below Menti.
+
+## R4 light journey roadmap
+
+`Reference/Roadmap.png` is the approved visual reference (the local filesystem uses this capitalization). R4 translates its hopeful landscape, central guide and six-stage route into code-native SVG/CSS instead of embedding the reference. Pale blue, lilac and peach surfaces support dark navy text; violet Newsreader editorial emphasis retains the established typography. Quiet mountains, a distant city and soft radial atmosphere remain decorative. High-opacity white milestone surfaces provide consistent copy contrast without additional backdrop blur.
+
+Desktop uses six ordered, individually readable milestones across a gently rising route. Step markers attach each panel to the path, and a section-sized instance of the exact existing Menti sits above its center with an explicitly future-guide caption. Tablet uses three columns and a return route from 03 to 04. At 700px and below the same content stacks vertically along a colored connecting line. At 320px the layout retains comfortable full-card tap areas and readable text without horizontal scrolling.
+
+Hover, focus and tap highlight the corresponding card/marker/route; keyboard focus has a distinct 3px blue outline. A stage toggle means visual emphasis only. Fine-pointer hover movement is restrained to 3px/5deg; existing pupil movement stays bounded to 2.4px/1.8px. Reduced motion removes character animation, gaze and hover movement; static emphasis and full content remain. The independent pause control affects only Journey. Heading and guide reveals reuse the page observer, and no information depends on hover or animation.
+
+The light horizon starts inside Journey, preserving the existing Purpose section between Modules and Journey and leaving their order/styles unchanged. The footer note identifies the roadmap as a vision with guidance/matching in development. No live-assistant or opportunity availability is implied by the visual interaction.
+
+## R4.1 roadmap polish
+
+Journey now reserves section-level fragment clearance using `--header-height`, in addition to existing document scroll padding. A cancellable, one-time fragment alignment after fonts and two paint frames corrects initial anchor coordinates calculated against taller pre-hydration responsive sections. It applies only to `#journey` on initial load/hash navigation and stops on user input or cleanup; Navbar and Modules are unchanged.
+
+The same six-stage composition now evolves from desaturated grey-blue through cyan, blue/violet, violet/magenta and magenta into a warm gold destination. The route has a stronger 4px line and restrained halo, with cumulative emphasis from stage 1 to the active milestone. Later segments remain quiet. Mobile applies the same cumulative emphasis to its vertical connector. Stage 1 keeps a cool, quiet panel; Stage 6 gains a warm high-opacity panel, stronger gold node, destination flag, sunlight and clearer city silhouette. A third mountain layer and separated cloud/horizon layers add static depth.
+
+Desktop cards shorten from 285px to 248px minimum height with smaller internal gaps and 44px icons; copy and body font sizes remain unchanged. Tablet cards use a uniform 220px first row and a correspondingly adjusted return route. Mobile retains its vertical layout and comfortable card targets. Existing Menti pupils target the active card center through the unchanged bounded helper, with neutral reset and pause/reduced-motion behavior preserved. No new art, dependency or continuous animation is added. See `R4.1-VALIDATION.md` for final checks and screenshots.

@@ -7,27 +7,38 @@ export const navigation = [
 export const journey = [
   {
     number: '01',
-    title: 'Understand',
-    description: 'Your strengths. Your interests. Your ambitions.',
-    note: 'Start with yourself.',
+    title: 'Feeling Stuck',
+    description: 'Too many choices. Not sure what’s next. You’re not alone.',
   },
   {
     number: '02',
-    title: 'Explore',
-    description: 'Careers, education, and possibilities worth considering.',
-    note: 'See a wider world.',
+    title: 'Understand Yourself',
+    description:
+      'Discover your strengths, interests and goals with AI-powered guidance.',
   },
   {
     number: '03',
-    title: 'Build',
-    description: 'The skills, profile, and confidence to take your next step.',
-    note: 'Make progress tangible.',
+    title: 'Explore Possibilities',
+    description:
+      'Discover career paths, learning options and global opportunities tailored to you.',
   },
   {
     number: '04',
-    title: 'Move Forward',
-    description: 'Your next application, career move, or new idea.',
-    note: 'Turn clarity into action.',
+    title: 'Build Skills & Profile',
+    description:
+      'Gain in-demand skills, earn credentials, and showcase your unique profile.',
+  },
+  {
+    number: '05',
+    title: 'Access Opportunities',
+    description:
+      'Get matched with internships, jobs and global opportunities beyond borders.',
+  },
+  {
+    number: '06',
+    title: 'Move Forward Confidently',
+    description:
+      'Turn your potential into real progress with clarity, support and a global future.',
   },
 ] as const;
 export const opportunities = [
