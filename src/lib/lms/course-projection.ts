@@ -34,9 +34,11 @@ export function outlineSelect(userId: string) {
                   select: { question: { select: { published: true } } },
                 },
                 attempts: {
-                  where: { userId, status: 'SUBMITTED' },
+                  where: { userId },
                   orderBy: { number: 'asc' as const },
                   select: {
+                    status: true,
+                    lastSavedAt: true,
                     submittedAt: true,
                     percentage: true,
                     requiresReview: true,
@@ -106,7 +108,7 @@ export function projectCourse(record: OutlineRecord) {
                 item.activity.questions.length > 0 &&
                   item.activity.questions.every((q) => q.question.published),
                 item.activity.passingPercent,
-                item.activity.attempts,
+                item.activity.attempts.filter((a) => a.submittedAt),
               )
             : item.assignment
               ? assignmentCompletion(
@@ -125,11 +127,28 @@ export function projectCourse(record: OutlineRecord) {
         title: item.title,
         type: item.type,
         required: item.required,
+        inProgress:
+          item.activity?.attempts.some((a) => a.status === 'IN_PROGRESS') ||
+          false,
         lesson: item.lesson ? { format: item.lesson.format } : null,
         completion,
         completedAt: completion.completedAt,
         lastAccessedAt:
-          item.lesson?.states[0]?.lastAccessedAt?.toISOString() || null,
+          item.lesson?.states[0]?.lastAccessedAt?.toISOString() ||
+          [
+            ...(item.activity?.attempts.map((a) =>
+              (a.submittedAt && a.submittedAt > a.lastSavedAt
+                ? a.submittedAt
+                : a.lastSavedAt
+              ).toISOString(),
+            ) || []),
+            ...(item.assignment?.submissions[0]?.versions.map((v) =>
+              v.submittedAt.toISOString(),
+            ) || []),
+          ]
+            .sort()
+            .at(-1) ||
+          null,
       };
     });
     return { ...section, items, progress: itemProgress(items) };

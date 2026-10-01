@@ -1,3 +1,5 @@
+import { mutationLimiter } from '@/lib/student/abuse';
+import { getCurrentStudent } from '@/lib/student/session';
 import { studentRepository } from '@/lib/student/session';
 import { privateJson, requestBody, studentResponse } from '@/lib/student/http';
 import { StudentError } from '@/lib/student/errors';
@@ -23,6 +25,15 @@ async function route(
     )
       throw new StudentError('INVALID_INPUT');
     const key = path.join('/');
+    if (request.method !== 'GET')
+      mutationLimiter.check(
+        (await getCurrentStudent()).id,
+        path[0] === 'tickets'
+          ? 'support'
+          : path[0] === 'referral'
+            ? 'referral'
+            : 'learning',
+      );
     if (request.method === 'GET') {
       if (key === 'profile') return privateJson(await repo.profile());
       if (key === 'courses') return privateJson(await getStudentCourses());

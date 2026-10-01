@@ -305,6 +305,20 @@ export function CoursePlayer({
                       ← Previous
                     </Link>
                   )}
+                  {lesson.completed &&
+                    course.progress.nextItem &&
+                    course.progress.nextItem.id !== lesson.id &&
+                    course.progress.nextItem.type !== 'LESSON' && (
+                      <Link
+                        prefetch={false}
+                        href={learningItemHref(
+                          course.id,
+                          course.progress.nextItem,
+                        )}
+                      >
+                        Next learning item: {course.progress.nextItem.title} →
+                      </Link>
+                    )}
                   {next && (
                     <Link
                       prefetch={false}

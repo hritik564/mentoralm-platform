@@ -33,6 +33,14 @@ export function deploymentOrigins(
     throw new Error(
       'LMS domain configuration requires distinct approved website and LMS origins.',
     );
+  if (
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith('pk_live_') &&
+    (origins.website !== platformDomains.website ||
+      origins.lms !== platformDomains.lms)
+  )
+    throw new Error(
+      'Production identity requires both approved production origins.',
+    );
   return origins;
 }
 
@@ -52,6 +60,7 @@ export function lmsInternalPath(path: string): string | null {
     /^\/courses\/[a-zA-Z0-9_-]{1,100}(?:\/(?:lessons|activities|assignments)\/[a-zA-Z0-9_-]{1,100})?$/.test(
       short,
     ) ||
+    /^\/discussions\/[a-zA-Z0-9_-]{1,100}$/.test(short) ||
     /^\/certificates\/[a-zA-Z0-9_-]{1,100}$/.test(short)
     ? `/learn${short}`
     : null;
@@ -128,4 +137,50 @@ export function learningItemHref(
         ? 'assignments'
         : 'activities';
   return lmsHref(`/learn/courses/${courseId}/${kind}/${item.id}`);
+}
+
+/** Approved deployment origins control routing; forwarded headers never select destinations. */
+export function approvedRequestHost(
+  host: string,
+  origins = deploymentOrigins(),
+) {
+  try {
+    if (!/^(?:[a-zA-Z0-9.-]+|\[[a-fA-F0-9:]+\])(?::[0-9]{1,5})?$/.test(host))
+      return false;
+    const parsed = new URL(`https://${host}`);
+    if (
+      parsed.username ||
+      parsed.password ||
+      parsed.pathname !== '/' ||
+      parsed.search ||
+      parsed.hash
+    )
+      return false;
+    const allowed = [origins.website, origins.lms]
+      .filter(Boolean)
+      .map((o) => new URL(o!).host);
+    if (allowed.length) return allowed.includes(parsed.host);
+    return (
+      ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname) ||
+      parsed.host === 'students.mentoralm.com' ||
+      parsed.host === 'mentoralm.com'
+    );
+  } catch {
+    return false;
+  }
+}
+export function authorizedSessionParties() {
+  const origins = deploymentOrigins();
+  return origins.website && origins.lms
+    ? [origins.website, origins.lms]
+    : undefined;
+}
+export function trustedRequestOrigin(host: string) {
+  host = host.toLowerCase();
+  if (!approvedRequestHost(host)) throw new Error('Unapproved authority.');
+  host = new URL(`https://${host}`).host;
+  const origins = deploymentOrigins();
+  for (const origin of [origins.website, origins.lms])
+    if (origin && new URL(origin).host === host) return origin;
+  return `${['mentoralm.com', 'students.mentoralm.com'].includes(host) ? 'https' : 'http'}://${host}`;
 }

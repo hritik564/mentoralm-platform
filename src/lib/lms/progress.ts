@@ -4,6 +4,7 @@ export interface OutlineItem {
   title: string;
   type: string;
   required: boolean;
+  inProgress?: boolean;
   completion?: ItemCompletion;
   lesson: { format: string } | null;
   completedAt: string | null;
@@ -49,7 +50,7 @@ export function learningProjection(sections: OutlineSection[]) {
           a.id.localeCompare(b.id),
       )[0] || null;
   const next =
-    accessed && !accessed.completedAt
+    accessed && (accessed.inProgress || !accessed.completedAt)
       ? accessed
       : lessons.find((item) => item.required && !item.completedAt) ||
         lessons.find((item) => !item.completedAt) ||
@@ -57,9 +58,10 @@ export function learningProjection(sections: OutlineSection[]) {
   return {
     ...itemProgress(lessons),
     lastAccessedAt: accessed?.lastAccessedAt || null,
-    lastAccessedLesson: accessed
-      ? { id: accessed.id, title: accessed.title }
-      : null,
+    lastAccessedLesson:
+      accessed?.type === 'LESSON'
+        ? { id: accessed.id, title: accessed.title }
+        : null,
     nextItem: next ? { id: next.id, title: next.title, type: next.type } : null,
     nextLesson:
       next?.type === 'LESSON' ? { id: next.id, title: next.title } : null,

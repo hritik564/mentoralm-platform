@@ -40,6 +40,7 @@ export function dashboardDestination(value: unknown): string {
   }
   return typeof value === 'string' &&
     (destinations.has(value) ||
+      /^\/learn\/discussions\/[a-zA-Z0-9_-]{1,100}$/.test(value) ||
       /^\/learn\/certificates\/[a-zA-Z0-9_-]{1,100}$/.test(value) ||
       /^\/learn\/courses\/[a-zA-Z0-9_-]{1,100}(?:\/(?:lessons|activities|assignments)\/[a-zA-Z0-9_-]{1,100})?$/.test(
         value,

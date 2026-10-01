@@ -78,6 +78,8 @@ export function LmsShell({
                 path === href ||
                 (href === '/learn/assignments' &&
                   path.includes('/assignments/')) ||
+                (href === '/learn/discussions' &&
+                  path.startsWith('/learn/discussions/')) ||
                 (href === '/learn/certificates' &&
                   path.startsWith('/learn/certificates/')) ||
                 (href === '/learn/lectures' &&

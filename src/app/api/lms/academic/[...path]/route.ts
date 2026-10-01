@@ -1,3 +1,5 @@
+import { mutationLimiter } from '@/lib/student/abuse';
+import { getCurrentStudent } from '@/lib/student/session';
 import { getAcademics } from '@/lib/lms/services';
 import { privateJson, requestBody, studentResponse } from '@/lib/student/http';
 import { privateFileResponse } from '@/lib/storage/private-files';
@@ -19,6 +21,11 @@ async function route(
       (url.search && url.search !== '?download=1')
     )
       throw new StudentError('INVALID_INPUT');
+    if (request.method !== 'GET')
+      mutationLimiter.check(
+        (await getCurrentStudent()).id,
+        path.includes('assignments') ? 'upload' : 'academic',
+      );
     if (request.method === 'GET') {
       if (path[0] === 'certificates' && path.length === 2 && !url.search)
         return privateJson(await repo.certificate(path[1]));

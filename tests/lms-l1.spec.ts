@@ -167,11 +167,17 @@ test('real LMS identity, empty/future states, cohorts, course structure, ownersh
       path: `${review}/${info.project.name}-learn.png`,
       fullPage: true,
     });
-    for (const route of ['/learn/discussions', '/learn/chat']) {
+    for (const route of ['/learn/chat']) {
       await page.goto(route);
       await expect(page.getByText('Coming in a later phase')).toBeVisible();
       await scan(page);
     }
+    await page.goto('/learn/discussions');
+    await expect(
+      page.getByRole('heading', { name: 'Discussions', exact: true }),
+    ).toBeVisible();
+    await expect(page.getByText(/No discussions yet/)).toBeVisible();
+    await scan(page);
     if (info.project.name === 'l1-desktop') {
       await page.goto('/learn/assignments');
       await page.screenshot({

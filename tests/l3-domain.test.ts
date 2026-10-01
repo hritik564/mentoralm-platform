@@ -183,12 +183,12 @@ test(
         };
       }
       await t.test(
-        'six clean migrations and subtype/policy constraints',
+        'seven clean migrations and subtype/policy constraints',
         async () => {
           const count = await db.$queryRawUnsafe<{ count: bigint }[]>(
             `SELECT count(*) FROM "${isolated.schema}"."_prisma_migrations" WHERE finished_at IS NOT NULL`,
           );
-          assert.equal(Number(count[0].count), 6);
+          assert.equal(Number(count[0].count), 7);
           await assert.rejects(
             db.academicActivity.create({
               data: {

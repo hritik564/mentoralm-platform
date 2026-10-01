@@ -163,3 +163,17 @@ The owner explicitly authorized technology selection and homepage implementation
 ### ADR-027 — Opt-in final completion and certificate issuance
 
 **Status:** Accepted under explicit L3 scope. **Decision:** One required configured-item contributor boundary, optional explicit Course attendance condition, nonempty requirements and Course-level final-completion opt-in. Separate certificate policy; unique student/Course record and random code. Serializable evaluation updates Enrollment and issues at most one record. **Consequences:** Existing L2 Courses remain unchanged by default. Current projections recompute eligibility; publication changes must reconcile. Added requirements reopen status but preserve the first timestamp; certificates suspend/recover with eligibility, manually revoked certificates stay revoked. Only real attached private PDFs enter Dashboard Resources; PDF design/public verification are deferred.
+
+## L4 implementation decisions
+
+### ADR-028 — scoped plaintext learning discussions
+
+**Status:** Accepted under L4. **Decision:** Course enrollment plus current LMS entitlement authorize discussions; optional applicable active Batch membership narrows scope. Server-derived authors, bounded plain text, immutable posts/context and cursor conversation pages. **Consequences:** No student edits/moderation powers, no Support merger or fake Chat; future control-plane moderation is separate.
+
+### ADR-029 — explicit consent and provider-free cohort planning
+
+**Status:** Accepted under L4. **Decision:** Reusable server-only Batch audience resolver, separate channel/purpose preferences with evidence and private history, denied-by-default permissions, auditable message/delivery plans. Student entitlement does not determine cohort membership; marketing is not inherited consent. **Consequences:** PENDING_PROVIDER/SUPPRESSED only; no sends, templates/automation/provider UI or unresolved preference controls. Other audience sources require explicit authorized resolvers.
+
+### ADR-030 — transactional facts, audited access controls and local abuse guard
+
+**Status:** Accepted under L4. **Decision:** Minimal idempotent LearningEvent journal, existing private audit extended with optional details, persisted-role-checked future access service, per-identity bounded local rate policies and explicit production authority/session-origin guards. **Consequences:** No large bus/control-plane interface/provider. Event consumers and shared multi-instance rate storage remain deployment/future work. Root and LMS hosts share the existing Clerk production instance.

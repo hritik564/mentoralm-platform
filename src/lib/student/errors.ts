@@ -6,12 +6,14 @@ export class StudentError extends Error {
       | 'NOT_FOUND'
       | 'INVALID_INPUT'
       | 'CONFLICT'
-      | 'UNAVAILABLE',
+      | 'UNAVAILABLE'
+      | 'RATE_LIMITED',
   ) {
     super(code);
   }
 }
 export const errorMessages = {
+  RATE_LIMITED: 'Please wait a moment before trying again.',
   UNAUTHENTICATED: 'Please sign in to continue.',
   FORBIDDEN: 'This action is not available for your account.',
   NOT_FOUND: 'This item is not available.',
@@ -22,6 +24,7 @@ export const errorMessages = {
     'Student data is temporarily unavailable. Please try again later.',
 };
 export const errorStatus = {
+  RATE_LIMITED: 429,
   UNAUTHENTICATED: 401,
   FORBIDDEN: 403,
   NOT_FOUND: 404,

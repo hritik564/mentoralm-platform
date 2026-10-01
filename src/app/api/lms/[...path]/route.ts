@@ -1,3 +1,5 @@
+import { mutationLimiter } from '@/lib/student/abuse';
+import { getCurrentStudent } from '@/lib/student/session';
 import { z } from 'zod';
 import { getLearningRepository } from '@/lib/lms/services';
 import { privateFileResponse } from '@/lib/storage/private-files';
@@ -23,6 +25,8 @@ async function route(
     )
       throw new StudentError('INVALID_INPUT');
     if (path[0] !== 'courses') throw new StudentError('NOT_FOUND');
+    if (request.method !== 'GET')
+      mutationLimiter.check((await getCurrentStudent()).id, 'learning');
     if (request.method === 'GET') {
       if (path.length === 2 && !url.search)
         return privateJson(await repo.course(path[1]));

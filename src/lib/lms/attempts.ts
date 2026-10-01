@@ -1,4 +1,5 @@
 import 'server-only';
+import { learningEvent } from './events';
 import type { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { StudentError } from '../student/errors';
 import { studentItem } from './academic-access';
@@ -174,13 +175,13 @@ export class Attempts {
     itemId: string,
     attemptId: string,
   ) {
-    await this.activity(db, courseId, itemId);
+    const activity = await this.activity(db, courseId, itemId);
     const a = await db.academicAttempt.findFirst({
       where: { id: attemptId, userId: this.userId, activityId: itemId },
       include: responsesInclude,
     });
     if (!a) throw new StudentError('NOT_FOUND');
-    return a;
+    return { ...a, itemType: activity.itemType };
   }
   async save(
     courseId: string,
@@ -290,6 +291,16 @@ export class Attempts {
                 : percentage >= a.passingPercent,
         },
         include: responsesInclude,
+      });
+      await learningEvent(db, {
+        kind:
+          a.itemType === 'ASSESSMENT'
+            ? 'AssessmentResultAvailable'
+            : 'QuizResultAvailable',
+        key: `result:${attemptId}`,
+        subjectId: attemptId,
+        courseId,
+        userId: this.userId,
       });
       await evaluateCompletion(db, this.userId, courseId);
       return studentAttempt(updated);

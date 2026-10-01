@@ -177,14 +177,14 @@ test(
       const repoA = new LmsRepository(db, A),
         repoB = new LmsRepository(db, B);
       await t.test(
-        'all six migrations complete and student IDs issue once under concurrency',
+        'all seven migrations complete and student IDs issue once under concurrency',
         async () => {
           const records = await db.$queryRawUnsafe<
             Array<{ finished_at: Date }>
           >(
             `SELECT finished_at FROM "${isolated.schema}"."_prisma_migrations"`,
           );
-          assert.equal(records.length, 6);
+          assert.equal(records.length, 7);
           assert.ok(records.every((row) => row.finished_at));
           const same = await Promise.all(
             Array.from({ length: 24 }, () =>

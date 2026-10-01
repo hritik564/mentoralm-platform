@@ -325,7 +325,10 @@ test('real course player, formats, persistence, responsive outline, Dashboard pr
     await scan(page);
     for (const route of ['/learn/discussions']) {
       await page.goto(route);
-      await expect(page.getByText('Coming in a later phase')).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Discussions', exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText(/No discussions yet/)).toBeVisible();
     }
     const request = page.context().request;
     for (const body of [

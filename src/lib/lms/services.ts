@@ -32,3 +32,13 @@ export async function getAcademics() {
   const { Academics } = await import('./academics');
   return new Academics(getDatabase(), await getCurrentStudent());
 }
+
+export async function getDiscussions() {
+  const { Discussions } = await import('./discussions');
+  const student = await getCurrentStudent();
+  if (student.role !== 'STUDENT') {
+    const { StudentError } = await import('../student/errors');
+    throw new StudentError('FORBIDDEN');
+  }
+  return new Discussions(getDatabase(), student.id);
+}

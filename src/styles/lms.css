@@ -943,3 +943,97 @@
 .l3-surface > label {
   display: block;
 }
+
+.l4-discussion-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 20px;
+}
+.l4-discussion-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.l4-discussion-form :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  padding: 12px;
+  color: var(--lms-text, #edf3ff);
+  background: #101c31;
+  border: 1px solid #51617c;
+  border-radius: 10px;
+  font: inherit;
+}
+.l4-discussion-form textarea {
+  resize: vertical;
+}
+.l4-discussion-form :is(input, select, textarea, button):focus-visible {
+  outline: 2px solid #83d7ff;
+  outline-offset: 3px;
+}
+.l4-discussion-form button {
+  justify-self: start;
+}
+.l4-thread-list,
+.l4-conversation ol {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0;
+}
+.l4-thread-list li {
+  padding: 16px 0;
+  border-bottom: 1px solid #31415a;
+}
+.l4-thread-list a {
+  font-weight: 600;
+}
+.l4-thread-list p {
+  margin: 6px 0;
+}
+.l4-conversation {
+  margin-bottom: 20px;
+}
+.l4-conversation li + li {
+  border-top: 1px solid #31415a;
+}
+.l4-conversation article {
+  padding: 18px 0;
+}
+.l4-conversation header {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.l4-conversation p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: 14px;
+}
+.l4-conversation time,
+.l4-form-hint {
+  color: #b9c6dc;
+  font-size: 13px;
+}
+.l4-back {
+  display: inline-block;
+  margin-bottom: 20px;
+}
+.l4-discussion-grid :is(h1, h2, a, p),
+.l4-conversation h1 {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 900px) {
+  .l4-discussion-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.l4-discussion-form button {
+  border: 1px solid #5a4b7c;
+  font: inherit;
+  cursor: pointer;
+}
+.l3-home {
+  margin-bottom: 20px;
+}

@@ -1,4 +1,5 @@
 import 'server-only';
+import { learningEvent } from './events';
 import { randomBytes } from 'node:crypto';
 import type { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { outlineSelect, projectCourse } from './course-projection';
@@ -51,7 +52,7 @@ export async function evaluateCompletion(
   const enrollment = await db.enrollment.findUniqueOrThrow({
     where: { userId_courseId: { userId, courseId } },
   });
-  if (projected.completion.eligible)
+  if (projected.completion.eligible) {
     await db.enrollment.update({
       where: { id: enrollment.id },
       data: {
@@ -59,7 +60,14 @@ export async function evaluateCompletion(
         completedAt: enrollment.completedAt || new Date(),
       },
     });
-  else if (enrollment.status === 'COMPLETED')
+    await learningEvent(db, {
+      kind: 'CourseCompleted',
+      key: `course-completed:${enrollment.id}`,
+      subjectId: enrollment.id,
+      courseId,
+      userId,
+    });
+  } else if (enrollment.status === 'COMPLETED')
     await db.enrollment.update({
       where: { id: enrollment.id },
       data: { status: 'IN_PROGRESS' },
@@ -68,15 +76,22 @@ export async function evaluateCompletion(
     where: { userId_courseId: { userId, courseId } },
   });
   if (projected.completion.certificateEligible) {
-    if (!certificate)
-      await db.certificate.create({
+    if (!certificate) {
+      const issued = await db.certificate.create({
         data: {
           userId,
           courseId,
           code: `MLM-${randomBytes(18).toString('hex').toUpperCase()}`,
         },
       });
-    else if (certificate.status === 'SUSPENDED')
+      await learningEvent(db, {
+        kind: 'CertificateIssued',
+        key: `certificate-issued:${issued.id}`,
+        subjectId: issued.id,
+        courseId,
+        userId,
+      });
+    } else if (certificate.status === 'SUSPENDED')
       await db.certificate.update({
         where: { id: certificate.id },
         data: { status: 'ACTIVE' },

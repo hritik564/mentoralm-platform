@@ -157,3 +157,37 @@ Browser suites share port 3100 and must run sequentially. Existing local-only `_
 Optional server-only `LMS_SUBMISSIONS_ROOT` must point to a pre-created writable private directory outside `public/`; normal runtime does not invent storage. Assignment policy supports at most five files/10 MiB each (defaults three/5 MiB), with stricter configuration allowed. Plain text/PDF/raster are the initial allowlist; DOCX is not accepted in L3. Due dates are informational; no undocumented late-submission penalty. Resubmissions require policy permission and are blocked while UNDER_REVIEW or ACCEPTED. Answers use explicit Save and Submit; there is no watch telemetry, time-limit enforcement, proctoring, auto text grading or high-frequency autosave. Percentages may be rounded for display, but pass/attendance thresholds use unrounded facts.
 
 Course final completion and certificate policy are separate opt-ins. Future authoring/publication must validate question/option configuration and invoke scoped `AcademicStaff.reconcile` after curriculum/condition changes. Original Enrollment completion time is retained on reopening/requalification; certificate suspension follows current eligibility and manual revocation remains sticky. Genuine certificate PDFs can be attached through future privileged control-plane work and delivered from `LMS_FILES_ROOT`; no PDF is fabricated for a record. Production requires durable private upload/media storage, quarantine/scanning, retention/backups, orphan cleanup, rate/abuse controls and existing domain/Clerk deployment configuration. No production/DNS change is part of L3.
+
+## L4 final validation and deployment contract
+
+L4 adds `20261001120000_lms_integration`; deploy additively to the intended local mentoralm_dev and never reset. The guarded mentoralm_test harness validates connected database identity before creating a random disposable schema, excludes the development database even across loopback aliases, migrates cleanly or baselines six old migrations for a populated L3 upgrade, and drops only its own schema/private directory. Browser suites use real disposable Clerk Development identities and port 3100; run sequentially. No fixtures ship in normal runtime.
+
+```sh
+npm run db:generate
+npm run db:validate
+npm run db:migrate
+npx prisma migrate status
+npm run typecheck
+npm run lint
+npm run format:check
+npm run build
+npm run test:l4:domain
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:l4
+npm run test:d4:domain
+npm run test:l1:domain
+npm run test:l2:domain
+npm run test:l3:domain
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:l3
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:l2
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:l1
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:d4
+npm audit
+```
+
+Future deployment requires one Clerk production instance, its production publishable/secret keys, the same MentoraLM PostgreSQL User mapping, a production PostgreSQL database with migrations/backups/pooling, and both `NEXT_PUBLIC_SITE_URL=https://mentoralm.com` and `NEXT_PUBLIC_LMS_ORIGIN=https://students.mentoralm.com` at build/runtime. Live Clerk publishable keys reject missing/local production-origin configuration. Route both TLS hosts to the same application, including LMS rewrites/APIs; Dashboard/Support remain on the website. No second authentication/user database or manual shared-session cookie is required.
+
+Clerk's [production requirements](https://clerk.com/docs/guides/development/deployment/production) state that root-domain sessions support subdomains. Configure mentoralm.com as the primary root, complete Clerk's required production DNS/TLS records and custom OAuth credentials/redirect configuration, and enable the [subdomain allowlist](https://clerk.com/docs/guides/dashboard/dns-domains/subdomain-allowlist) with students. The application configures both origins as authorizedParties; allowlist intended custom redirects at Clerk too. A [satellite setup](https://clerk.com/docs/guides/dashboard/dns-domains/satellite-domains) is for different root domains and is unnecessary here. When deployment is authorized, verify real login/logout/recovery and deep learning handoff on both HTTPS hosts. Local host tests do not establish production cookie/DNS readiness. No DNS/provider setting was changed in L4.
+
+Private `RESOURCE_FILES_ROOT`, `LMS_FILES_ROOT` and writable `LMS_SUBMISSIONS_ROOT` remain local adapters outside public with least-privilege filesystem permissions. Production must replace them with a durable private object adapter beneath existing domain authorization: opaque object keys, bounded upload/quarantine/scanning, canonical metadata, streaming/range delivery or short-lived strictly authorized download URLs, lifecycle/retention/backups and orphan reconciliation. Keep one certificate object; Dashboard and LMS reference it. Do not expose bucket/object URLs directly or migrate authorization into storage keys. Approved external learning requires `LMS_EXTERNAL_LINKS` plus exact `LMS_EXTERNAL_ORIGINS`; missing roots/registry show honest unavailable states.
+
+No email/WhatsApp/in-app delivery worker or provider credentials are configured by L4. Future providers need verified destinations, finalized operational/marketing consent policy/UI, dispatch-time audience/consent checks, suppression/unsubscribe, idempotency, genuine provider receipts and private auditable status transitions. Shared rate storage/ingress limits, production observability/alerting, recovery drills and abuse/moderation operations are infrastructure/operational prerequisites. Admin/Instructor UI, AI Tutor, Quantum/intelligence interpretation, payments and certificate design stay deferred.

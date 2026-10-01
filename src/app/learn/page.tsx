@@ -1,7 +1,13 @@
+import Link from 'next/link';
+import { lmsHref } from '@/lib/platform/domains';
 import { AcademicHome } from '@/components/lms/AcademicHome';
 import { LearningCourses } from '@/components/lms/LearningLists';
 import { requireStudentIdentity } from '@/lib/auth/session';
-import { getLmsIdentity, getLearningRepository } from '@/lib/lms/services';
+import {
+  getLmsIdentity,
+  getLearningRepository,
+  getDiscussions,
+} from '@/lib/lms/services';
 import { LmsBoundary } from '@/components/lms/LmsBoundary';
 import { LmsIdentity, BatchList } from '@/components/lms/LmsViews';
 export default async function LmsHome() {
@@ -9,9 +15,10 @@ export default async function LmsHome() {
   return (
     <LmsBoundary
       load={async () => {
-        const [identity, courses] = await Promise.all([
+        const [identity, courses, discussion] = await Promise.all([
           getLmsIdentity(),
           (await getLearningRepository()).courses(),
+          (await getDiscussions()).workspace(),
         ]);
         return (
           <>
@@ -40,20 +47,23 @@ export default async function LmsHome() {
             </div>
             <AcademicHome />
             <section className="lms-panel lms-upcoming">
-              <h2>Learning activity</h2>
-              <div>
-                {[
-                  ['Schedule', 'Scheduled sessions will appear when shared.'],
-                  ['Tasks', 'Find course tasks in Assignments.'],
-                  ['Announcements', 'No announcements available yet.'],
-                  ['Support sessions', 'No support sessions scheduled yet.'],
-                ].map(([title, text]) => (
-                  <div key={title}>
-                    <h3>{title}</h3>
-                    <p>{text}</p>
-                  </div>
-                ))}
-              </div>
+              <h2>Recent discussions</h2>
+              {discussion.threads.length ? (
+                discussion.threads.slice(0, 3).map((t) => (
+                  <p key={t.id}>
+                    <Link href={lmsHref(`/learn/discussions/${t.id}`)}>
+                      {t.title}
+                    </Link>{' '}
+                    · {t.course.title}
+                    {t.batch ? ` · ${t.batch.name}` : ''}
+                  </p>
+                ))
+              ) : (
+                <p>No discussions in your courses yet.</p>
+              )}
+              <Link href={lmsHref('/learn/discussions')}>
+                Open discussions →
+              </Link>
             </section>
           </>
         );

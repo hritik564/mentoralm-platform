@@ -9,6 +9,7 @@ export default defineConfig({
     'lms-l1.spec.ts',
     'lms-l2.spec.ts',
     'lms-l3.spec.ts',
+    'lms-l4.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: true,

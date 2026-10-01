@@ -17,6 +17,58 @@ export class Academics {
     this.attempts = new Attempts(db, actor.id);
     this.assignments = new Assignments(db, actor.id);
   }
+  async recentResult() {
+    const result = await this.db.academicAttempt.findFirst({
+      where: {
+        userId: this.actor.id,
+        status: 'SUBMITTED',
+        activity: {
+          published: true,
+          item: {
+            published: true,
+            section: {
+              published: true,
+              course: courseAccessWhere(this.actor.id),
+            },
+          },
+        },
+      },
+      orderBy: [{ submittedAt: 'desc' }, { id: 'asc' }],
+      select: {
+        number: true,
+        submittedAt: true,
+        percentage: true,
+        passed: true,
+        requiresReview: true,
+        activity: {
+          select: {
+            item: {
+              select: {
+                id: true,
+                title: true,
+                type: true,
+                section: { select: { courseId: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!result) return null;
+    return {
+      number: result.number,
+      submittedAt: result.submittedAt!.toISOString(),
+      percentage: result.percentage,
+      passed: result.passed,
+      requiresReview: result.requiresReview,
+      item: {
+        id: result.activity.item.id,
+        title: result.activity.item.title,
+        type: result.activity.item.type,
+      },
+      courseId: result.activity.item.section.courseId,
+    };
+  }
   async attendance() {
     if (
       !(await this.db.user.findFirst({

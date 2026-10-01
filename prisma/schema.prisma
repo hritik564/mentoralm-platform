@@ -47,31 +47,36 @@ enum MessageActor {
 }
 
 model User {
-  id                String                 @id @default(cuid())
-  clerkUserId       String                 @unique
-  studentId         String?                @unique
-  lmsAccessOverride LmsAccessOverride?
-  memberships       BatchMembership[]
-  teaching          BatchInstructor[]
-  lessonStates      LessonState[]
-  academicAttempts  AcademicAttempt[]
-  submissions       AssignmentSubmission[]
-  attendance        AttendanceRecord[]
-  certificates      Certificate[]
-  reviews           AssignmentReview[]
-  academicAudit     AcademicAudit[]
-  role              Role                   @default(STUDENT)
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  profile           StudentProfile?
-  views             CourseView[]
-  enrollments       Enrollment[]
-  assignments       ResourceAssignment[]
-  tickets           SupportTicket[]
-  messages          SupportMessage[]
-  referral          ReferralIdentity?
-  referred          ReferralAttribution?   @relation("Referred")
-  referrals         ReferralAttribution[]  @relation("Referrer")
+  id                       String                    @id @default(cuid())
+  clerkUserId              String                    @unique
+  studentId                String?                   @unique
+  lmsAccessOverride        LmsAccessOverride?
+  memberships              BatchMembership[]
+  teaching                 BatchInstructor[]
+  lessonStates             LessonState[]
+  academicAttempts         AcademicAttempt[]
+  submissions              AssignmentSubmission[]
+  attendance               AttendanceRecord[]
+  certificates             Certificate[]
+  reviews                  AssignmentReview[]
+  academicAudit            AcademicAudit[]
+  discussionThreads        DiscussionThread[]
+  discussionPosts          DiscussionPost[]
+  communicationPreferences CommunicationPreference[]
+  communicationDeliveries  CommunicationDelivery[]
+  communicationMessages    CommunicationMessage[]
+  role                     Role                      @default(STUDENT)
+  createdAt                DateTime                  @default(now())
+  updatedAt                DateTime                  @updatedAt
+  profile                  StudentProfile?
+  views                    CourseView[]
+  enrollments              Enrollment[]
+  assignments              ResourceAssignment[]
+  tickets                  SupportTicket[]
+  messages                 SupportMessage[]
+  referral                 ReferralIdentity?
+  referred                 ReferralAttribution?      @relation("Referred")
+  referrals                ReferralAttribution[]     @relation("Referrer")
 
   @@unique([id, role])
 }
@@ -96,27 +101,28 @@ model Program {
 }
 
 model Course {
-  id                        String         @id @default(cuid())
+  id                        String             @id @default(cuid())
   title                     String
   description               String
   programId                 String?
-  program                   Program?       @relation(fields: [programId], references: [id], onDelete: SetNull)
+  program                   Program?           @relation(fields: [programId], references: [id], onDelete: SetNull)
   thumbnailPath             String
   thumbnailAlt              String
   publicPath                String
-  published                 Boolean        @default(false)
-  createdAt                 DateTime       @default(now())
-  updatedAt                 DateTime       @updatedAt
+  published                 Boolean            @default(false)
+  createdAt                 DateTime           @default(now())
+  updatedAt                 DateTime           @updatedAt
   batches                   Batch[]
   sections                  Section[]
   views                     CourseView[]
   enrollments               Enrollment[]
   resources                 Resource[]
-  academicCompletionEnabled Boolean        @default(false)
-  certificateEnabled        Boolean        @default(false)
+  academicCompletionEnabled Boolean            @default(false)
+  certificateEnabled        Boolean            @default(false)
   requiredAttendancePercent Float?
   certificates              Certificate[]
   sessions                  BatchSession[]
+  discussionThreads         DiscussionThread[]
 
   @@index([programId])
 }
@@ -262,22 +268,24 @@ enum LessonFormat {
 }
 
 model Batch {
-  id               String            @id @default(cuid())
-  code             String            @unique
-  name             String
-  programId        String?
-  program          Program?          @relation(fields: [programId], references: [id], onDelete: Restrict)
-  courseId         String?
-  course           Course?           @relation(fields: [courseId], references: [id], onDelete: Restrict)
-  startsAt         DateTime?         @db.Timestamptz(6)
-  endsAt           DateTime?         @db.Timestamptz(6)
-  status           BatchStatus       @default(PLANNED)
-  lmsAccessEnabled Boolean           @default(false)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  memberships      BatchMembership[]
-  instructors      BatchInstructor[]
-  sessions         BatchSession[]
+  id                    String                 @id @default(cuid())
+  code                  String                 @unique
+  name                  String
+  programId             String?
+  program               Program?               @relation(fields: [programId], references: [id], onDelete: Restrict)
+  courseId              String?
+  course                Course?                @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  startsAt              DateTime?              @db.Timestamptz(6)
+  endsAt                DateTime?              @db.Timestamptz(6)
+  status                BatchStatus            @default(PLANNED)
+  lmsAccessEnabled      Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  memberships           BatchMembership[]
+  instructors           BatchInstructor[]
+  sessions              BatchSession[]
+  discussionThreads     DiscussionThread[]
+  communicationMessages CommunicationMessage[]
 
   @@index([programId])
   @@index([courseId])
@@ -519,6 +527,7 @@ model AcademicAttempt {
 
   @@unique([userId, activityId, number])
   @@index([userId, activityId, status])
+  @@index([userId, submittedAt(sort: Desc)])
 }
 
 // Immutable question/scoring snapshots keep previously started/submitted attempts independent of later authoring.
@@ -676,8 +685,109 @@ model AcademicAudit {
   actorId   String
   actor     User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
   action    String
+  details   Json?
   targetId  String
   createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([targetId, createdAt])
+}
+
+enum CommunicationChannel {
+  EMAIL
+  WHATSAPP
+  IN_APP
+}
+
+enum CommunicationPurpose {
+  OPERATIONAL
+  MARKETING
+}
+
+enum CommunicationDeliveryStatus {
+  PENDING_PROVIDER
+  SUPPRESSED
+}
+
+model CommunicationPreference {
+  userId    String
+  user      User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
+  channel   CommunicationChannel
+  purpose   CommunicationPurpose
+  allowed   Boolean              @default(false)
+  evidence  String
+  updatedAt DateTime             @updatedAt
+
+  @@id([userId, channel, purpose])
+}
+
+model CommunicationMessage {
+  id          String                  @id @default(cuid())
+  batchId     String
+  batch       Batch                   @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  initiatorId String
+  initiator   User                    @relation(fields: [initiatorId], references: [id], onDelete: Restrict)
+  channel     CommunicationChannel
+  purpose     CommunicationPurpose
+  subject     String
+  body        String
+  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
+  deliveries  CommunicationDelivery[]
+
+  @@index([batchId, createdAt])
+}
+
+model CommunicationDelivery {
+  messageId String
+  message   CommunicationMessage        @relation(fields: [messageId], references: [id], onDelete: Restrict)
+  userId    String
+  user      User                        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status    CommunicationDeliveryStatus
+  reason    String
+  queuedAt  DateTime                    @default(now()) @db.Timestamptz(6)
+
+  @@id([messageId, userId])
+  @@index([userId, queuedAt])
+}
+
+model DiscussionThread {
+  id        String           @id @default(cuid())
+  courseId  String
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  batchId   String?
+  batch     Batch?           @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  authorId  String
+  author    User             @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  title     String
+  locked    Boolean          @default(false)
+  createdAt DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime         @default(now()) @db.Timestamptz(6)
+  posts     DiscussionPost[]
+
+  @@index([courseId, updatedAt])
+  @@index([batchId, updatedAt])
+}
+
+model DiscussionPost {
+  id        String           @id @default(cuid())
+  threadId  String
+  thread    DiscussionThread @relation(fields: [threadId], references: [id], onDelete: Restrict)
+  authorId  String
+  author    User             @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  body      String
+  createdAt DateTime         @default(now()) @db.Timestamptz(6)
+
+  @@index([threadId, createdAt, id])
+}
+
+// Durable facts recorded transactionally; no notification worker or provider is enabled.
+model LearningEvent {
+  id         String   @id @default(cuid())
+  kind       String
+  key        String   @unique
+  subjectId  String
+  courseId   String?
+  userId     String?
+  occurredAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([kind, occurredAt])
 }

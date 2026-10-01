@@ -1,4 +1,5 @@
 import 'server-only';
+import { learningEvent } from './events';
 import type {
   Prisma,
   PrismaClient,
@@ -89,7 +90,7 @@ export class AcademicStaff {
         orderBy: { number: 'desc' },
       });
       if (latest?.id !== version.id) throw new StudentError('FORBIDDEN');
-      await db.assignmentReview.create({
+      const review = await db.assignmentReview.create({
         data: {
           versionId,
           reviewerId: this.actorId,
@@ -107,6 +108,13 @@ export class AcademicStaff {
           action: 'ASSIGNMENT_REVIEW',
           targetId: versionId,
         },
+      });
+      await learningEvent(db, {
+        kind: 'AssignmentReviewed',
+        key: `review:${review.id}`,
+        subjectId: versionId,
+        courseId: course.id,
+        userId: s.userId,
       });
       await evaluateCompletion(db, s.userId, course.id);
     });

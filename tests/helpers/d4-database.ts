@@ -1,4 +1,5 @@
 import { loadEnvConfig } from '@next/env';
+import { readFileSync, readdirSync } from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { Client } from 'pg';
@@ -35,7 +36,10 @@ export function testDatabaseUrl(): string | null {
   }
   return url.toString();
 }
-export async function isolatedDatabase(requestedSchema?: string) {
+export async function isolatedDatabase(
+  requestedSchema?: string,
+  throughMigration?: string,
+) {
   const configured = testDatabaseUrl();
   if (!configured) throw new Error('TEST_DATABASE_URL is required.');
   const schema = requestedSchema || `d4_${randomBytes(12).toString('hex')}`;
@@ -59,14 +63,29 @@ export async function isolatedDatabase(requestedSchema?: string) {
   }
   await admin.query(`CREATE SCHEMA "${schema}"`);
   try {
-    execFileSync(
-      process.execPath,
-      ['node_modules/prisma/build/index.js', 'migrate', 'deploy'],
-      {
-        env: { ...process.env, DATABASE_URL: url.toString() },
-        stdio: 'pipe',
-      },
-    );
+    const cli = (args: string[]) =>
+      execFileSync(
+        process.execPath,
+        ['node_modules/prisma/build/index.js', ...args],
+        {
+          env: { ...process.env, DATABASE_URL: url.toString() },
+          stdio: 'pipe',
+        },
+      );
+    if (throughMigration) {
+      const migrations = readdirSync('prisma/migrations')
+        .filter((m) => /^\d{14}_/.test(m))
+        .sort();
+      if (!migrations.includes(throughMigration))
+        throw new Error('Unknown test baseline');
+      await admin.query(`SET search_path TO "${schema}"`);
+      for (const migration of migrations.filter((m) => m <= throughMigration)) {
+        await admin.query(
+          readFileSync(`prisma/migrations/${migration}/migration.sql`, 'utf8'),
+        );
+        cli(['migrate', 'resolve', '--applied', migration]);
+      }
+    } else cli(['migrate', 'deploy']);
   } catch {
     await admin.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
     await admin.end();
