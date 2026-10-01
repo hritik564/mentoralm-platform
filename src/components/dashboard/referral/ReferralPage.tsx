@@ -1,4 +1,5 @@
 'use client';
+import { studentRequest } from '../../../lib/dashboard/student-client';
 import { useState } from 'react';
 import {
   browserReferralSharing,
@@ -13,11 +14,15 @@ export function ReferralPage({
   summary,
   registry,
   sharing,
+  inviteCode,
 }: {
   summary: ReferralSummary | null;
   registry?: ReferralRegistry;
   sharing?: ReferralSharing;
+  inviteCode?: string;
 }) {
+  const [claimNotice, setClaimNotice] = useState('');
+  const [claimed, setClaimed] = useState(false);
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const link = summary
@@ -56,41 +61,83 @@ export function ReferralPage({
         title="Referral"
         description="Your space to share MentoraLM and follow your invitations."
       />
-      {summary && link ? (
+      {inviteCode && /^[a-zA-Z0-9_-]{20,64}$/.test(inviteCode) && (
+        <section className="d3-panel" aria-labelledby="invite-title">
+          <h2 id="invite-title">Confirm your invitation</h2>
+          <p className="d3-muted">
+            Attribute your account to the member who invited you. An existing
+            attribution cannot be changed.
+          </p>
+          <button
+            className="d3-secondary"
+            disabled={busy || claimed}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await studentRequest('referral/attribute', 'POST', {
+                  code: inviteCode,
+                });
+                setClaimed(true);
+                setClaimNotice('Invitation confirmed.');
+              } catch (error) {
+                setClaimNotice(
+                  error instanceof Error
+                    ? error.message
+                    : 'Unable to confirm invitation.',
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Confirm invitation
+          </button>
+          <p role="status">{claimNotice}</p>
+        </section>
+      )}
+      {summary && !link && (
+        <p className="d3-notice">
+          Your referral code: <strong>{summary.code}</strong>. Sharing will be
+          available once the approved website address is configured.
+        </p>
+      )}
+      {summary ? (
         <>
-          <section className="d3-panel" aria-labelledby="referral-link-title">
-            <h2 id="referral-link-title">Your referral link</h2>
-            <p className="d3-muted">
-              Personal code: <strong>{summary.code}</strong>
-            </p>
-            <label className="d3-referral-link">
-              Referral link
-              <input
-                readOnly
-                value={link}
-                onFocus={(event) => event.target.select()}
-              />
-            </label>
-            <div className="d3-actions">
-              <button
-                className="d3-button"
-                disabled={busy}
-                onClick={() => activate('copy')}
-              >
-                Copy Link
-              </button>
-              <button
-                className="d3-secondary"
-                disabled={busy}
-                onClick={() => activate('share')}
-              >
-                Share
-              </button>
-            </div>
-            <p role="status" className="d3-feedback">
-              {notice}
-            </p>
-          </section>
+          {link && (
+            <section className="d3-panel" aria-labelledby="referral-link-title">
+              <h2 id="referral-link-title">Your referral link</h2>
+              <p className="d3-muted">
+                Personal code: <strong>{summary.code}</strong>
+              </p>
+              <label className="d3-referral-link">
+                Referral link
+                <input
+                  readOnly
+                  value={link}
+                  onFocus={(event) => event.target.select()}
+                />
+              </label>
+              <div className="d3-actions">
+                <button
+                  className="d3-button"
+                  disabled={busy}
+                  onClick={() => activate('copy')}
+                >
+                  Copy Link
+                </button>
+                <button
+                  className="d3-secondary"
+                  disabled={busy}
+                  onClick={() => activate('share')}
+                >
+                  Share
+                </button>
+              </div>
+              <p role="status" className="d3-feedback">
+                {notice}
+              </p>
+            </section>
+          )}
           <section
             className="d3-panel"
             aria-labelledby="referral-history-title"
@@ -134,8 +181,9 @@ export function ReferralPage({
           </span>
           <h2>Your referral space is ready.</h2>
           <p>
-            Your personal code, sharing link and referral activity will appear
-            once referrals are available.
+            {summary
+              ? 'Your referral identity is saved. Sharing is waiting for the approved website address.'
+              : 'Your personal code, sharing link and referral activity will appear once referrals are available.'}
           </p>
           <span className="d3-badge">Not configured yet</span>
         </div>

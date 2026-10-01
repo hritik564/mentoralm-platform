@@ -10,7 +10,6 @@ import { randomBytes } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import AxeBuilder from '@axe-core/playwright';
 import {
-  getDashboardCourses,
   publicCourseDestination,
   type EnrolledCourse,
   type ViewedCourse,
@@ -87,7 +86,6 @@ test.beforeAll(async () => {
 });
 
 test('empty source and controlled launch reject arbitrary destinations', () => {
-  expect(getDashboardCourses()).toEqual({ viewed: [], enrolled: [] });
   expect(resolveLearningLaunch(enrolled.learningTarget)).toBeNull();
   expect(resolveLearningLaunch(enrolled.learningTarget, registry)).toBe(
     '/learning/test-course',

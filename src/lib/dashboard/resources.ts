@@ -32,10 +32,6 @@ export const resourceFilters = [
   { value: 'certificates', label: 'Certificates' },
   { value: 'other', label: 'Other' },
 ] as const;
-export function getStudentResources(): readonly Resource[] {
-  return [];
-}
-
 export function resolveResourceTarget(
   targetId: string | null,
   config: ResourceRegistry = registry,

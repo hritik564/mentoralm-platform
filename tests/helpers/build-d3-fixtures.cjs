@@ -6,6 +6,11 @@ webpack(
     mode: 'development',
     target: 'web',
     devtool: false,
+    plugins: [
+      new webpack.DefinePlugin({
+        'process.env': JSON.stringify({ NODE_ENV: 'development' }),
+      }),
+    ],
     entry: path.resolve('tests/helpers/d3-fixtures.tsx'),
     output: {
       path: path.resolve('docs/reviews/d3'),

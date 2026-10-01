@@ -1,4 +1,6 @@
 'use client';
+import { useRouter } from 'next/navigation';
+import { ProfileEditor } from './ProfileEditor';
 import { useClerk } from '@clerk/nextjs';
 import { useRef, useState } from 'react';
 import type { StudentProfile } from '../../../lib/dashboard/profile';
@@ -6,6 +8,9 @@ import { UserAvatar } from '../../auth/UserAvatar';
 import { DashboardPageHeader } from '../DashboardPageHeader';
 import { useDashboardTheme } from '../theme/DashboardTheme';
 export function StudentProfilePage({ profile }: { profile: StudentProfile }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [saved, setSaved] = useState(false);
   const { openUserProfile } = useClerk();
   const { theme } = useDashboardTheme();
   const section = useRef<HTMLElement>(null);
@@ -82,13 +87,18 @@ export function StudentProfilePage({ profile }: { profile: StudentProfile }) {
             </dl>
           ) : (
             <>
-              <span className="d3-badge">In development</span>
               <p className="d3-muted">
-                A space for your education, interests and career goals. These
-                MentoraLM profile fields are not connected yet.
+                Add your education, interests and career goals when you are
+                ready.
               </p>
             </>
           )}
+          <button className="d3-secondary" onClick={() => setEditing(true)}>
+            Edit education & career
+          </button>
+          <p role="status" className="d3-feedback">
+            {saved ? 'Profile saved.' : ''}
+          </p>
         </section>
         <section className="d3-panel" aria-labelledby="account-title">
           <h2 id="account-title">Account</h2>
@@ -130,6 +140,17 @@ export function StudentProfilePage({ profile }: { profile: StudentProfile }) {
           </p>
         </section>
       </div>
+      {editing && (
+        <ProfileEditor
+          education={profile.education}
+          onClose={() => setEditing(false)}
+          onSaved={() => {
+            setEditing(false);
+            setSaved(true);
+            router.refresh();
+          }}
+        />
+      )}
     </section>
   );
 }

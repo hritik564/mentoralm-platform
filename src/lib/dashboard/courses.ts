@@ -28,11 +28,6 @@ export interface DashboardCourses {
 }
 export const exploreProgramsDestination = '/#programs';
 
-/** D4 replaces this empty source with an authorized per-student domain adapter. */
-export function getDashboardCourses(): DashboardCourses {
-  return { viewed: [], enrolled: [] };
-}
-
 export function publicCourseDestination(value: string): string | null {
   // Local discovery paths/fragments only; no query-string redirects or encoding.
   return /^\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_-]*(?:#[a-zA-Z0-9_-]+)?$/.test(

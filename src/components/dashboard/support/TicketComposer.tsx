@@ -2,13 +2,19 @@
 import { useRef, useState } from 'react';
 import {
   supportCategories,
-  supportService,
   validateTicketDraft,
   type TicketDraft,
   type TicketErrors,
 } from '../../../lib/dashboard/support';
+import { studentRequest } from '../../../lib/dashboard/student-client';
 import { DashboardDialog } from '../DashboardDialog';
-export function TicketComposer({ onClose }: { onClose: () => void }) {
+export function TicketComposer({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
   const [draft, setDraft] = useState<TicketDraft>({
     category: 'General',
     subject: '',
@@ -21,8 +27,8 @@ export function TicketComposer({ onClose }: { onClose: () => void }) {
   return (
     <DashboardDialog title="Create Ticket" onClose={onClose}>
       <p className="d3-notice">
-        Ticket submission is in development. Nothing you enter here is sent or
-        saved.
+        Send a request to MentoraLM Support. Do not include passwords or payment
+        details.
       </p>
       <form
         className="d3-form"
@@ -42,12 +48,14 @@ export function TicketComposer({ onClose }: { onClose: () => void }) {
           }
           setBusy(true);
           try {
-            await supportService.createTicket(draft);
+            await studentRequest('tickets', 'POST', draft);
+            onCreated();
+          } catch (error) {
             setNotice(
-              'Ticket submission is not available yet. Your ticket has not been sent or saved.',
+              error instanceof Error
+                ? error.message
+                : 'Unable to submit. Please try again.',
             );
-          } catch {
-            setNotice('Unable to submit. No ticket has been saved.');
           } finally {
             setBusy(false);
           }

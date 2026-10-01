@@ -36,9 +36,6 @@ export const ticketStatusLabels: Record<SupportTicketStatus, string> = {
   resolved: 'Resolved',
   closed: 'Closed',
 };
-export function getStudentTickets(): readonly SupportTicket[] {
-  return [];
-}
 export function validateTicketDraft(draft: TicketDraft): TicketErrors {
   const errors: TicketErrors = {};
   if (!supportCategories.includes(draft.category))
@@ -51,19 +48,3 @@ export function validateTicketDraft(draft: TicketDraft): TicketErrors {
     errors.message = 'Keep the message within 4,000 characters.';
   return errors;
 }
-export interface SupportService {
-  createTicket: (draft: TicketDraft) => Promise<{ status: 'unavailable' }>;
-  reply: (
-    ticketId: string,
-    message: string,
-  ) => Promise<{ status: 'unavailable' }>;
-}
-/** D4 must replace this with authenticated, ownership-checked server operations. */
-export const supportService: SupportService = {
-  async createTicket() {
-    return { status: 'unavailable' };
-  },
-  async reply() {
-    return { status: 'unavailable' };
-  },
-};

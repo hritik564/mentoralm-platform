@@ -13,9 +13,6 @@ export interface ReferralRegistry {
   links: Readonly<Record<string, string>>;
   trustedOrigins: readonly string[];
 }
-export function getStudentReferral(): ReferralSummary | null {
-  return null;
-}
 export function resolveReferralLink(
   targetId: string,
   registry: ReferralRegistry = { links: {}, trustedOrigins: [] },

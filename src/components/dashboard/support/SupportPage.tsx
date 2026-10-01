@@ -1,4 +1,6 @@
 'use client';
+import { useRouter } from 'next/navigation';
+import { studentRequest } from '../../../lib/dashboard/student-client';
 import { useState } from 'react';
 import {
   ticketStatusLabels,
@@ -71,6 +73,19 @@ export function SupportPage({
 }: {
   tickets: readonly SupportTicket[];
 }) {
+  const router = useRouter();
+  const [notice, setNotice] = useState('');
+  async function openTicket(ticket: SupportTicket) {
+    setNotice('Loading ticket…');
+    try {
+      setSelected(await studentRequest<SupportTicket>(`tickets/${ticket.id}`));
+      setNotice('');
+    } catch (error) {
+      setNotice(
+        error instanceof Error ? error.message : 'Unable to open ticket.',
+      );
+    }
+  }
   const [composing, setComposing] = useState(false);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
   return (
@@ -83,17 +98,31 @@ export function SupportPage({
           Create Ticket <span aria-hidden="true">＋</span>
         </button>
       </DashboardPageHeader>
-      <div className="d3-notice">
-        Support ticket submission is in development. No requests are being sent
-        or saved yet.
-      </div>
+      <p role="status" className="d3-muted">
+        {notice}
+      </p>
       <section className="d3-panel" aria-labelledby="your-tickets-title">
         <h2 id="your-tickets-title">Your tickets</h2>
-        <TicketList tickets={tickets} onOpen={setSelected} />
+        <TicketList tickets={tickets} onOpen={openTicket} />
       </section>
-      {composing && <TicketComposer onClose={() => setComposing(false)} />}
+      {composing && (
+        <TicketComposer
+          onClose={() => setComposing(false)}
+          onCreated={() => {
+            setComposing(false);
+            setNotice('Ticket created.');
+            router.refresh();
+          }}
+        />
+      )}
       {selected && (
-        <TicketDetail ticket={selected} onClose={() => setSelected(null)} />
+        <TicketDetail
+          ticket={selected}
+          onClose={() => {
+            setSelected(null);
+            router.refresh();
+          }}
+        />
       )}
     </section>
   );

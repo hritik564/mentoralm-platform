@@ -5,6 +5,7 @@ export default defineConfig({
     'auth-dashboard.spec.ts',
     'dashboard-d2.spec.tsx',
     'dashboard-d3.spec.ts',
+    'dashboard-d4.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: true,

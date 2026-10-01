@@ -12,17 +12,9 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import {
   resolveResourceTarget,
   safeResourcePreview,
-  getStudentResources,
   type Resource,
 } from '../src/lib/dashboard/resources';
-import {
-  getStudentTickets,
-  supportService,
-} from '../src/lib/dashboard/support';
-import {
-  getStudentReferral,
-  resolveReferralLink,
-} from '../src/lib/dashboard/referral';
+import { resolveReferralLink } from '../src/lib/dashboard/referral';
 import { parseDashboardTheme } from '../src/lib/dashboard/theme';
 
 const development =
@@ -97,16 +89,6 @@ test.beforeAll(async () => {
 });
 
 test('D3 contracts fail closed, empty records and unavailable support persist nothing', async () => {
-  expect(getStudentResources()).toEqual([]);
-  expect(getStudentTickets()).toEqual([]);
-  expect(getStudentReferral()).toBeNull();
-  expect(
-    await supportService.createTicket({
-      category: 'General',
-      subject: 'Test',
-      message: 'Test',
-    }),
-  ).toEqual({ status: 'unavailable' });
   expect(resolveResourceTarget('image', registry)).toBe('/images/campus.webp');
   expect(resolveResourceTarget('image')).toBeNull();
   for (const target of [

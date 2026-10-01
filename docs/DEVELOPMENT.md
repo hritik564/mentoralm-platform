@@ -72,3 +72,25 @@ Compose hero-specific server components through `HeroExperience`; keep editorial
 D1 explicitly authorizes Clerk identity and the Student Dashboard shell. Use the two keys from `.env.example` in ignored `.env.local`; missing keys keep account submission unavailable and Dashboard protected. Rebuild/restart after changing Clerk keys because the publishable key and root provider availability enter the public build. Clerk owns credentials and recovery; business data, LMS and Admin remain deferred.
 
 `npm run test:d1` runs a focused 1440px/390px suite after a production build. Development keys enable real UI signup/login/logout with temporary Clerk test accounts, deleted by exact test email in `finally`. Production instances are never mutated. Auth traces and persisted session files are disabled. The existing marketing suite is separate; no huge screenshot matrix is required for D1.
+
+## D4 PostgreSQL setup and validation
+
+Supply a development PostgreSQL `DATABASE_URL` in ignored `.env.local`; never paste credentials into chat. Clerk Development keys still authenticate the Dashboard. Install generates the ignored typed Prisma client; generation and schema validation do not need a connection. Run `npm run db:migrate` to apply committed migrations only to the intended development database, then build/start. `db:migrate:dev` is a developer authoring tool with reset/shadow-database implications; never point it at production. Initial migration has no runtime/demo seed.
+
+Optional `REFERRAL_APP_ORIGIN` must be the approved HTTPS origin without path/query/credentials. Missing origin keeps the saved referral identity but disables sharing. Optional `RESOURCE_FILES_ROOT` is an operator-controlled private directory outside `public`; resources without a configured file provider show metadata without false delivery promises. Files must be scanned/validated before future Admin publication. No student upload feature exists.
+
+For database tests supply **a separate disposable PostgreSQL database whose name ends `_test`**, `TEST_DATABASE_URL`, and `ALLOW_DATABASE_TESTS=1`. The harness permits local PostgreSQL only, refuses development targets including equivalent localhost aliases/default ports, verifies the connected database name, and creates a fresh random schema. It applies committed migrations there and drops only its own schema afterward. Playwright workers retain the server schema identity; explicit global teardown removes the schema and temporary fixture directory. Connections need schema creation/removal permission. Normal completion cleans up; after a process crash the owner may remove only leftover `d4_` test schemas in that disposable database.
+
+```sh
+npm run db:validate
+npm run typecheck
+npm run lint
+npm run format:check
+npm run test:d4:domain
+npm run build
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:d4
+```
+
+The browser path above refers to this workstation's existing Playwright installation; elsewhere install/use the standard Playwright Chromium browser. D4 tests start a separate production server at 3100 with an isolated schema and temporary private fixture directory. Without PostgreSQL they explicitly skip database/populated E2E checks and verify authenticated unavailable states. UI fixture tests intercept APIs to verify form contracts and accessibility only; they never establish persistence. Historical D1–D3 reports describe prior milestone validation; D4 tests supersede runtime-empty assertions, which must not be treated as current persistence evidence.
+
+Prisma CLI transitive dependency overrides pin patched `deepmerge-ts@8.0.2` and `mysql2@3.24.5`; install/generate/validate/build are checked. Keep these overrides reviewed during Prisma upgrades. SQL checks added to the initial migration are intentional schema invariants not represented by Prisma's model syntax; preserve them in future migrations.

@@ -117,3 +117,13 @@ The owner explicitly authorized technology selection and homepage implementation
 ### ADR-017 — Dashboard-scoped device theme
 
 **Status:** Accepted under D3 theme scope. **Decision:** Semantic Dashboard variables plus a server-read, validated `/dashboard` preference cookie implement Light/Dark without a library or reload flash. Initial default is Light. **Consequences:** Theme is device-local and unrelated to auth; public marketing appearance stays unchanged. D4 account preference synchronization requires a later policy.
+
+## D4 implementation decisions
+
+### ADR-018 — PostgreSQL business database and verified subject mapping
+
+**Status:** Accepted under explicit D4 scope. **Decision:** Prisma 7/PostgreSQL with the pg driver adapter, committed migrations and a lazily constructed server client. Clerk owns authentication; a unique Clerk subject maps to an internal User with STUDENT default. Business records do not use Clerk metadata. Strict ownership-scoped repositories project existing Dashboard contracts. **Consequences:** DATABASE_URL and disposable test infrastructure are owner configuration; live verification cannot be inferred from a successful build. D4 supersedes D2/D3 empty/unavailable business adapters. ADMIN exists only as a future role; no Admin mutation/UI is implemented.
+
+### ADR-019 — Restrained student domains and controlled file provider
+
+**Status:** Accepted under D4 scope. **Decision:** Separate Program/Course; unique user/course views and enrollments; published resources available globally, by assignment, or current course/program enrollment; owned plain-text support conversations; random referral identity and one immutable attribution; education/career profile whitelist. Local private-file delivery is an optional controlled provider, with per-request authorization, path/type safeguards and no arbitrary URLs. Preserve device-local theme and null LMS state. **Consequences:** Enrollment/resource publication/scanning, durable storage, cancellation policy, Admin/support staff workflows, LMS learning state and referral economics remain deferred. The invitation entry requires explicit signed-in confirmation; no automatic GET attribution or new auth redirect policy.

@@ -1,0 +1,205 @@
+generator client {
+  provider     = "prisma-client"
+  moduleFormat = "cjs"
+  output       = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum EnrollmentStatus {
+  ENROLLED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum ResourceCategory {
+  NOTES
+  DOCUMENTS
+  CERTIFICATES
+  OTHER
+}
+
+enum ResourceAudience {
+  PRIVATE
+  STUDENTS
+  COURSE
+  PROGRAM
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum MessageActor {
+  STUDENT
+  STAFF
+}
+
+model User {
+  id          String                @id @default(cuid())
+  clerkUserId String                @unique
+  role        Role                  @default(STUDENT)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  profile     StudentProfile?
+  views       CourseView[]
+  enrollments Enrollment[]
+  assignments ResourceAssignment[]
+  tickets     SupportTicket[]
+  messages    SupportMessage[]
+  referral    ReferralIdentity?
+  referred    ReferralAttribution?  @relation("Referred")
+  referrals   ReferralAttribution[] @relation("Referrer")
+}
+
+model StudentProfile {
+  userId         String   @id
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  educationLevel String?
+  institution    String?
+  graduationYear Int?
+  interests      String[] @default([])
+  careerGoals    String?
+  updatedAt      DateTime @updatedAt
+}
+
+model Program {
+  id        String     @id @default(cuid())
+  title     String
+  courses   Course[]
+  resources Resource[]
+}
+
+model Course {
+  id            String       @id @default(cuid())
+  title         String
+  description   String
+  programId     String?
+  program       Program?     @relation(fields: [programId], references: [id], onDelete: SetNull)
+  thumbnailPath String
+  thumbnailAlt  String
+  publicPath    String
+  published     Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  views         CourseView[]
+  enrollments   Enrollment[]
+  resources     Resource[]
+
+  @@index([programId])
+}
+
+model CourseView {
+  userId       String
+  courseId     String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lastViewedAt DateTime @default(now())
+
+  @@id([userId, courseId])
+  @@index([userId, lastViewedAt])
+}
+
+model Enrollment {
+  id         String           @id @default(cuid())
+  userId     String
+  courseId   String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  status     EnrollmentStatus @default(ENROLLED)
+  enrolledAt DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  @@unique([userId, courseId])
+  @@index([userId, updatedAt])
+  @@index([courseId])
+}
+
+model Resource {
+  id          String               @id @default(cuid())
+  title       String
+  description String
+  category    ResourceCategory
+  mimeType    String
+  fileName    String
+  fileSize    Int?
+  storageKey  String?
+  published   Boolean              @default(false)
+  audience    ResourceAudience     @default(PRIVATE)
+  courseId    String?
+  programId   String?
+  course      Course?              @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  program     Program?             @relation(fields: [programId], references: [id], onDelete: Restrict)
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  assignments ResourceAssignment[]
+
+  @@index([published, audience])
+  @@index([courseId])
+  @@index([programId])
+}
+
+model ResourceAssignment {
+  resourceId String
+  userId     String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([resourceId, userId])
+  @@index([userId])
+}
+
+model SupportTicket {
+  id        String           @id @default(cuid())
+  reference String           @unique
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category  String
+  subject   String
+  status    TicketStatus     @default(OPEN)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  messages  SupportMessage[]
+
+  @@index([userId, updatedAt])
+}
+
+model SupportMessage {
+  id        String        @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId  String
+  sender    User          @relation(fields: [senderId], references: [id], onDelete: Restrict)
+  actor     MessageActor  @default(STUDENT)
+  body      String
+  createdAt DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+model ReferralIdentity {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model ReferralAttribution {
+  referredUserId String   @id
+  referredUser   User     @relation("Referred", fields: [referredUserId], references: [id], onDelete: Cascade)
+  referrerId     String
+  referrer       User     @relation("Referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime @default(now())
+
+  @@index([referrerId, joinedAt])
+}

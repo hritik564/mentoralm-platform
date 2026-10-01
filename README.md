@@ -2,7 +2,7 @@
 
 MentoraLM is one unified platform with four product surfaces: Main Public Website, Student Dashboard / Portal, LMS, and Admin Console. **Main Public Website first.**
 
-W1/W2 implements the public frontend foundation, reusable design system, responsive navigation, flagship homepage, motion, and footer. It uses the supplied official logo and a fresh design inspired by the approved concept. D1 adds Clerk identity, public account actions and a protected Student Dashboard foundation. LMS, Admin, business databases and business APIs remain deferred.
+W1/W2 implements the public frontend foundation, reusable design system, responsive navigation, flagship homepage, motion, and footer. It uses the supplied official logo and a fresh design inspired by the approved concept. D1 adds Clerk identity, public account actions and a protected Student Dashboard foundation. D4 adds PostgreSQL/Prisma business persistence and student ownership APIs. LMS and Admin remain deferred.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ```
 
-Open [the local homepage](http://127.0.0.1:3000). For a production preview, run `npm run build` followed by `npm run start`. The public homepage works without credentials; account access and Dashboard require the two Clerk keys in `.env.example`, supplied through ignored `.env.local`. Missing keys leave sign-in unavailable and Dashboard closed.
+Open [the local homepage](http://127.0.0.1:3000). For a production preview, run `npm run build` followed by `npm run start`. The public homepage works without credentials; account access and Dashboard require the two Clerk keys in `.env.example`, supplied through ignored `.env.local`. Missing keys leave sign-in unavailable and Dashboard closed. Student business data additionally requires DATABASE_URL and committed migrations; unavailable database configuration renders an honest unavailable state. See [D4 setup](docs/DEVELOPMENT.md#d4-postgresql-setup-and-validation) and [D4 report](docs/D4.md).
 
 ## Validate
 

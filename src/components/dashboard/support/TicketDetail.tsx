@@ -1,11 +1,11 @@
 'use client';
 import { useState } from 'react';
 import {
-  supportService,
   ticketStatusLabels,
   type SupportMessage,
   type SupportTicket,
 } from '../../../lib/dashboard/support';
+import { studentRequest } from '../../../lib/dashboard/student-client';
 import { DashboardDialog } from '../DashboardDialog';
 export function TicketConversation({
   messages,
@@ -39,17 +39,19 @@ export function TicketDetail({
   ticket: SupportTicket;
   onClose: () => void;
 }) {
+  const [currentTicket, setCurrentTicket] = useState(ticket);
   const [reply, setReply] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
-  const writable = ticket.status === 'open' || ticket.status === 'in-progress';
+  const writable =
+    currentTicket.status === 'open' || currentTicket.status === 'in-progress';
   return (
     <DashboardDialog title={ticket.subject} onClose={onClose}>
       <p className="d3-muted">
         {ticket.reference} · {ticket.category} ·{' '}
-        {ticketStatusLabels[ticket.status]}
+        {ticketStatusLabels[currentTicket.status]}
       </p>
-      <TicketConversation messages={ticket.messages} />
+      <TicketConversation messages={currentTicket.messages} />
       {writable ? (
         <form
           className="d3-form"
@@ -57,12 +59,26 @@ export function TicketDetail({
             event.preventDefault();
             setBusy(true);
             try {
-              await supportService.reply(ticket.id, reply);
+              await studentRequest(`tickets/${ticket.id}/reply`, 'POST', {
+                message: reply,
+              });
+              setReply('');
+              setNotice('Reply saved.');
+              try {
+                setCurrentTicket(
+                  await studentRequest<SupportTicket>(`tickets/${ticket.id}`),
+                );
+              } catch {
+                setNotice(
+                  'Reply saved. Close and reopen the ticket to refresh its conversation.',
+                );
+              }
+            } catch (error) {
               setNotice(
-                'Replies are not available yet. Nothing has been sent or saved.',
+                error instanceof Error
+                  ? error.message
+                  : 'Unable to send. Please try again.',
               );
-            } catch {
-              setNotice('Unable to send. No reply has been saved.');
             } finally {
               setBusy(false);
             }
@@ -78,7 +94,7 @@ export function TicketDetail({
             rows={4}
           />
           <p className="d3-muted">
-            Replies are in development. Do not include sensitive information.
+            Do not include passwords or payment details.
           </p>
           <button
             className="d3-button"
@@ -91,8 +107,9 @@ export function TicketDetail({
         </form>
       ) : (
         <p className="d3-notice">
-          This ticket is {ticketStatusLabels[ticket.status].toLowerCase()}.
-          Replies are unavailable.
+          This ticket is{' '}
+          {ticketStatusLabels[currentTicket.status].toLowerCase()}. Replies are
+          unavailable.
         </p>
       )}
     </DashboardDialog>

@@ -16,15 +16,27 @@
     "test": "playwright test",
     "test:d1": "playwright test --config=playwright.d1.config.ts",
     "test:d2": "playwright test --config=playwright.d2.config.ts",
-    "test:d3": "playwright test --config=playwright.d3.config.ts"
+    "test:d3": "playwright test --config=playwright.d3.config.ts",
+    "db:generate": "prisma generate",
+    "db:validate": "prisma validate",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "prebuild": "prisma generate",
+    "postinstall": "prisma generate",
+    "test:d4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/d4-domain.test.ts",
+    "test:d4": "playwright test --config=playwright.d4.config.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",
     "@fontsource/dm-sans": "^5.2.0",
     "@fontsource/newsreader": "^5.2.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
     "next": "^16.3.7",
+    "pg": "^8.23.1",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
@@ -33,13 +45,24 @@
     "@next/eslint-plugin-next": "^16.3.7",
     "@playwright/test": "^1.56.0",
     "@types/node": "^20.0.0",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "eslint": "^10.0.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.12.0",
     "prettier": "^3.0.0",
+    "prisma": "^7.10.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.0",
     "typescript-eslint": "^8.71.0"
+  },
+  "overrides": {
+    "@prisma/config": {
+      "deepmerge-ts": "8.0.2"
+    },
+    "prisma": {
+      "mysql2": "3.24.5"
+    }
   }
 }

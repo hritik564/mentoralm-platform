@@ -13,9 +13,11 @@ import { CourseEmptyState } from './courses/CourseEmptyState';
 export function DashboardOverview({
   user,
   courses,
+  resourcesAvailable = false,
 }: {
   user: AccountIdentity;
   courses: DashboardCourses;
+  resourcesAvailable?: boolean;
 }) {
   // Preserve the domain adapter's ordering; Dashboard does not calculate recency/progress.
   const active = courses.enrolled.find(
@@ -112,12 +114,20 @@ export function DashboardOverview({
       >
         <DashboardIcon name="resources" />
         <div>
-          <h2 id="resource-boundary-title">A place for useful resources</h2>
+          <h2 id="resource-boundary-title">
+            {resourcesAvailable
+              ? 'Your resources are available'
+              : 'A place for useful resources'}
+          </h2>
           <p>
-            Learning tools and recommendations will arrive in a future update.
+            {resourcesAvailable
+              ? 'Visit Resources to browse the materials shared with you.'
+              : 'Resources shared with you will appear in your library.'}
           </p>
         </div>
-        <span className="dashboard-state-label">In development</span>
+        <Link href="/dashboard/resources" className="d2-text-action">
+          View Resources →
+        </Link>
       </section>
     </>
   );
