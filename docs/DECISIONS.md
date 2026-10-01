@@ -141,3 +141,11 @@ The owner explicitly authorized technology selection and homepage implementation
 ### ADR-022 — LMS domain topology and business entitlement
 
 **Status:** Locked by the owner's L1 domain/access addendum. **Decision:** Public/module pages and Dashboard stay on mentoralm.com; LMS uses students.mentoralm.com, served by the same application/Clerk/PostgreSQL identity. This supersedes ADR-020's production `/learn` URL and adds entitlement before enrollment authorization. Nullable student ENABLED/DISABLED override takes precedence; otherwise any applicable active enabled batch grants workspace access. No override/grant means deny. Batch access defaults disabled. **Consequences:** Existing authentication/enrollment alone no longer enables LMS. Local `/learn` remains a development alias. No Clerk entitlement metadata, student mutation API, Admin UI, live domain/DNS change or L2 work. Production cross-subdomain session configuration must be verified when deployment is authorized.
+
+### ADR-023 — L2 manual lesson state and extensible progress projection
+
+**Status:** Accepted under explicit L2 scope. **Decision:** Unique per-student LessonState stores access and explicit completion; only required published lessons with implemented semantics contribute to L2 progress. No editable course percentage or automatic Enrollment completion. One LMS projection controls resume/progress in LMS and Dashboard. **Consequences:** Optional/future items never depress L2 lesson progress; final completion must later aggregate L3 contributors. Curriculum publication changes can alter derived totals.
+
+### ADR-024 — Shared private file mechanism, separate domain permissions
+
+**Status:** Accepted under L2 scope. **Decision:** Reuse bounded private-file opening and validation beneath independent Resource/Lesson/LearningResource authorization. Stream LMS media with range support, typed text blocks, native players and approved external target registry. Dark L1 shell remains unchanged; compact player adds a modal outline below tablet breakpoint. **Consequences:** Production durable storage, scanning, caption publication, authoring and attachment relationships remain future infrastructure/work. No binary database storage, public media keys, new player dependency, learning telemetry or AI.

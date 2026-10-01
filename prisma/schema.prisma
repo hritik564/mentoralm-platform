@@ -53,6 +53,7 @@ model User {
   lmsAccessOverride LmsAccessOverride?
   memberships       BatchMembership[]
   teaching          BatchInstructor[]
+  lessonStates      LessonState[]
   role              Role                  @default(STUDENT)
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
@@ -313,13 +314,15 @@ model Section {
 }
 
 model LearningItem {
-  id        String           @id @default(cuid())
+  id        String            @id @default(cuid())
   sectionId String
-  section   Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  section   Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   title     String
   type      LearningItemType
   position  Int
-  published Boolean          @default(false)
+  published Boolean           @default(false)
+  required  Boolean           @default(true)
+  resource  LearningResource?
   lesson    Lesson?
 
   @@unique([sectionId, position])
@@ -327,12 +330,46 @@ model LearningItem {
 }
 
 model Lesson {
+  itemId             String           @id
+  itemType           LearningItemType @default(LESSON)
+  item               LearningItem     @relation(fields: [itemId, itemType], references: [id, type], onDelete: Cascade, onUpdate: Restrict)
+  structuredContent  Json?
+  mimeType           String?
+  fileName           String?
+  altText            String?
+  externalTargetId   String?
+  captionsStorageKey String?
+  downloadAllowed    Boolean          @default(false)
+  states             LessonState[]
+  format             LessonFormat
+  storageKey         String?
+  durationSeconds    Int?
+
+  @@unique([itemId, itemType])
+}
+
+model LessonState {
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId          String
+  lesson          Lesson    @relation(fields: [itemId], references: [itemId], onDelete: Cascade)
+  firstAccessedAt DateTime  @default(now()) @db.Timestamptz(6)
+  lastAccessedAt  DateTime  @default(now()) @db.Timestamptz(6)
+  completedAt     DateTime? @db.Timestamptz(6)
+
+  @@id([userId, itemId])
+  @@index([userId, lastAccessedAt])
+}
+
+model LearningResource {
   itemId          String           @id
-  itemType        LearningItemType @default(LESSON)
+  itemType        LearningItemType @default(RESOURCE)
   item            LearningItem     @relation(fields: [itemId, itemType], references: [id, type], onDelete: Cascade, onUpdate: Restrict)
-  format          LessonFormat
+  description     String?
   storageKey      String?
-  durationSeconds Int?
+  mimeType        String
+  fileName        String
+  downloadAllowed Boolean          @default(true)
 
   @@unique([itemId, itemType])
 }

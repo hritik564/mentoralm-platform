@@ -116,3 +116,21 @@ L1 uses the same local `mentoralm_test` opt-in, random-schema guards, test serve
 For a future authorized production deployment, configure **both** `NEXT_PUBLIC_SITE_URL=https://mentoralm.com` and `NEXT_PUBLIC_LMS_ORIGIN=https://students.mentoralm.com`, then rebuild. Route both TLS hostnames to this same application; LMS-root/course rewrites and controlled cross-domain links are already implemented. Dashboard and Support stay on the website origin. Leave LMS origin unset for current local same-host `/learn` development; distinct loopback HTTP origins are permitted for local host testing. No DNS or deployment is changed by L1.
 
 Use the same Clerk production instance/keys with mentoralm.com as the root domain and students as an approved subdomain. Clerk documents [shared sessions across subdomains](https://clerk.com/docs/guides/dashboard/dns-domains/satellite-domains) separately from satellite domains; a second satellite application/identity store is unnecessary. Configure its [subdomain allowlist](https://clerk.com/docs/guides/dashboard/dns-domains/subdomain-allowlist), required Clerk DNS/TLS and approved redirects/OAuth settings during the deployment phase. Verify real login, logout and recovery across both hosts then; localhost host-header tests prove routing and server denial, not production DNS/session-cookie readiness. Keep the same PostgreSQL User mapping and business entitlement, never Clerk metadata.
+
+## L2 local learning validation
+
+`20261001030000_lesson_delivery_progress` adds required item policy, bounded structured/media Lesson metadata, unique LessonState and LearningResource subtype with SQL invariants. Apply with `npm run db:migrate` only to intended local mentoralm_dev; never reset. Existing L1 identities, enrollment and curriculum are preserved.
+
+```sh
+npm run db:generate
+npm run db:validate
+npm run test:l2:domain
+npm run build
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:l2
+npm run test:l1:domain
+npm run test:d4:domain
+```
+
+L2 tests retain the local-only mentoralm_test guards/random schema teardown. Browser fixtures create a short playable WebM, captions, PDF and raster image only in the owned temporary private directory. No fixture records/files are seeded into normal runtime. Real Clerk Development test users are deleted by exact IDs. `L2_TEST_MEDIA` is test-harness-only and is not an app feature flag. Authentication traces/session state are disabled.
+
+Optional `LMS_FILES_ROOT` supplies private lesson/course-resource files separately from D4 `RESOURCE_FILES_ROOT`. Missing provider produces unavailable content. Optional server-only `LMS_EXTERNAL_LINKS` JSON maps approved target IDs to HTTPS URLs and `LMS_EXTERNAL_ORIGINS` lists exact comma-separated origins; both are needed for clickable external lessons. No provider or destinations are invented. Future production requires a durable streaming object-storage adapter with the same authorization boundary, publication/MIME scanning and accessible media/captions. PDF plugin support varies; separate-tab fallback is provided. Production subdomain/DNS/Clerk verification remains the L1 deployment boundary.

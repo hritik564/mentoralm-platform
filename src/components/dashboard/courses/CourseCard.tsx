@@ -24,7 +24,7 @@ export function CourseCard({
     ? resolveLearningLaunch(course.learningTarget, registry)
     : publicCourseDestination(course.publicDestination);
   const action = learning
-    ? course.status === 'in-progress'
+    ? course.status === 'in-progress' || course.lastAccessed !== null
       ? 'Continue Learning'
       : 'Open LMS'
     : 'View Course';
@@ -66,7 +66,7 @@ export function CourseCard({
             {progress !== null && (
               <div className="d2-course-progress">
                 <label>
-                  Course progress <strong>{progress}%</strong>
+                  Lesson progress <strong>{progress}%</strong>
                   <progress max={100} value={progress} />
                 </label>
               </div>

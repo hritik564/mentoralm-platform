@@ -1,7 +1,8 @@
+import { LearningCourses } from '@/components/lms/LearningLists';
 import { requireStudentIdentity } from '@/lib/auth/session';
-import { getLmsIdentity, getAuthorizedCourses } from '@/lib/lms/services';
+import { getLmsIdentity, getLearningRepository } from '@/lib/lms/services';
 import { LmsBoundary } from '@/components/lms/LmsBoundary';
-import { LmsIdentity, CourseList, BatchList } from '@/components/lms/LmsViews';
+import { LmsIdentity, BatchList } from '@/components/lms/LmsViews';
 export default async function LmsHome() {
   const user = await requireStudentIdentity();
   return (
@@ -9,7 +10,7 @@ export default async function LmsHome() {
       load={async () => {
         const [identity, courses] = await Promise.all([
           getLmsIdentity(),
-          getAuthorizedCourses(),
+          (await getLearningRepository()).courses(),
         ]);
         return (
           <>
@@ -25,9 +26,9 @@ export default async function LmsHome() {
             <div className="lms-home-grid">
               <section className="lms-panel">
                 <header className="lms-panel-heading">
-                  <h2>Your courses</h2>
+                  <h2>Continue Learning</h2>
                 </header>
-                <CourseList courses={courses} />
+                <LearningCourses courses={courses} />
               </section>
               <section className="lms-panel">
                 <header className="lms-panel-heading">

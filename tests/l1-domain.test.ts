@@ -177,14 +177,14 @@ test(
       const repoA = new LmsRepository(db, A),
         repoB = new LmsRepository(db, B);
       await t.test(
-        'all four migrations complete and student IDs issue once under concurrency',
+        'all five migrations complete and student IDs issue once under concurrency',
         async () => {
           const records = await db.$queryRawUnsafe<
             Array<{ finished_at: Date }>
           >(
             `SELECT finished_at FROM "${isolated.schema}"."_prisma_migrations"`,
           );
-          assert.equal(records.length, 4);
+          assert.equal(records.length, 5);
           assert.ok(records.every((row) => row.finished_at));
           const same = await Promise.all(
             Array.from({ length: 24 }, () =>
@@ -713,8 +713,32 @@ test(
       await admin.query(
         `INSERT INTO "BatchMembership" (id,"batchId","userId","updatedAt") VALUES ('legacy_membership','legacy_batch','legacy_student',now())`,
       );
+      await admin.query(
+        `INSERT INTO "Course" (id,title,description,"thumbnailPath","thumbnailAlt","publicPath",published,"updatedAt") VALUES ('legacy_course','Preserved course','Preserved curriculum','/images/campus.webp','Campus','/#programs',true,now())`,
+      );
+      await admin.query(
+        `INSERT INTO "Enrollment" (id,"userId","courseId","updatedAt") VALUES ('legacy_enrollment','legacy_student','legacy_course',now())`,
+      );
+      await admin.query(
+        `INSERT INTO "Section" (id,"courseId",title,position,published) VALUES ('legacy_section','legacy_course','Preserved section',1,true)`,
+      );
+      await admin.query(
+        `INSERT INTO "LearningItem" (id,"sectionId",title,type,position,published) VALUES ('legacy_item','legacy_section','Preserved lesson','LESSON',1,true)`,
+      );
+      await admin.query(
+        `INSERT INTO "Lesson" ("itemId",format) VALUES ('legacy_item','TEXT')`,
+      );
       cli(['migrate', 'deploy']);
       cli(['migrate', 'deploy']);
+      const legacyLesson = (
+        await admin.query(
+          `SELECT i.title,i.required,l."structuredContent" FROM "LearningItem" i JOIN "Lesson" l ON l."itemId"=i.id WHERE i.id='legacy_item'`,
+        )
+      ).rows[0];
+      assert.equal(legacyLesson.title, 'Preserved lesson');
+      assert.equal(legacyLesson.required, true);
+      assert.equal(legacyLesson.structuredContent, null);
+
       assert.equal(
         (
           await admin.query(

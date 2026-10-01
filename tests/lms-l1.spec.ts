@@ -154,7 +154,7 @@ test('real LMS identity, empty/future states, cohorts, course structure, ownersh
     });
     await page.goto('/learn/lectures');
     await expect(
-      page.getByRole('heading', { name: 'No courses available yet' }),
+      page.getByText('No enrolled courses with learning access yet.'),
     ).toBeVisible();
     for (const label of ['Lectures', 'Assignments', 'Resources', 'Discussions'])
       await expect(
@@ -169,7 +169,6 @@ test('real LMS identity, empty/future states, cohorts, course structure, ownersh
     });
     for (const route of [
       '/learn/assignments',
-      '/learn/resources',
       '/learn/discussions',
       '/learn/chat',
     ]) {
@@ -280,20 +279,33 @@ test('real LMS identity, empty/future states, cohorts, course structure, ownersh
     await expect(
       page.getByRole('heading', { name: course.title, exact: true }),
     ).toBeVisible();
+    if (suffix === 'l1-mobile')
+      await page
+        .getByRole('button', { name: 'Course Outline', exact: true })
+        .click();
+    const outline =
+      suffix === 'l1-mobile'
+        ? page.getByRole('dialog', { name: 'Course Outline' })
+        : page.locator('.l2-outline');
     await expect(
-      page.getByText('Speaking with clarity', { exact: true }),
+      outline
+        .locator('.l2-future-item')
+        .filter({ hasText: 'Speaking with clarity' }),
     ).toBeVisible();
     await expect(page.getByText('PRIVATE DRAFT', { exact: true })).toHaveCount(
       0,
     );
-    expect(
-      await page.locator('.lms-item-list strong').allTextContents(),
-    ).toEqual([
+    const outlineRows = await outline
+      .locator('.l2-future-item')
+      .allTextContents();
+    expect(outlineRows.length).toBe(3);
+    [
       'Speaking with clarity',
       'Communication reading',
       'Future knowledge check',
-    ]);
+    ].forEach((title, index) => expect(outlineRows[index]).toContain(title));
     await scan(page);
+    if (suffix === 'l1-mobile') await page.keyboard.press('Escape');
     if (suffix === 'l1-desktop')
       await page.screenshot({
         path: `${review}/l1-desktop-course-populated.png`,

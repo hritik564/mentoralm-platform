@@ -1,5 +1,6 @@
-import { getCourseStructure } from '@/lib/lms/services';
-import { CourseStructure } from '@/components/lms/LmsViews';
+import { getLearningRepository } from '@/lib/lms/services';
+import { CoursePlayer } from '@/components/lms/CoursePlayer';
+import { LearningResources } from '@/components/lms/LearningLists';
 import { LmsBoundary } from '@/components/lms/LmsBoundary';
 export default async function Course({
   params,
@@ -9,9 +10,21 @@ export default async function Course({
   const { courseId } = await params;
   return (
     <LmsBoundary
-      load={async () => (
-        <CourseStructure course={await getCourseStructure(courseId)} />
-      )}
+      load={async () => {
+        const repo = await getLearningRepository();
+        const [course, resources] = await Promise.all([
+          repo.course(courseId),
+          repo.resources(courseId),
+        ]);
+        return (
+          <CoursePlayer course={course} lesson={null}>
+            <section className="l2-course-resources">
+              <h3>Course resources</h3>
+              <LearningResources resources={resources} />
+            </section>
+          </CoursePlayer>
+        );
+      }}
     />
   );
 }

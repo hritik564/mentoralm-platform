@@ -1,4 +1,7 @@
 import 'server-only';
+import { LearningRepository } from '../lms/learning';
+import { getDatabase } from '../db/client';
+import { getCurrentStudent } from './session';
 import { studentRepository } from './session';
 import { referralOrigin } from '../db/config';
 import {
@@ -17,6 +20,13 @@ import type { StudentRepository } from './repository';
 
 export async function getStudentCourses(): Promise<DashboardCourses> {
   const { views, enrollments } = await (await studentRepository()).courses();
+  const learning = await new LearningRepository(
+    getDatabase(),
+    await getCurrentStudent(),
+  ).dashboardSummaries();
+  const learningById = new Map(
+    learning.map((course) => [course.id, course.progress]),
+  );
   function course(record: (typeof views)[number]['course']) {
     return {
       id: record.id,
@@ -41,18 +51,32 @@ export async function getStudentCourses(): Promise<DashboardCourses> {
       description: view.course.description,
       lastViewed: view.lastViewedAt.toISOString(),
     })),
-    enrolled: enrollments.map((enrollment) => ({
-      ...course(enrollment.course),
-      kind: 'enrolled',
-      status: enrollment.status.toLowerCase().replace('_', '-') as
-        'enrolled' | 'in-progress' | 'completed',
-      progress: null,
-      nextLesson: null,
-      lastAccessed: null,
-      learningTarget: enrollment.course.published
-        ? { destinationId: `lms-course-${enrollment.courseId}` }
-        : null,
-    })),
+    enrolled: enrollments
+      .map((enrollment) => ({
+        ...course(enrollment.course),
+        kind: 'enrolled' as const,
+        status: enrollment.status.toLowerCase().replace('_', '-') as
+          'enrolled' | 'in-progress' | 'completed',
+        progress: learningById.get(enrollment.courseId)?.percentage ?? null,
+        nextLesson:
+          learningById.get(enrollment.courseId)?.nextLesson?.title ?? null,
+        lastAccessed:
+          learningById.get(enrollment.courseId)?.lastAccessedAt ?? null,
+        learningTarget: learningById.has(enrollment.courseId)
+          ? {
+              destinationId: `lms-course-${enrollment.courseId}`,
+              ...(learningById.get(enrollment.courseId)?.nextLesson
+                ? {
+                    lessonId: learningById.get(enrollment.courseId)!.nextLesson!
+                      .id,
+                  }
+                : {}),
+            }
+          : null,
+      }))
+      .sort((a, b) =>
+        (b.lastAccessed || '').localeCompare(a.lastAccessed || ''),
+      ),
   };
 }
 export async function getResources(): Promise<{

@@ -30,6 +30,15 @@ async function main() {
         DATABASE_URL: isolated?.url || '',
         RESOURCE_FILES_ROOT: files,
         REFERRAL_APP_ORIGIN: 'https://mentoralm.example.test',
+        ...(process.env.L2_TEST_MEDIA === '1'
+          ? {
+              LMS_FILES_ROOT: files,
+              LMS_EXTERNAL_LINKS: JSON.stringify({
+                fixture: 'https://learning.example.test/course',
+              }),
+              LMS_EXTERNAL_ORIGINS: 'https://learning.example.test',
+            }
+          : {}),
       },
     },
   );

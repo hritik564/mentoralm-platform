@@ -7,6 +7,7 @@ export default defineConfig({
     'dashboard-d3.spec.ts',
     'dashboard-d4.spec.ts',
     'lms-l1.spec.ts',
+    'lms-l2.spec.ts',
   ],
   fullyParallel: true,
   forbidOnly: true,

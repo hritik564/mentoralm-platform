@@ -23,6 +23,14 @@ export function resolveLearningLaunch(
     target.destinationId.startsWith('lms-course-')
   ) {
     const courseId = target.destinationId.slice('lms-course-'.length);
+    if (target.lessonId !== undefined) {
+      if (
+        !/^[a-zA-Z0-9_-]{1,100}$/.test(courseId) ||
+        !/^[a-zA-Z0-9_-]{1,100}$/.test(target.lessonId)
+      )
+        return null;
+      return lmsHref(`/learn/courses/${courseId}/lessons/${target.lessonId}`);
+    }
     return /^[a-zA-Z0-9_-]{1,100}$/.test(courseId)
       ? lmsHref(`/learn/courses/${courseId}`)
       : null;

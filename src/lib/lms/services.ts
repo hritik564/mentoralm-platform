@@ -23,3 +23,8 @@ export async function getAuthorizedCourses() {
 export async function getCourseStructure(courseId: string) {
   return (await getLmsRepository()).courseStructure(courseId);
 }
+
+export async function getLearningRepository() {
+  const { LearningRepository } = await import('./learning');
+  return new LearningRepository(getDatabase(), await getCurrentStudent());
+}

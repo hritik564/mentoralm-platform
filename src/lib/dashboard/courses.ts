@@ -1,6 +1,7 @@
 /** Presentation snapshots only. Enrollment and progress remain domain-owned. */
 export interface LearningLaunchTarget {
   destinationId: string;
+  lessonId?: string;
 }
 export interface DashboardCourse {
   id: string;
