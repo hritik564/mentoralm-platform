@@ -24,7 +24,9 @@
     "prebuild": "prisma generate",
     "postinstall": "prisma generate",
     "test:d4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/d4-domain.test.ts",
-    "test:d4": "playwright test --config=playwright.d4.config.ts"
+    "test:d4": "playwright test --config=playwright.d4.config.ts",
+    "test:l1:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/l1-domain.test.ts",
+    "test:l1": "playwright test --config=playwright.l1.config.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",

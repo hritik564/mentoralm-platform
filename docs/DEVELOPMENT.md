@@ -94,3 +94,25 @@ PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:d4
 The browser path above refers to this workstation's existing Playwright installation; elsewhere install/use the standard Playwright Chromium browser. D4 tests start a separate production server at 3100 with an isolated schema and temporary private fixture directory. Without PostgreSQL they explicitly skip database/populated E2E checks and verify authenticated unavailable states. UI fixture tests intercept APIs to verify form contracts and accessibility only; they never establish persistence. Historical D1–D3 reports describe prior milestone validation; D4 tests supersede runtime-empty assertions, which must not be treated as current persistence evidence.
 
 Prisma CLI transitive dependency overrides pin patched `deepmerge-ts@8.0.2` and `mysql2@3.24.5`; install/generate/validate/build are checked. Keep these overrides reviewed during Prisma upgrades. SQL checks added to the initial migration are intentional schema invariants not represented by Prisma's model syntax; preserve them in future migrations.
+
+## L1 migration and learning validation
+
+Two additive migrations follow D4: `20261001005000_instructor_role` and `20261001010000_lms_foundation`. Enum extension is committed before the new tables use INSTRUCTOR, consistent with [PostgreSQL's enum transaction rule](https://www.postgresql.org/docs/current/sql-altertype.html). `npm run db:migrate` applies them to the configured local `mentoralm_dev`; never reset D4 tables. Student IDs are database-issued and existing students are backfilled automatically. Future ORM-generated migrations must preserve the custom issuance trigger, sequence and SQL checks.
+
+```sh
+npm run test:l1:domain
+npm run build
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:l1
+npm run test:d4:domain
+PLAYWRIGHT_BROWSERS_PATH=/private/tmp/mentoralm-browsers npm run test:d4
+```
+
+L1 uses the same local `mentoralm_test` opt-in, random-schema guards, test server at 3100, Clerk Development users and teardown as D4. Its upgrade fixture starts with populated D4 tables inside a disposable test schema, baselines only that test schema, applies additive migrations, and verifies identity/profile preservation. Fixtures are never created in development runtime. `test:l1` inspects desktop/mobile plus an intermediate tablet viewport and captures only five core views plus one populated outline. LMS normally contains only the logged-in student's real enrollments and memberships; it may legitimately be empty. No new environment key/provider is required for L1.
+
+## L1 domain/access configuration
+
+`20261001020000_lms_entitlement` adds nullable User LMS override and disabled-by-default Batch access without resetting data. Apply with `npm run db:migrate` to local mentoralm_dev. Existing students remain inherited; enrollment or login alone no longer enables LMS. Only authorized internal business-data fixtures/operations can set an ENABLED override or enable an applicable active batch; there is no student setter or Admin interface.
+
+For a future authorized production deployment, configure **both** `NEXT_PUBLIC_SITE_URL=https://mentoralm.com` and `NEXT_PUBLIC_LMS_ORIGIN=https://students.mentoralm.com`, then rebuild. Route both TLS hostnames to this same application; LMS-root/course rewrites and controlled cross-domain links are already implemented. Dashboard and Support stay on the website origin. Leave LMS origin unset for current local same-host `/learn` development; distinct loopback HTTP origins are permitted for local host testing. No DNS or deployment is changed by L1.
+
+Use the same Clerk production instance/keys with mentoralm.com as the root domain and students as an approved subdomain. Clerk documents [shared sessions across subdomains](https://clerk.com/docs/guides/dashboard/dns-domains/satellite-domains) separately from satellite domains; a second satellite application/identity store is unnecessary. Configure its [subdomain allowlist](https://clerk.com/docs/guides/dashboard/dns-domains/subdomain-allowlist), required Clerk DNS/TLS and approved redirects/OAuth settings during the deployment phase. Verify real login, logout and recovery across both hosts then; localhost host-header tests prove routing and server denial, not production DNS/session-cookie readiness. Keep the same PostgreSQL User mapping and business entitlement, never Clerk metadata.

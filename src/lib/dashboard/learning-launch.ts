@@ -1,11 +1,12 @@
 import type { LearningLaunchTarget } from './courses';
+import { lmsHref } from '../platform/domains';
 
 export interface LearningLaunchRegistry {
   /** Deployment-owned destinations, never supplied by students/course URL input. */
   destinations: Readonly<Record<string, string>>;
   trustedOrigins: readonly string[];
 }
-// No LMS has been selected. D2 must not expose a speculative learning route.
+// Approved internal LMS course routes; external registry policy remains unchanged.
 const deploymentRegistry: LearningLaunchRegistry = {
   destinations: {},
   trustedOrigins: [],
@@ -17,6 +18,15 @@ export function resolveLearningLaunch(
   registry: LearningLaunchRegistry = deploymentRegistry,
 ): string | null {
   if (!target || !/^[a-zA-Z0-9_-]+$/.test(target.destinationId)) return null;
+  if (
+    registry === deploymentRegistry &&
+    target.destinationId.startsWith('lms-course-')
+  ) {
+    const courseId = target.destinationId.slice('lms-course-'.length);
+    return /^[a-zA-Z0-9_-]{1,100}$/.test(courseId)
+      ? lmsHref(`/learn/courses/${courseId}`)
+      : null;
+  }
   if (!Object.hasOwn(registry.destinations, target.destinationId)) return null;
   const destination = registry.destinations[target.destinationId];
   if (!destination || /[\\\s%?#]/.test(destination)) return null;

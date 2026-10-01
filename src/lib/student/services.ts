@@ -49,7 +49,9 @@ export async function getStudentCourses(): Promise<DashboardCourses> {
       progress: null,
       nextLesson: null,
       lastAccessed: null,
-      learningTarget: null,
+      learningTarget: enrollment.course.published
+        ? { destinationId: `lms-course-${enrollment.courseId}` }
+        : null,
     })),
   };
 }

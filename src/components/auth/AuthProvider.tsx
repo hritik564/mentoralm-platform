@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import { ClerkProvider } from '@clerk/nextjs';
+import { deploymentOrigins } from '@/lib/platform/domains';
 
 const Availability = createContext(false);
 export const useAuthAvailable = () => useContext(Availability);
@@ -13,6 +14,7 @@ export function AuthProvider({
   enabled: boolean;
   children: React.ReactNode;
 }) {
+  const origins = deploymentOrigins();
   const content = (
     <Availability.Provider value={enabled}>{children}</Availability.Provider>
   );
@@ -22,7 +24,7 @@ export function AuthProvider({
       signUpUrl="/sign-up"
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/dashboard"
-      allowedRedirectOrigins={[]}
+      allowedRedirectOrigins={origins.lms ? [origins.lms] : []}
       appearance={{
         variables: {
           colorPrimary: '#6550b9',

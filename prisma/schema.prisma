@@ -11,6 +11,7 @@ datasource db {
 enum Role {
   STUDENT
   ADMIN
+  INSTRUCTOR
 }
 
 enum EnrollmentStatus {
@@ -46,20 +47,26 @@ enum MessageActor {
 }
 
 model User {
-  id          String                @id @default(cuid())
-  clerkUserId String                @unique
-  role        Role                  @default(STUDENT)
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  profile     StudentProfile?
-  views       CourseView[]
-  enrollments Enrollment[]
-  assignments ResourceAssignment[]
-  tickets     SupportTicket[]
-  messages    SupportMessage[]
-  referral    ReferralIdentity?
-  referred    ReferralAttribution?  @relation("Referred")
-  referrals   ReferralAttribution[] @relation("Referrer")
+  id                String                @id @default(cuid())
+  clerkUserId       String                @unique
+  studentId         String?               @unique
+  lmsAccessOverride LmsAccessOverride?
+  memberships       BatchMembership[]
+  teaching          BatchInstructor[]
+  role              Role                  @default(STUDENT)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  profile           StudentProfile?
+  views             CourseView[]
+  enrollments       Enrollment[]
+  assignments       ResourceAssignment[]
+  tickets           SupportTicket[]
+  messages          SupportMessage[]
+  referral          ReferralIdentity?
+  referred          ReferralAttribution?  @relation("Referred")
+  referrals         ReferralAttribution[] @relation("Referrer")
+
+  @@unique([id, role])
 }
 
 model StudentProfile {
@@ -76,6 +83,7 @@ model StudentProfile {
 model Program {
   id        String     @id @default(cuid())
   title     String
+  batches   Batch[]
   courses   Course[]
   resources Resource[]
 }
@@ -92,6 +100,8 @@ model Course {
   published     Boolean      @default(false)
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  batches       Batch[]
+  sections      Section[]
   views         CourseView[]
   enrollments   Enrollment[]
   resources     Resource[]
@@ -202,4 +212,127 @@ model ReferralAttribution {
   joinedAt       DateTime @default(now())
 
   @@index([referrerId, joinedAt])
+}
+
+enum LmsAccessOverride {
+  ENABLED
+  DISABLED
+}
+
+enum BatchStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum LearningItemType {
+  LESSON
+  QUIZ
+  ASSIGNMENT
+  RESOURCE
+  LIVE_SESSION
+  ASSESSMENT
+}
+
+enum LessonFormat {
+  VIDEO
+  TEXT
+  PDF
+  IMAGE
+  EXTERNAL
+}
+
+model Batch {
+  id               String            @id @default(cuid())
+  code             String            @unique
+  name             String
+  programId        String?
+  program          Program?          @relation(fields: [programId], references: [id], onDelete: Restrict)
+  courseId         String?
+  course           Course?           @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  startsAt         DateTime?         @db.Timestamptz(6)
+  endsAt           DateTime?         @db.Timestamptz(6)
+  status           BatchStatus       @default(PLANNED)
+  lmsAccessEnabled Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  memberships      BatchMembership[]
+  instructors      BatchInstructor[]
+
+  @@index([programId])
+  @@index([courseId])
+  @@index([status, startsAt])
+}
+
+model BatchMembership {
+  id          String           @id @default(cuid())
+  batchId     String
+  batch       Batch            @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  userId      String
+  studentRole Role             @default(STUDENT)
+  student     User             @relation(fields: [userId, studentRole], references: [id, role], onDelete: Cascade, onUpdate: Restrict)
+  status      MembershipStatus @default(ACTIVE)
+  joinedAt    DateTime         @default(now())
+  leftAt      DateTime?
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([userId, batchId])
+  @@index([userId, status])
+  @@index([batchId, status])
+}
+
+model BatchInstructor {
+  batchId        String
+  batch          Batch    @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  instructorId   String
+  instructorRole Role     @default(INSTRUCTOR)
+  instructor     User     @relation(fields: [instructorId, instructorRole], references: [id, role], onDelete: Restrict, onUpdate: Restrict)
+  assignedAt     DateTime @default(now())
+
+  @@id([batchId, instructorId])
+  @@index([instructorId])
+}
+
+model Section {
+  id          String         @id @default(cuid())
+  courseId    String
+  course      Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  position    Int
+  published   Boolean        @default(false)
+  items       LearningItem[]
+
+  @@unique([courseId, position])
+}
+
+model LearningItem {
+  id        String           @id @default(cuid())
+  sectionId String
+  section   Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title     String
+  type      LearningItemType
+  position  Int
+  published Boolean          @default(false)
+  lesson    Lesson?
+
+  @@unique([sectionId, position])
+  @@unique([id, type])
+}
+
+model Lesson {
+  itemId          String           @id
+  itemType        LearningItemType @default(LESSON)
+  item            LearningItem     @relation(fields: [itemId, itemType], references: [id, type], onDelete: Cascade, onUpdate: Restrict)
+  format          LessonFormat
+  storageKey      String?
+  durationSeconds Int?
+
+  @@unique([itemId, itemType])
 }

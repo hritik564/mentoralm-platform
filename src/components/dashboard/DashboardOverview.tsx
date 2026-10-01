@@ -21,7 +21,10 @@ export function DashboardOverview({
 }) {
   // Preserve the domain adapter's ordering; Dashboard does not calculate recency/progress.
   const active = courses.enrolled.find(
-    (course) => course.status === 'in-progress' && course.progress !== null,
+    (course) =>
+      course.status !== 'completed' &&
+      (course.learningTarget !== null ||
+        (course.status === 'in-progress' && course.progress !== null)),
   );
   const preview = [...courses.enrolled, ...courses.viewed].slice(0, 2);
   return (

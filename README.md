@@ -2,7 +2,7 @@
 
 MentoraLM is one unified platform with four product surfaces: Main Public Website, Student Dashboard / Portal, LMS, and Admin Console. **Main Public Website first.**
 
-W1/W2 implements the public frontend foundation, reusable design system, responsive navigation, flagship homepage, motion, and footer. It uses the supplied official logo and a fresh design inspired by the approved concept. D1 adds Clerk identity, public account actions and a protected Student Dashboard foundation. D4 adds PostgreSQL/Prisma business persistence and student ownership APIs. LMS and Admin remain deferred.
+W1/W2 implements the public frontend foundation, reusable design system, responsive navigation, flagship homepage, motion, and footer. It uses the supplied official logo and a fresh design inspired by the approved concept. D1 adds Clerk identity, public account actions and a protected Student Dashboard foundation. D4 adds PostgreSQL/Prisma business persistence and student ownership APIs. L1 adds the protected LMS learning shell, course outlines, operational Student IDs and batch/instructor architecture. Learning execution and Admin remain deferred.
 
 ## Run locally
 
@@ -71,3 +71,7 @@ Resources now provides student-only search/filter and safe preview/download pres
 A top-bar Light/Dark toggle applies only to Dashboard semantic tokens. A validated device cookie scoped to `/dashboard` is read on the server, avoiding a theme flash on reload. Light is the initial default. The sidebar stays dark in both modes; public website styling is unchanged.
 
 Run `npm run test:d3` after building. Tests create/delete exact temporary development users and bundle fixture components through Next's existing Webpack and TypeScript dependencies; no fixture route or new dependency ships. Runtime resource/ticket/referral records stay empty until D4. See [D3 report](docs/D3.md).
+
+L1 scope and validation are recorded in [the LMS report](docs/L1.md); [migration and test instructions](docs/DEVELOPMENT.md#l1-migration-and-learning-validation) reuse the existing local PostgreSQL and Clerk Development configuration.
+
+L1 domain/access addendum locks LMS to `students.mentoralm.com` for future deployment, sharing the existing platform identity/database. Authentication alone does not enable LMS: a PostgreSQL student override or applicable enabled active batch is required before course enrollment authorization. Local `/learn` remains available; see `docs/L1.md` and `docs/DEVELOPMENT.md` for safe domain configuration.

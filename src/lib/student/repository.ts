@@ -51,7 +51,7 @@ function parse<T>(
 export class StudentRepository {
   constructor(
     private db: PrismaClient,
-    private actor: { id: string; role: 'STUDENT' | 'ADMIN' },
+    private actor: { id: string; role: 'STUDENT' | 'ADMIN' | 'INSTRUCTOR' },
   ) {
     if (actor.role !== 'STUDENT') throw new StudentError('FORBIDDEN');
   }

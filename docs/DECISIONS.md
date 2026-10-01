@@ -127,3 +127,17 @@ The owner explicitly authorized technology selection and homepage implementation
 ### ADR-019 — Restrained student domains and controlled file provider
 
 **Status:** Accepted under D4 scope. **Decision:** Separate Program/Course; unique user/course views and enrollments; published resources available globally, by assignment, or current course/program enrollment; owned plain-text support conversations; random referral identity and one immutable attribution; education/career profile whitelist. Local private-file delivery is an optional controlled provider, with per-request authorization, path/type safeguards and no arbitrary URLs. Preserve device-local theme and null LMS state. **Consequences:** Enrollment/resource publication/scanning, durable storage, cancellation policy, Admin/support staff workflows, LMS learning state and referral economics remain deferred. The invitation entry requires explicit signed-in confirmation; no automatic GET attribution or new auth redirect policy.
+
+## L1 implementation decisions
+
+### ADR-020 — Shared LMS identity and enrollment authority
+
+**Status:** Accepted under explicit L1 approval. **Decision:** Extend the existing User, database and Clerk route guards; LMS is `/learn` in the same Next.js application. STUDENT role plus own Enrollment and published Course authorize outlines. Batch groups delivery but never substitutes for enrollment. Database-issued immutable Student ID is LMS-only. **Consequences:** No disconnected auth/project, no self-assignment APIs, no client role/identifier input; sequence gaps are normal. ADMIN/INSTRUCTOR are distinct and no instructor UI is authorized.
+
+### ADR-021 — Cohorts, ordered items and dark-first shell
+
+**Status:** Accepted under L1 scope. **Decision:** Program/Course remain separate; explicit section/item positions with publication gating; minimal relational Lesson subtype. Batch scope is optional Program or Course, multi-memberships and multi-instructor assignments use role-aware relations, current batch is date/status deterministic. Dark LMS tokens introduce no independent preference storage; existing Dashboard device theme remains intact. **Consequences:** Learning execution/state, content management, communications/sending, marketing consent, Admin workflows and light LMS theme remain later phases. Batch membership is not promotional consent. Dashboard now resolves only approved internal course handoffs and continues to display null learning progress.
+
+### ADR-022 — LMS domain topology and business entitlement
+
+**Status:** Locked by the owner's L1 domain/access addendum. **Decision:** Public/module pages and Dashboard stay on mentoralm.com; LMS uses students.mentoralm.com, served by the same application/Clerk/PostgreSQL identity. This supersedes ADR-020's production `/learn` URL and adds entitlement before enrollment authorization. Nullable student ENABLED/DISABLED override takes precedence; otherwise any applicable active enabled batch grants workspace access. No override/grant means deny. Batch access defaults disabled. **Consequences:** Existing authentication/enrollment alone no longer enables LMS. Local `/learn` remains a development alias. No Clerk entitlement metadata, student mutation API, Admin UI, live domain/DNS change or L2 work. Production cross-subdomain session configuration must be verified when deployment is authorized.

@@ -154,10 +154,17 @@ test(
           >(
             `SELECT migration_name, finished_at, rolled_back_at FROM "${isolated.schema}"."_prisma_migrations"`,
           );
-          assert.equal(migrations.length, 1);
-          assert.equal(
-            migrations[0].migration_name,
-            '20261001000000_student_foundation',
+          assert.equal(migrations.length, 4);
+          assert.ok(
+            migrations.some(
+              (row) =>
+                row.migration_name === '20261001000000_student_foundation',
+            ),
+          );
+          assert.ok(
+            migrations.every(
+              (row) => row.finished_at && row.rolled_back_at === null,
+            ),
           );
           assert.ok(migrations[0].finished_at);
           assert.equal(migrations[0].rolled_back_at, null);
