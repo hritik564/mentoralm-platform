@@ -769,3 +769,177 @@
     height: 400px;
   }
 }
+
+/* L3 academic surfaces share the LMS tokens and compact workspace. */
+.l3-surface h1 {
+  margin-bottom: 12px;
+}
+.l3-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.l3-form,
+.l3-question {
+  display: grid;
+  gap: 12px;
+}
+.l3-question {
+  border: 0;
+  border-top: 1px solid var(--lms-border);
+  margin: 24px 0 0;
+  padding: 20px 0 0;
+  min-width: 0;
+}
+.l3-question legend {
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.l3-attempt fieldset {
+  min-width: 0;
+}
+.l3-attempt > form > fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.l3-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--lms-border);
+  border-radius: 8px;
+  background: var(--lms-bg);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.l3-choice input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  accent-color: #baa5ef;
+}
+.l3-choice:has(input:checked) {
+  border-color: #baa5ef;
+  background: #2c2445;
+}
+.l3-form input,
+.l3-form select,
+.l3-form textarea,
+.l3-attempt textarea,
+.l3-surface select {
+  width: 100%;
+  max-width: 100%;
+  min-height: 44px;
+  color: var(--lms-text);
+  background: #0b1221;
+  border: 1px solid #53617c;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+}
+.l3-form textarea,
+.l3-attempt textarea {
+  resize: vertical;
+}
+.l3-form button,
+.l3-form-actions button,
+.l3-attempt button {
+  min-height: 44px;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: #33294e;
+  color: #f5f1ff;
+  border: 1px solid #665882;
+  font: inherit;
+  cursor: pointer;
+}
+.l3-form button:disabled,
+.l3-attempt button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+.l3-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.l3-result {
+  border-left: 3px solid #baa5ef;
+  background: #24223b;
+  padding: 18px;
+  margin: 20px 0;
+}
+.l3-history,
+.l3-review {
+  border-top: 1px solid var(--lms-border);
+  padding-top: 20px;
+  margin-top: 28px;
+}
+.l3-history article,
+.l3-review > div {
+  border-top: 1px solid var(--lms-border);
+  padding: 18px 0;
+}
+.l3-history summary {
+  cursor: pointer;
+  min-height: 44px;
+}
+.l3-history li {
+  padding: 8px 0;
+}
+.l3-assignment form {
+  margin-top: 24px;
+}
+.l3-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 24px 0;
+}
+.l3-metrics div {
+  min-width: 110px;
+}
+.l3-metrics dt {
+  color: var(--lms-muted);
+}
+.l3-metrics dd {
+  margin: 4px 0 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+.l3-home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+.l3-home {
+  margin-top: 24px;
+}
+.l3-certificate dd {
+  margin: 8px 0 20px;
+  overflow-wrap: anywhere;
+}
+.l3-surface select {
+  width: auto;
+  margin: 12px 0 24px;
+}
+@media (max-width: 700px) {
+  .l3-form-actions {
+    flex-direction: column;
+  }
+  .l3-surface .lms-list > li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .l3-question {
+    margin-top: 20px;
+  }
+}
+.l3-surface > label {
+  display: block;
+}

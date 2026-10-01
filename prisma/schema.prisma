@@ -47,16 +47,22 @@ enum MessageActor {
 }
 
 model User {
-  id                String                @id @default(cuid())
-  clerkUserId       String                @unique
-  studentId         String?               @unique
+  id                String                 @id @default(cuid())
+  clerkUserId       String                 @unique
+  studentId         String?                @unique
   lmsAccessOverride LmsAccessOverride?
   memberships       BatchMembership[]
   teaching          BatchInstructor[]
   lessonStates      LessonState[]
-  role              Role                  @default(STUDENT)
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
+  academicAttempts  AcademicAttempt[]
+  submissions       AssignmentSubmission[]
+  attendance        AttendanceRecord[]
+  certificates      Certificate[]
+  reviews           AssignmentReview[]
+  academicAudit     AcademicAudit[]
+  role              Role                   @default(STUDENT)
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
   profile           StudentProfile?
   views             CourseView[]
   enrollments       Enrollment[]
@@ -64,8 +70,8 @@ model User {
   tickets           SupportTicket[]
   messages          SupportMessage[]
   referral          ReferralIdentity?
-  referred          ReferralAttribution?  @relation("Referred")
-  referrals         ReferralAttribution[] @relation("Referrer")
+  referred          ReferralAttribution?   @relation("Referred")
+  referrals         ReferralAttribution[]  @relation("Referrer")
 
   @@unique([id, role])
 }
@@ -90,22 +96,27 @@ model Program {
 }
 
 model Course {
-  id            String       @id @default(cuid())
-  title         String
-  description   String
-  programId     String?
-  program       Program?     @relation(fields: [programId], references: [id], onDelete: SetNull)
-  thumbnailPath String
-  thumbnailAlt  String
-  publicPath    String
-  published     Boolean      @default(false)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  batches       Batch[]
-  sections      Section[]
-  views         CourseView[]
-  enrollments   Enrollment[]
-  resources     Resource[]
+  id                        String         @id @default(cuid())
+  title                     String
+  description               String
+  programId                 String?
+  program                   Program?       @relation(fields: [programId], references: [id], onDelete: SetNull)
+  thumbnailPath             String
+  thumbnailAlt              String
+  publicPath                String
+  published                 Boolean        @default(false)
+  createdAt                 DateTime       @default(now())
+  updatedAt                 DateTime       @updatedAt
+  batches                   Batch[]
+  sections                  Section[]
+  views                     CourseView[]
+  enrollments               Enrollment[]
+  resources                 Resource[]
+  academicCompletionEnabled Boolean        @default(false)
+  certificateEnabled        Boolean        @default(false)
+  requiredAttendancePercent Float?
+  certificates              Certificate[]
+  sessions                  BatchSession[]
 
   @@index([programId])
 }
@@ -122,14 +133,15 @@ model CourseView {
 }
 
 model Enrollment {
-  id         String           @id @default(cuid())
-  userId     String
-  courseId   String
-  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course     Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
-  status     EnrollmentStatus @default(ENROLLED)
-  enrolledAt DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  id          String           @id @default(cuid())
+  userId      String
+  courseId    String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  status      EnrollmentStatus @default(ENROLLED)
+  completedAt DateTime?        @db.Timestamptz(6)
+  enrolledAt  DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   @@unique([userId, courseId])
   @@index([userId, updatedAt])
@@ -265,6 +277,7 @@ model Batch {
   updatedAt        DateTime          @updatedAt
   memberships      BatchMembership[]
   instructors      BatchInstructor[]
+  sessions         BatchSession[]
 
   @@index([programId])
   @@index([courseId])
@@ -272,17 +285,19 @@ model Batch {
 }
 
 model BatchMembership {
-  id          String           @id @default(cuid())
+  id          String             @id @default(cuid())
   batchId     String
-  batch       Batch            @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  batch       Batch              @relation(fields: [batchId], references: [id], onDelete: Restrict)
   userId      String
-  studentRole Role             @default(STUDENT)
-  student     User             @relation(fields: [userId, studentRole], references: [id, role], onDelete: Cascade, onUpdate: Restrict)
-  status      MembershipStatus @default(ACTIVE)
-  joinedAt    DateTime         @default(now())
+  studentRole Role               @default(STUDENT)
+  student     User               @relation(fields: [userId, studentRole], references: [id, role], onDelete: Cascade, onUpdate: Restrict)
+  status      MembershipStatus   @default(ACTIVE)
+  joinedAt    DateTime           @default(now())
   leftAt      DateTime?
-  updatedAt   DateTime         @updatedAt
+  updatedAt   DateTime           @updatedAt
+  attendance  AttendanceRecord[]
 
+  @@unique([id, userId])
   @@unique([userId, batchId])
   @@index([userId, status])
   @@index([batchId, status])
@@ -314,16 +329,19 @@ model Section {
 }
 
 model LearningItem {
-  id        String            @id @default(cuid())
-  sectionId String
-  section   Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
-  title     String
-  type      LearningItemType
-  position  Int
-  published Boolean           @default(false)
-  required  Boolean           @default(true)
-  resource  LearningResource?
-  lesson    Lesson?
+  id         String            @id @default(cuid())
+  sectionId  String
+  section    Section           @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title      String
+  type       LearningItemType
+  position   Int
+  published  Boolean           @default(false)
+  required   Boolean           @default(true)
+  resource   LearningResource?
+  lesson     Lesson?
+  activity   AcademicActivity?
+  assignment Assignment?
+  sessions   BatchSession[]
 
   @@unique([sectionId, position])
   @@unique([id, type])
@@ -372,4 +390,294 @@ model LearningResource {
   downloadAllowed Boolean          @default(true)
 
   @@unique([itemId, itemType])
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+  TRUE_FALSE
+  SHORT_TEXT
+  LONG_TEXT
+}
+
+enum AcademicAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+}
+
+enum SubmissionKind {
+  TEXT
+  FILE
+  TEXT_AND_FILE
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  CHANGES_REQUESTED
+  ACCEPTED
+}
+
+enum SessionStatus {
+  SCHEDULED
+  HELD
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum CertificateStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+model QuestionBank {
+  id        String     @id @default(cuid())
+  title     String
+  questions Question[]
+}
+
+model Question {
+  id          String             @id @default(cuid())
+  bankId      String
+  bank        QuestionBank       @relation(fields: [bankId], references: [id], onDelete: Restrict)
+  type        QuestionType
+  prompt      String
+  explanation String?
+  position    Int
+  published   Boolean            @default(false)
+  options     QuestionOption[]
+  activities  ActivityQuestion[]
+
+  @@unique([bankId, position])
+}
+
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  label      String
+  position   Int
+  correct    Boolean  @default(false)
+
+  @@unique([questionId, position])
+}
+
+// Quiz and Assessment share execution mechanics; kind is constrained to the actual LearningItem subtype.
+model AcademicActivity {
+  itemId         String             @id
+  itemType       LearningItemType
+  item           LearningItem       @relation(fields: [itemId, itemType], references: [id, type], onDelete: Cascade, onUpdate: Restrict)
+  instructions   String
+  published      Boolean            @default(false)
+  passingPercent Float?
+  attemptLimit   Int?
+  reviewAnswers  Boolean            @default(false)
+  questions      ActivityQuestion[]
+  attempts       AcademicAttempt[]
+
+  @@unique([itemId, itemType])
+}
+
+model ActivityQuestion {
+  activityId String
+  activity   AcademicActivity @relation(fields: [activityId], references: [itemId], onDelete: Cascade)
+  questionId String
+  question   Question         @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  position   Int
+  points     Int              @default(1)
+
+  @@id([activityId, questionId])
+  @@unique([activityId, position])
+}
+
+model AcademicAttempt {
+  id             String                @id @default(cuid())
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Restrict)
+  activityId     String
+  activity       AcademicActivity      @relation(fields: [activityId], references: [itemId], onDelete: Restrict)
+  number         Int
+  status         AcademicAttemptStatus @default(IN_PROGRESS)
+  startedAt      DateTime              @default(now()) @db.Timestamptz(6)
+  lastSavedAt    DateTime              @default(now()) @db.Timestamptz(6)
+  submittedAt    DateTime?             @db.Timestamptz(6)
+  score          Int?
+  maxScore       Int?
+  percentage     Float?
+  passed         Boolean?
+  requiresReview Boolean               @default(false)
+  passingPercent Float?
+  reviewAnswers  Boolean               @default(false)
+  responses      AcademicResponse[]
+
+  @@unique([userId, activityId, number])
+  @@index([userId, activityId, status])
+}
+
+// Immutable question/scoring snapshots keep previously started/submitted attempts independent of later authoring.
+model AcademicResponse {
+  id             String           @id @default(cuid())
+  attemptId      String
+  attempt        AcademicAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId     String
+  type           QuestionType
+  prompt         String
+  explanation    String?
+  position       Int
+  points         Int
+  text           String?
+  awardedPoints  Int?
+  requiresReview Boolean          @default(false)
+  options        ResponseOption[]
+
+  @@unique([attemptId, questionId])
+  @@unique([attemptId, position])
+}
+
+model ResponseOption {
+  responseId String
+  response   AcademicResponse @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  optionId   String
+  label      String
+  position   Int
+  correct    Boolean
+  selected   Boolean          @default(false)
+
+  @@id([responseId, optionId])
+  @@unique([responseId, position])
+}
+
+model Assignment {
+  itemId             String                 @id
+  itemType           LearningItemType       @default(ASSIGNMENT)
+  item               LearningItem           @relation(fields: [itemId, itemType], references: [id, type], onDelete: Cascade, onUpdate: Restrict)
+  instructions       String
+  published          Boolean                @default(false)
+  dueAt              DateTime?              @db.Timestamptz(6)
+  allowedKinds       SubmissionKind[]
+  maxFiles           Int                    @default(3)
+  maxFileBytes       Int                    @default(5242880)
+  requiresAcceptance Boolean                @default(true)
+  allowResubmission  Boolean                @default(true)
+  submissions        AssignmentSubmission[]
+
+  @@unique([itemId, itemType])
+}
+
+model AssignmentSubmission {
+  id           String              @id @default(cuid())
+  userId       String
+  user         User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  assignmentId String
+  assignment   Assignment          @relation(fields: [assignmentId], references: [itemId], onDelete: Restrict)
+  versions     SubmissionVersion[]
+
+  @@unique([userId, assignmentId])
+}
+
+model SubmissionVersion {
+  id           String               @id @default(cuid())
+  submissionId String
+  submission   AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  number       Int
+  requestKey   String
+  submittedAt  DateTime             @default(now()) @db.Timestamptz(6)
+  kind         SubmissionKind
+  text         String?
+  status       SubmissionStatus     @default(SUBMITTED)
+  files        SubmissionFile[]
+  reviews      AssignmentReview[]
+
+  @@unique([submissionId, number])
+  @@unique([submissionId, requestKey])
+}
+
+model SubmissionFile {
+  id         String            @id @default(cuid())
+  versionId  String
+  version    SubmissionVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  fileName   String
+  mimeType   String
+  bytes      Int
+  storageKey String            @unique
+}
+
+model AssignmentReview {
+  id         String            @id @default(cuid())
+  versionId  String
+  version    SubmissionVersion @relation(fields: [versionId], references: [id], onDelete: Restrict)
+  reviewerId String
+  reviewer   User              @relation(fields: [reviewerId], references: [id], onDelete: Restrict)
+  status     SubmissionStatus
+  feedback   String
+  reviewedAt DateTime          @default(now()) @db.Timestamptz(6)
+
+  @@index([versionId, reviewedAt])
+}
+
+model BatchSession {
+  id               String             @id @default(cuid())
+  batchId          String
+  batch            Batch              @relation(fields: [batchId], references: [id], onDelete: Restrict)
+  title            String
+  startsAt         DateTime           @db.Timestamptz(6)
+  endsAt           DateTime           @db.Timestamptz(6)
+  courseId         String?
+  course           Course?            @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  itemId           String?
+  item             LearningItem?      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  status           SessionStatus      @default(SCHEDULED)
+  locationLabel    String?
+  externalTargetId String?
+  attendance       AttendanceRecord[]
+
+  @@index([batchId, startsAt])
+}
+
+model AttendanceRecord {
+  sessionId    String
+  session      BatchSession     @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  membershipId String
+  userId       String
+  membership   BatchMembership  @relation(fields: [membershipId, userId], references: [id, userId], onDelete: Restrict)
+  user         User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status       AttendanceStatus
+  recordedAt   DateTime         @default(now()) @db.Timestamptz(6)
+
+  @@id([sessionId, userId])
+  @@index([userId])
+}
+
+model Certificate {
+  id         String            @id @default(cuid())
+  code       String            @unique
+  userId     String
+  user       User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId   String
+  course     Course            @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  issuedAt   DateTime          @default(now()) @db.Timestamptz(6)
+  status     CertificateStatus @default(ACTIVE)
+  storageKey String?
+  fileName   String?
+  mimeType   String?
+
+  @@unique([userId, courseId])
+}
+
+model AcademicAudit {
+  id        String   @id @default(cuid())
+  actorId   String
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  action    String
+  targetId  String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([targetId, createdAt])
 }

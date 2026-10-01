@@ -33,6 +33,7 @@ async function main() {
         ...(process.env.L2_TEST_MEDIA === '1'
           ? {
               LMS_FILES_ROOT: files,
+              LMS_SUBMISSIONS_ROOT: files,
               LMS_EXTERNAL_LINKS: JSON.stringify({
                 fixture: 'https://learning.example.test/course',
               }),

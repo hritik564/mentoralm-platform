@@ -7,11 +7,13 @@ import {
   approvedExternalLink,
   lessonMimes,
 } from './content';
+import { outlineSelect, projectCourse } from './course-projection';
 import {
-  learningProjection,
-  lessonProgress,
-  type OutlineItem,
-} from './progress';
+  attendanceProjection,
+  attendanceMemberships,
+  projectAttendance,
+} from './attendance';
+import { finalizeCourseProjection } from './completion';
 import {
   openPrivateFile,
   validatePrivateContent,
@@ -28,68 +30,7 @@ export function courseAccessWhere(id: string): Prisma.CourseWhereInput {
     enrollments: { some: { userId: id, user: entitledStudentWhere(id) } },
   };
 }
-function outlineSelect(userId: string) {
-  return {
-    id: true,
-    title: true,
-    description: true,
-    program: { select: { title: true } },
-    sections: {
-      where: { published: true },
-      orderBy: { position: 'asc' as const },
-      select: {
-        title: true,
-        position: true,
-        items: {
-          where: { published: true },
-          orderBy: { position: 'asc' as const },
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            required: true,
-            lesson: {
-              select: {
-                format: true,
-                states: {
-                  where: { userId },
-                  select: { completedAt: true, lastAccessedAt: true },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  } satisfies Prisma.CourseSelect;
-}
-type OutlineRecord = Prisma.CourseGetPayload<{
-  select: ReturnType<typeof outlineSelect>;
-}>;
-function projectCourse(record: OutlineRecord) {
-  const sections = record.sections.map((section) => {
-    const items: OutlineItem[] = section.items.map((item) => ({
-      id: item.id,
-      title: item.title,
-      type: item.type,
-      required: item.required,
-      lesson: item.lesson ? { format: item.lesson.format } : null,
-      completedAt: item.lesson?.states[0]?.completedAt?.toISOString() || null,
-      lastAccessedAt:
-        item.lesson?.states[0]?.lastAccessedAt?.toISOString() || null,
-    }));
-    return { ...section, items, progress: lessonProgress(items) };
-  });
-  return {
-    id: record.id,
-    title: record.title,
-    description: record.description,
-    program: record.program?.title || null,
-    sections,
-    progress: learningProjection(sections),
-  };
-}
-export type LearningCourse = ReturnType<typeof projectCourse>;
+export type LearningCourse = ReturnType<typeof finalizeCourseProjection>;
 export class LearningRepository {
   constructor(
     private db: PrismaClient,
@@ -114,7 +55,10 @@ export class LearningRepository {
       select: outlineSelect(this.actor.id),
     });
     if (!record) throw new StudentError('NOT_FOUND');
-    return projectCourse(record);
+    return finalizeCourseProjection(
+      projectCourse(record),
+      await attendanceProjection(this.db, this.actor.id, record),
+    );
   }
   /** Dashboard reads the same projection; denied students get no learning projection. */
   async dashboardSummaries() {
@@ -124,14 +68,22 @@ export class LearningRepository {
       orderBy: { id: 'asc' },
       take: 100,
     });
-    return records
-      .map(projectCourse)
-      .sort(
-        (a, b) =>
-          (b.progress.lastAccessedAt || '').localeCompare(
-            a.progress.lastAccessedAt || '',
-          ) || a.id.localeCompare(b.id),
-      );
+    const memberships = await attendanceMemberships(this.db, this.actor.id);
+    return (
+      await Promise.all(
+        records.map(async (record) =>
+          finalizeCourseProjection(
+            projectCourse(record),
+            projectAttendance(memberships, record),
+          ),
+        ),
+      )
+    ).sort(
+      (a, b) =>
+        (b.progress.lastAccessedAt || '').localeCompare(
+          a.progress.lastAccessedAt || '',
+        ) || a.id.localeCompare(b.id),
+    );
   }
   async courses() {
     await this.entitled();
@@ -358,7 +310,11 @@ export class LearningRepository {
             const existing = await tx.lessonState.findUnique({
               where: { userId_itemId: { userId: this.actor.id, itemId } },
             });
-            if (complete && existing?.completedAt) return;
+            if (complete && existing?.completedAt) {
+              const { evaluateCompletion } = await import('./completion');
+              await evaluateCompletion(tx, this.actor.id, courseId);
+              return;
+            }
             const now = new Date(
               Math.max(Date.now(), existing?.lastAccessedAt.getTime() || 0),
             );
@@ -377,6 +333,10 @@ export class LearningRepository {
                   : { lastAccessedAt: now }),
               },
             });
+            if (complete) {
+              const { evaluateCompletion } = await import('./completion');
+              await evaluateCompletion(tx, this.actor.id, courseId);
+            }
           },
           { isolationLevel: 'Serializable' },
         );

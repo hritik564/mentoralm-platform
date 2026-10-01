@@ -134,3 +134,26 @@ npm run test:d4:domain
 L2 tests retain the local-only mentoralm_test guards/random schema teardown. Browser fixtures create a short playable WebM, captions, PDF and raster image only in the owned temporary private directory. No fixture records/files are seeded into normal runtime. Real Clerk Development test users are deleted by exact IDs. `L2_TEST_MEDIA` is test-harness-only and is not an app feature flag. Authentication traces/session state are disabled.
 
 Optional `LMS_FILES_ROOT` supplies private lesson/course-resource files separately from D4 `RESOURCE_FILES_ROOT`. Missing provider produces unavailable content. Optional server-only `LMS_EXTERNAL_LINKS` JSON maps approved target IDs to HTTPS URLs and `LMS_EXTERNAL_ORIGINS` lists exact comma-separated origins; both are needed for clickable external lessons. No provider or destinations are invented. Future production requires a durable streaming object-storage adapter with the same authorization boundary, publication/MIME scanning and accessible media/captions. PDF plugin support varies; separate-tab fallback is provided. Production subdomain/DNS/Clerk verification remains the L1 deployment boundary.
+
+## L3 local academic validation
+
+Apply additive `20261001100000_academic_engine` to intended local `mentoralm_dev` with `npm run db:migrate`; never reset. All six committed migrations are required. The populated upgrade fixture preserves prior Student IDs, BatchMembership and completed LessonState. Ordinary runtime has no seeded question banks, attempts, submissions, attendance or certificates.
+
+```sh
+npm run db:generate
+npm run db:validate
+npm run db:migrate
+npx prisma migrate status
+npm run test:l3:domain
+npm run build
+npm run test:l3
+npm run test:l2
+npm run test:l1
+npm run test:d4
+```
+
+Browser suites share port 3100 and must run sequentially. Existing local-only `_test`/opt-in/connected-identity/random-schema guards remain authoritative; cleanup removes only the owned schema and private directory. L3 uses real temporary Clerk Development users deleted by exact IDs. The scoped staff helper runs solely against the guarded test schema; no privileged fixture route ships. Visual captures cover eight representative screens in ignored `docs/reviews/l3/`.
+
+Optional server-only `LMS_SUBMISSIONS_ROOT` must point to a pre-created writable private directory outside `public/`; normal runtime does not invent storage. Assignment policy supports at most five files/10 MiB each (defaults three/5 MiB), with stricter configuration allowed. Plain text/PDF/raster are the initial allowlist; DOCX is not accepted in L3. Due dates are informational; no undocumented late-submission penalty. Resubmissions require policy permission and are blocked while UNDER_REVIEW or ACCEPTED. Answers use explicit Save and Submit; there is no watch telemetry, time-limit enforcement, proctoring, auto text grading or high-frequency autosave. Percentages may be rounded for display, but pass/attendance thresholds use unrounded facts.
+
+Course final completion and certificate policy are separate opt-ins. Future authoring/publication must validate question/option configuration and invoke scoped `AcademicStaff.reconcile` after curriculum/condition changes. Original Enrollment completion time is retained on reopening/requalification; certificate suspension follows current eligibility and manual revocation remains sticky. Genuine certificate PDFs can be attached through future privileged control-plane work and delivered from `LMS_FILES_ROOT`; no PDF is fabricated for a record. Production requires durable private upload/media storage, quarantine/scanning, retention/backups, orphan cleanup, rate/abuse controls and existing domain/Clerk deployment configuration. No production/DNS change is part of L3.

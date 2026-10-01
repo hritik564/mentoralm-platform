@@ -177,14 +177,14 @@ test(
       const repoA = new LmsRepository(db, A),
         repoB = new LmsRepository(db, B);
       await t.test(
-        'all five migrations complete and student IDs issue once under concurrency',
+        'all six migrations complete and student IDs issue once under concurrency',
         async () => {
           const records = await db.$queryRawUnsafe<
             Array<{ finished_at: Date }>
           >(
             `SELECT finished_at FROM "${isolated.schema}"."_prisma_migrations"`,
           );
-          assert.equal(records.length, 5);
+          assert.equal(records.length, 6);
           assert.ok(records.every((row) => row.finished_at));
           const same = await Promise.all(
             Array.from({ length: 24 }, () =>
@@ -728,6 +728,18 @@ test(
       await admin.query(
         `INSERT INTO "Lesson" ("itemId",format) VALUES ('legacy_item','TEXT')`,
       );
+      for (const migration of [
+        '20261001020000_lms_entitlement',
+        '20261001030000_lesson_delivery_progress',
+      ]) {
+        await admin.query(
+          readFileSync(`prisma/migrations/${migration}/migration.sql`, 'utf8'),
+        );
+        cli(['migrate', 'resolve', '--applied', migration]);
+      }
+      await admin.query(
+        `INSERT INTO "LessonState" ("userId","itemId","completedAt") VALUES ('legacy_student','legacy_item',now())`,
+      );
       cli(['migrate', 'deploy']);
       cli(['migrate', 'deploy']);
       const legacyLesson = (
@@ -738,6 +750,22 @@ test(
       assert.equal(legacyLesson.title, 'Preserved lesson');
       assert.equal(legacyLesson.required, true);
       assert.equal(legacyLesson.structuredContent, null);
+      assert.equal(
+        (
+          await admin.query(
+            `SELECT count(*)::int AS count FROM "LessonState" WHERE "userId"='legacy_student' AND "itemId"='legacy_item' AND "completedAt" IS NOT NULL`,
+          )
+        ).rows[0].count,
+        1,
+      );
+      assert.equal(
+        (
+          await admin.query(
+            `SELECT "academicCompletionEnabled" FROM "Course" WHERE id='legacy_course'`,
+          )
+        ).rows[0].academicCompletionEnabled,
+        false,
+      );
 
       assert.equal(
         (

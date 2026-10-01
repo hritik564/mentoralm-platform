@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { lmsHref } from '@/lib/platform/domains';
 import type {
   EnrolledCourse,
   ViewedCourse,
@@ -66,7 +67,8 @@ export function CourseCard({
             {progress !== null && (
               <div className="d2-course-progress">
                 <label>
-                  Lesson progress <strong>{progress}%</strong>
+                  {course.progressLabel || 'Lesson progress'}{' '}
+                  <strong>{progress}%</strong>
                   <progress max={100} value={progress} />
                 </label>
               </div>
@@ -88,6 +90,15 @@ export function CourseCard({
               })}
             </time>
           </p>
+        )}
+        {enrolled && course.certificateCode && (
+          <a
+            className="d2-action"
+            href={lmsHref(`/learn/certificates/${course.certificateCode}`)}
+            aria-label={`View certificate: ${course.title}`}
+          >
+            View certificate →
+          </a>
         )}
         {destination ? (
           <a

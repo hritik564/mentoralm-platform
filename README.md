@@ -2,7 +2,7 @@
 
 MentoraLM is one unified platform with four product surfaces: Main Public Website, Student Dashboard / Portal, LMS, and Admin Console. **Main Public Website first.**
 
-W1/W2 implements the public frontend foundation, reusable design system, responsive navigation, flagship homepage, motion, and footer. It uses the supplied official logo and a fresh design inspired by the approved concept. D1 adds Clerk identity, public account actions and a protected Student Dashboard foundation. D4 adds PostgreSQL/Prisma business persistence and student ownership APIs. L1 adds the protected LMS learning shell, course outlines, operational Student IDs and batch/instructor architecture. L2 adds secure lesson delivery, the course player and derived lesson progress. Assessment execution and Admin remain deferred.
+W1/W2 implements the public frontend foundation, reusable design system, responsive navigation, flagship homepage, motion, and footer. It uses the supplied official logo and a fresh design inspired by the approved concept. D1 adds Clerk identity, public account actions and a protected Student Dashboard foundation. D4 adds PostgreSQL/Prisma business persistence and student ownership APIs. L1 adds the protected LMS learning shell, course outlines, operational Student IDs and batch/instructor architecture. L2 adds secure lesson delivery, the course player and derived lesson progress. L3 adds question-bank-based Quiz/Assessment attempts, assignment versions/review, attendance and explicit final completion/certificate policies. Admin and intelligence systems remain deferred.
 
 ## Run locally
 
@@ -77,3 +77,5 @@ L1 scope and validation are recorded in [the LMS report](docs/L1.md); [migration
 L1 domain/access addendum locks LMS to `students.mentoralm.com` for future deployment, sharing the existing platform identity/database. Authentication alone does not enable LMS: a PostgreSQL student override or applicable enabled active batch is required before course enrollment authorization. Local `/learn` remains available; see `docs/L1.md` and `docs/DEVELOPMENT.md` for safe domain configuration.
 
 L2 implementation and validation are recorded in [the learning experience report](docs/L2.md). It supports structured text, private video/PDF/images, approved external targets, explicit completion, resume and LMS course resources. Dashboard reads the LMS progress projection; lesson progress does not imply graduation/certificate eligibility.
+
+L3 implementation and validation are recorded in [the academic engine report](docs/L3.md). Academic final-completion and certificate issuance are separate Course opt-ins; no Admin/Instructor UI or intelligence interpretation is included. See [local validation](docs/DEVELOPMENT.md#l3-local-academic-validation) for isolated tests and optional private upload configuration.

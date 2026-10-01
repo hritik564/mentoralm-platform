@@ -16,6 +16,8 @@ const destinations = new Set([
   '/learn/resources',
   '/learn/discussions',
   '/learn/chat',
+  '/learn/attendance',
+  '/learn/certificates',
 ]);
 
 /** Approved internal routes only; never follow arbitrary provider/query redirects. */
@@ -38,7 +40,8 @@ export function dashboardDestination(value: unknown): string {
   }
   return typeof value === 'string' &&
     (destinations.has(value) ||
-      /^\/learn\/courses\/[a-zA-Z0-9_-]{1,100}(?:\/lessons\/[a-zA-Z0-9_-]{1,100})?$/.test(
+      /^\/learn\/certificates\/[a-zA-Z0-9_-]{1,100}$/.test(value) ||
+      /^\/learn\/courses\/[a-zA-Z0-9_-]{1,100}(?:\/(?:lessons|activities|assignments)\/[a-zA-Z0-9_-]{1,100})?$/.test(
         value,
       ))
     ? value.startsWith('/learn')

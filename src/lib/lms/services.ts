@@ -28,3 +28,7 @@ export async function getLearningRepository() {
   const { LearningRepository } = await import('./learning');
   return new LearningRepository(getDatabase(), await getCurrentStudent());
 }
+export async function getAcademics() {
+  const { Academics } = await import('./academics');
+  return new Academics(getDatabase(), await getCurrentStudent());
+}

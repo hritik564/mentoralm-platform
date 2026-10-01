@@ -1,3 +1,4 @@
+import { AcademicHome } from '@/components/lms/AcademicHome';
 import { LearningCourses } from '@/components/lms/LearningLists';
 import { requireStudentIdentity } from '@/lib/auth/session';
 import { getLmsIdentity, getLearningRepository } from '@/lib/lms/services';
@@ -37,12 +38,13 @@ export default async function LmsHome() {
                 <BatchList batches={identity.batches} />
               </section>
             </div>
+            <AcademicHome />
             <section className="lms-panel lms-upcoming">
               <h2>Learning activity</h2>
               <div>
                 {[
-                  ['Schedule', 'No sessions scheduled yet.'],
-                  ['Tasks', 'No learning tasks available yet.'],
+                  ['Schedule', 'Scheduled sessions will appear when shared.'],
+                  ['Tasks', 'Find course tasks in Assignments.'],
                   ['Announcements', 'No announcements available yet.'],
                   ['Support sessions', 'No support sessions scheduled yet.'],
                 ].map(([title, text]) => (

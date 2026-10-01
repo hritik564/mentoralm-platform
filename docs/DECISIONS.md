@@ -149,3 +149,17 @@ The owner explicitly authorized technology selection and homepage implementation
 ### ADR-024 — Shared private file mechanism, separate domain permissions
 
 **Status:** Accepted under L2 scope. **Decision:** Reuse bounded private-file opening and validation beneath independent Resource/Lesson/LearningResource authorization. Stream LMS media with range support, typed text blocks, native players and approved external target registry. Dark L1 shell remains unchanged; compact player adds a modal outline below tablet breakpoint. **Consequences:** Production durable storage, scanning, caption publication, authoring and attachment relationships remain future infrastructure/work. No binary database storage, public media keys, new player dependency, learning telemetry or AI.
+
+## L3 implementation decisions
+
+### ADR-025 — Reusable questions and immutable academic attempts
+
+**Status:** Accepted under explicit L3 scope. **Decision:** Question banks/options and ordered associations feed constrained Quiz/Assessment activities. Shared normalized attempt/response/option snapshots retain scoring and review policy at start; student projections omit private keys before configured review. Exact-match objective scoring only; text requires review. **Consequences:** Quiz/Assessment semantics stay separate. No personality/career/intelligence interpretation, deterministic text grading mode, proctoring or time limit is invented. Future authoring must validate published configuration.
+
+### ADR-026 — Versioned assignments and scoped attendance
+
+**Status:** Accepted under explicit L3 scope. **Decision:** Immutable numbered submission content/files, idempotent request keys, latest-version completion and appended reviews; conservative private upload allowlist. Assigned Instructor scope/persisted role protects domain-only review and attendance, with audit. Historical membership windows authorize held-session projection; present/late count, excused excluded, missing remains unrecorded. **Consequences:** No student staff actions, privileged UI or automatic late penalty. Production scanning/durable storage remain infrastructure.
+
+### ADR-027 — Opt-in final completion and certificate issuance
+
+**Status:** Accepted under explicit L3 scope. **Decision:** One required configured-item contributor boundary, optional explicit Course attendance condition, nonempty requirements and Course-level final-completion opt-in. Separate certificate policy; unique student/Course record and random code. Serializable evaluation updates Enrollment and issues at most one record. **Consequences:** Existing L2 Courses remain unchanged by default. Current projections recompute eligibility; publication changes must reconcile. Added requirements reopen status but preserve the first timestamp; certificates suspend/recover with eligibility, manually revoked certificates stay revoked. Only real attached private PDFs enter Dashboard Resources; PDF design/public verification are deferred.

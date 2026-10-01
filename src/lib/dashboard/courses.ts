@@ -2,6 +2,7 @@
 export interface LearningLaunchTarget {
   destinationId: string;
   lessonId?: string;
+  item?: { id: string; type: 'LESSON' | 'QUIZ' | 'ASSESSMENT' | 'ASSIGNMENT' };
 }
 export interface DashboardCourse {
   id: string;
@@ -19,6 +20,8 @@ export interface EnrolledCourse extends DashboardCourse {
   kind: 'enrolled';
   status: 'enrolled' | 'in-progress' | 'completed';
   progress: number | null;
+  progressLabel?: 'Lesson progress' | 'Course progress';
+  certificateCode?: string | null;
   nextLesson: string | null;
   lastAccessed: string | null;
   learningTarget: LearningLaunchTarget | null;

@@ -154,7 +154,7 @@ test(
           >(
             `SELECT migration_name, finished_at, rolled_back_at FROM "${isolated.schema}"."_prisma_migrations"`,
           );
-          assert.equal(migrations.length, 5);
+          assert.equal(migrations.length, 6);
           assert.ok(
             migrations.some(
               (row) =>

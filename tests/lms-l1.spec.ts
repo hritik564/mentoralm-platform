@@ -167,11 +167,7 @@ test('real LMS identity, empty/future states, cohorts, course structure, ownersh
       path: `${review}/${info.project.name}-learn.png`,
       fullPage: true,
     });
-    for (const route of [
-      '/learn/assignments',
-      '/learn/discussions',
-      '/learn/chat',
-    ]) {
+    for (const route of ['/learn/discussions', '/learn/chat']) {
       await page.goto(route);
       await expect(page.getByText('Coming in a later phase')).toBeVisible();
       await scan(page);

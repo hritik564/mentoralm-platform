@@ -3,34 +3,40 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { LearningCourse, LearningRepository } from '@/lib/lms/learning';
-import { lmsHref } from '@/lib/platform/domains';
+import { lmsHref, learningItemHref } from '@/lib/platform/domains';
 type Lesson = Awaited<ReturnType<LearningRepository['lesson']>>;
 export function ProgressLabel({
   progress,
+  academic = false,
 }: {
+  academic?: boolean;
   progress:
     LearningCourse['progress'] | LearningCourse['sections'][number]['progress'];
 }) {
   return (
     <div className="l2-progress">
       <span>
-        Lesson progress{' '}
+        {academic ? 'Course progress' : 'Lesson progress'}{' '}
         <strong>
           {progress.percentage === null
-            ? 'No required lessons'
+            ? 'No required learning items'
             : `${progress.percentage}%`}
         </strong>
       </span>
       {progress.percentage !== null && (
         <progress
-          aria-label="Required lesson progress"
+          aria-label={
+            academic
+              ? 'Required learning item progress'
+              : 'Required lesson progress'
+          }
           value={progress.completedItems}
           max={progress.requiredItems}
         />
       )}
       <small>
-        {progress.completedItems} of {progress.requiredItems} required lessons
-        complete
+        {progress.completedItems} of {progress.requiredItems} required{' '}
+        {academic ? 'learning items' : 'lessons'} complete
       </small>
     </div>
   );
@@ -51,7 +57,7 @@ function Outline({
           <h3>{section.title}</h3>
           <span>
             {section.progress.completedItems}/{section.progress.requiredItems}{' '}
-            required lessons
+            required learning items
             {section.progress.percentage !== null
               ? ` · ${section.progress.percentage}%`
               : ''}
@@ -59,13 +65,13 @@ function Outline({
           <ol>
             {section.items.map((item) => (
               <li key={item.id}>
-                {item.type === 'LESSON' && item.lesson ? (
+                {(item.type === 'LESSON' && item.lesson) ||
+                (item.completion?.eligible &&
+                  ['QUIZ', 'ASSESSMENT', 'ASSIGNMENT'].includes(item.type)) ? (
                   <Link
                     prefetch={false}
                     onClick={onSelect}
-                    href={lmsHref(
-                      `/learn/courses/${course.id}/lessons/${item.id}`,
-                    )}
+                    href={learningItemHref(course.id, item)}
                     aria-current={current === item.id ? 'page' : undefined}
                   >
                     <span aria-hidden="true">
@@ -76,7 +82,8 @@ function Outline({
                       <small>
                         {item.completedAt ? 'Completed · ' : ''}
                         {item.required ? 'Required' : 'Optional'} ·{' '}
-                        {item.lesson.format.toLowerCase()}
+                        {item.lesson?.format.toLowerCase() ||
+                          item.type.toLowerCase()}
                       </small>
                     </span>
                   </Link>
@@ -172,7 +179,9 @@ export function CoursePlayer({
   course,
   lesson,
   children,
+  activity,
 }: {
+  activity?: { id: string; title: string };
   course: LearningCourse;
   lesson: Lesson | null;
   children: React.ReactNode;
@@ -183,7 +192,7 @@ export function CoursePlayer({
     [feedback, setFeedback] = useState('');
   const accessed = useRef<string | null>(null);
   const router = useRouter();
-  const current = lesson?.id || null,
+  const current = lesson?.id || activity?.id || null,
     lessons = course.sections
       .flatMap((s) => s.items)
       .filter((i) => i.type === 'LESSON' && i.lesson),
@@ -191,7 +200,7 @@ export function CoursePlayer({
     previous = index > 0 ? lessons[index - 1] : null,
     next = index >= 0 ? lessons[index + 1] || null : null;
   useEffect(() => {
-    if (!current || accessed.current === current) return;
+    if (!lesson || !current || accessed.current === current) return;
     accessed.current = current;
     let alive = true;
     fetch(`/api/lms/courses/${course.id}/lessons/${current}/access`, {
@@ -214,7 +223,7 @@ export function CoursePlayer({
     return () => {
       alive = false;
     };
-  }, [course.id, current]);
+  }, [course.id, current, lesson]);
   async function complete() {
     if (!current) return;
     setSaving(true);
@@ -249,7 +258,17 @@ export function CoursePlayer({
           <p className="lms-eyebrow">{course.program || 'Self-paced course'}</p>
           <h1>{course.title}</h1>
         </div>
-        <ProgressLabel progress={course.progress} />
+        <ProgressLabel
+          progress={course.progress}
+          academic={
+            course.academicCompletionEnabled ||
+            course.sections.some((s) =>
+              s.items.some(
+                (i) => i.completion?.eligible && i.type !== 'LESSON',
+              ),
+            )
+          }
+        />
       </header>
       <button
         className="l2-outline-toggle"
@@ -313,29 +332,37 @@ export function CoursePlayer({
                 {feedback}
               </p>
             </>
+          ) : activity ? (
+            <>
+              <h2>{activity.title}</h2>
+              {children}
+            </>
           ) : (
             <>
               <h2>Your course workspace</h2>
               <p>{course.description}</p>
               <p>
-                Complete lessons at your own pace. Lesson progress does not
-                represent final course completion or certificate eligibility.
+                {course.academicCompletionEnabled
+                  ? course.completion.eligible
+                    ? 'Course requirements complete.'
+                    : 'Complete all required learning items and configured course conditions.'
+                  : 'Complete lessons at your own pace. Lesson progress does not represent final course completion or certificate eligibility.'}
               </p>
-              {course.progress.nextLesson ? (
+              {course.progress.nextItem ? (
                 <Link
                   className="lms-action"
                   prefetch={false}
-                  href={lmsHref(
-                    `/learn/courses/${course.id}/lessons/${course.progress.nextLesson.id}`,
-                  )}
+                  href={learningItemHref(course.id, course.progress.nextItem)}
                 >
-                  Continue Learning: {course.progress.nextLesson.title} →
+                  Continue Learning: {course.progress.nextItem.title} →
                 </Link>
               ) : (
                 <p>
-                  {lessons.length
-                    ? 'All current lessons complete.'
-                    : 'No published lessons are available yet.'}
+                  {course.sections.some((s) =>
+                    s.items.some((i) => i.completion?.eligible),
+                  )
+                    ? 'All current learning items complete.'
+                    : 'No published learning items are available yet.'}
                 </p>
               )}
               {children}

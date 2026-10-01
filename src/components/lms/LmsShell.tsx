@@ -15,6 +15,8 @@ const secondary = [
   ['Lectures', '/learn/lectures'],
   ['Assignments', '/learn/assignments'],
   ['Resources', '/learn/resources'],
+  ['Attendance', '/learn/attendance'],
+  ['Certificates', '/learn/certificates'],
   ['Discussions', '/learn/discussions'],
 ] as const;
 export function LmsShell({
@@ -74,8 +76,13 @@ export function LmsShell({
               prefetch={false}
               aria-current={
                 path === href ||
+                (href === '/learn/assignments' &&
+                  path.includes('/assignments/')) ||
+                (href === '/learn/certificates' &&
+                  path.startsWith('/learn/certificates/')) ||
                 (href === '/learn/lectures' &&
-                  path.startsWith('/learn/courses/'))
+                  path.startsWith('/learn/courses/') &&
+                  !path.includes('/assignments/'))
                   ? 'page'
                   : undefined
               }

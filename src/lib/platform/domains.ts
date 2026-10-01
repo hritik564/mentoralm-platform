@@ -36,14 +36,23 @@ export function deploymentOrigins(
   return origins;
 }
 
-const pages = ['lectures', 'assignments', 'resources', 'discussions', 'chat'];
+const pages = [
+  'lectures',
+  'assignments',
+  'resources',
+  'discussions',
+  'chat',
+  'attendance',
+  'certificates',
+];
 export function lmsInternalPath(path: string): string | null {
   if (path === '/' || path === '/learn' || path === '/learn/') return '/learn';
   const short = path.startsWith('/learn/') ? path.slice(6) : path;
   return pages.some((page) => short === `/${page}`) ||
-    /^\/courses\/[a-zA-Z0-9_-]{1,100}(?:\/lessons\/[a-zA-Z0-9_-]{1,100})?$/.test(
+    /^\/courses\/[a-zA-Z0-9_-]{1,100}(?:\/(?:lessons|activities|assignments)\/[a-zA-Z0-9_-]{1,100})?$/.test(
       short,
-    )
+    ) ||
+    /^\/certificates\/[a-zA-Z0-9_-]{1,100}$/.test(short)
     ? `/learn${short}`
     : null;
 }
@@ -106,4 +115,17 @@ export function domainRoute(
     if (internal) return { kind: 'redirect', path: lmsHref(internal, origins) };
   }
   return { kind: 'next', path };
+}
+
+export function learningItemHref(
+  courseId: string,
+  item: { id: string; type: string },
+) {
+  const kind =
+    item.type === 'LESSON'
+      ? 'lessons'
+      : item.type === 'ASSIGNMENT'
+        ? 'assignments'
+        : 'activities';
+  return lmsHref(`/learn/courses/${courseId}/${kind}/${item.id}`);
 }

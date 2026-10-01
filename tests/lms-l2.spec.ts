@@ -323,7 +323,7 @@ test('real course player, formats, persistence, responsive outline, Dashboard pr
     expect(file.status()).toBe(200);
     expect(file.headers()['content-disposition']).toContain('attachment');
     await scan(page);
-    for (const route of ['/learn/assignments', '/learn/discussions']) {
+    for (const route of ['/learn/discussions']) {
       await page.goto(route);
       await expect(page.getByText('Coming in a later phase')).toBeVisible();
     }

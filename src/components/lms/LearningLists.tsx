@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { LearningCourse, LearningRepository } from '@/lib/lms/learning';
-import { lmsHref } from '@/lib/platform/domains';
+import { lmsHref, learningItemHref } from '@/lib/platform/domains';
 export function LearningCourses({ courses }: { courses: LearningCourse[] }) {
   return courses.length ? (
     <ul className="lms-list l2-course-list">
@@ -11,11 +11,11 @@ export function LearningCourses({ courses }: { courses: LearningCourse[] }) {
             <h3>{course.title}</h3>
             <p>
               {course.progress.percentage === null
-                ? 'No required lessons yet'
-                : `Lesson progress ${course.progress.percentage}% · ${course.progress.completedItems}/${course.progress.requiredItems} required lessons`}
+                ? 'No required learning items yet'
+                : `${course.academicCompletionEnabled || course.hasAcademicItems ? 'Course' : 'Lesson'} progress ${course.progress.percentage}% · ${course.progress.completedItems}/${course.progress.requiredItems} required ${course.hasAcademicItems ? 'learning items' : 'lessons'}`}
             </p>
-            {course.progress.nextLesson && (
-              <p>Next: {course.progress.nextLesson.title}</p>
+            {course.progress.nextItem && (
+              <p>Next: {course.progress.nextItem.title}</p>
             )}
             {course.progress.lastAccessedAt && (
               <small>
@@ -32,11 +32,11 @@ export function LearningCourses({ courses }: { courses: LearningCourse[] }) {
           <Link
             className="lms-action"
             prefetch={false}
-            href={lmsHref(
-              course.progress.nextLesson
-                ? `/learn/courses/${course.id}/lessons/${course.progress.nextLesson.id}`
-                : `/learn/courses/${course.id}`,
-            )}
+            href={
+              course.progress.nextItem
+                ? learningItemHref(course.id, course.progress.nextItem)
+                : lmsHref(`/learn/courses/${course.id}`)
+            }
           >
             Continue Learning<span className="sr-only">: {course.title}</span> →
           </Link>

@@ -1,5 +1,5 @@
 import type { LearningLaunchTarget } from './courses';
-import { lmsHref } from '../platform/domains';
+import { lmsHref, learningItemHref } from '../platform/domains';
 
 export interface LearningLaunchRegistry {
   /** Deployment-owned destinations, never supplied by students/course URL input. */
@@ -23,6 +23,17 @@ export function resolveLearningLaunch(
     target.destinationId.startsWith('lms-course-')
   ) {
     const courseId = target.destinationId.slice('lms-course-'.length);
+    if (target.item) {
+      if (
+        !/^[a-zA-Z0-9_-]{1,100}$/.test(courseId) ||
+        !/^[a-zA-Z0-9_-]{1,100}$/.test(target.item.id) ||
+        !['LESSON', 'QUIZ', 'ASSESSMENT', 'ASSIGNMENT'].includes(
+          target.item.type,
+        )
+      )
+        return null;
+      return learningItemHref(courseId, target.item);
+    }
     if (target.lessonId !== undefined) {
       if (
         !/^[a-zA-Z0-9_-]{1,100}$/.test(courseId) ||

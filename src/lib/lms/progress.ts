@@ -1,8 +1,10 @@
+import type { ItemCompletion } from './academic-rules';
 export interface OutlineItem {
   id: string;
   title: string;
   type: string;
   required: boolean;
+  completion?: ItemCompletion;
   lesson: { format: string } | null;
   completedAt: string | null;
   lastAccessedAt: string | null;
@@ -12,9 +14,13 @@ export interface OutlineSection {
   position: number;
   items: OutlineItem[];
 }
-export function lessonProgress(items: readonly OutlineItem[]) {
+export function itemProgress(items: readonly OutlineItem[]) {
   const required = items.filter(
-    (item) => item.type === 'LESSON' && item.lesson && item.required,
+    (item) =>
+      item.required &&
+      (item.completion
+        ? item.completion.eligible
+        : item.type === 'LESSON' && !!item.lesson),
   );
   const completed = required.filter((item) => item.completedAt).length;
   return {
@@ -25,11 +31,15 @@ export function lessonProgress(items: readonly OutlineItem[]) {
       : null,
   };
 }
-/** L2 contributor only. Future assessments/submissions must supply their own completion facts. */
+/** Published configured contributors supply domain-owned completion facts; reads never mutate state. */
 export function learningProjection(sections: OutlineSection[]) {
   const lessons = sections
     .flatMap((section) => section.items)
-    .filter((item) => item.type === 'LESSON' && item.lesson);
+    .filter((item) =>
+      item.completion
+        ? item.completion.eligible
+        : item.type === 'LESSON' && !!item.lesson,
+    );
   const accessed =
     [...lessons]
       .filter((item) => item.lastAccessedAt)
@@ -45,11 +55,16 @@ export function learningProjection(sections: OutlineSection[]) {
         lessons.find((item) => !item.completedAt) ||
         null;
   return {
-    ...lessonProgress(lessons),
+    ...itemProgress(lessons),
     lastAccessedAt: accessed?.lastAccessedAt || null,
     lastAccessedLesson: accessed
       ? { id: accessed.id, title: accessed.title }
       : null,
-    nextLesson: next ? { id: next.id, title: next.title } : null,
+    nextItem: next ? { id: next.id, title: next.title, type: next.type } : null,
+    nextLesson:
+      next?.type === 'LESSON' ? { id: next.id, title: next.title } : null,
   };
 }
+
+// Compatibility for existing Lesson-only consumers; there is one aggregator.
+export const lessonProgress = itemProgress;

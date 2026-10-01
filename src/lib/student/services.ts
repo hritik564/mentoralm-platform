@@ -1,4 +1,5 @@
 import 'server-only';
+import { Academics } from '../lms/academics';
 import { LearningRepository } from '../lms/learning';
 import { getDatabase } from '../db/client';
 import { getCurrentStudent } from './session';
@@ -24,9 +25,11 @@ export async function getStudentCourses(): Promise<DashboardCourses> {
     getDatabase(),
     await getCurrentStudent(),
   ).dashboardSummaries();
-  const learningById = new Map(
-    learning.map((course) => [course.id, course.progress]),
-  );
+  const learningById = new Map(learning.map((course) => [course.id, course]));
+  const certificates = await new Academics(
+    getDatabase(),
+    await getCurrentStudent(),
+  ).certificates();
   function course(record: (typeof views)[number]['course']) {
     return {
       id: record.id,
@@ -55,20 +58,43 @@ export async function getStudentCourses(): Promise<DashboardCourses> {
       .map((enrollment) => ({
         ...course(enrollment.course),
         kind: 'enrolled' as const,
-        status: enrollment.status.toLowerCase().replace('_', '-') as
-          'enrolled' | 'in-progress' | 'completed',
-        progress: learningById.get(enrollment.courseId)?.percentage ?? null,
+        status: (learningById.get(enrollment.courseId)
+          ?.academicCompletionEnabled
+          ? learningById.get(enrollment.courseId)!.completion.eligible
+            ? 'COMPLETED'
+            : enrollment.status === 'COMPLETED'
+              ? 'IN_PROGRESS'
+              : enrollment.status
+          : enrollment.status
+        )
+          .toLowerCase()
+          .replace('_', '-') as 'enrolled' | 'in-progress' | 'completed',
+        progress:
+          learningById.get(enrollment.courseId)?.progress.percentage ?? null,
+        progressLabel:
+          learningById.get(enrollment.courseId)?.academicCompletionEnabled ||
+          learningById.get(enrollment.courseId)?.hasAcademicItems
+            ? ('Course progress' as const)
+            : ('Lesson progress' as const),
+        certificateCode:
+          certificates.find((c) => c.courseId === enrollment.courseId)?.code ||
+          null,
         nextLesson:
-          learningById.get(enrollment.courseId)?.nextLesson?.title ?? null,
+          learningById.get(enrollment.courseId)?.progress.nextItem?.title ??
+          null,
         lastAccessed:
-          learningById.get(enrollment.courseId)?.lastAccessedAt ?? null,
+          learningById.get(enrollment.courseId)?.progress.lastAccessedAt ??
+          null,
         learningTarget: learningById.has(enrollment.courseId)
           ? {
               destinationId: `lms-course-${enrollment.courseId}`,
-              ...(learningById.get(enrollment.courseId)?.nextLesson
+              ...(learningById.get(enrollment.courseId)?.progress.nextItem
                 ? {
-                    lessonId: learningById.get(enrollment.courseId)!.nextLesson!
-                      .id,
+                    item: learningById.get(enrollment.courseId)!.progress
+                      .nextItem! as {
+                      id: string;
+                      type: 'LESSON' | 'QUIZ' | 'ASSESSMENT' | 'ASSIGNMENT';
+                    },
                   }
                 : {}),
             }
@@ -85,7 +111,7 @@ export async function getResources(): Promise<{
 }> {
   const records = await (await studentRepository()).resources();
   const targets: Record<string, string> = {};
-  const resources = records.map((record) => {
+  const resources: Resource[] = records.map((record) => {
     const deliverable = Boolean(
       process.env.RESOURCE_FILES_ROOT && record.storageKey,
     );
@@ -125,6 +151,33 @@ export async function getResources(): Promise<{
         deliverable && kind ? { kind, targetId: `preview-${record.id}` } : null,
     };
   });
+  const certificates = await new Academics(
+    getDatabase(),
+    await getCurrentStudent(),
+  ).certificates();
+  for (const c of certificates.filter((c) => c.documentAvailable)) {
+    targets[`preview-certificate-${c.code}`] =
+      `/api/lms/academic/certificates/${c.code}/preview`;
+    targets[`download-certificate-${c.code}`] =
+      `/api/lms/academic/certificates/${c.code}/download`;
+    resources.push({
+      id: `certificate-${c.code}`,
+      title: `${c.course} certificate`,
+      description: 'Issued for completed course requirements.',
+      category: 'certificates',
+      mimeType: 'application/pdf',
+      fileName: c.fileName || 'certificate.pdf',
+      sizeBytes: null,
+      publishedAt: c.issuedAt,
+      program: null,
+      course: c.course,
+      access: {
+        scope: 'assigned',
+        downloadTargetId: `download-certificate-${c.code}`,
+      },
+      preview: { kind: 'pdf', targetId: `preview-certificate-${c.code}` },
+    });
+  }
   return { resources, registry: { targets, trustedOrigins: [] } };
 }
 type TicketRecord = Awaited<ReturnType<StudentRepository['ticket']>>;

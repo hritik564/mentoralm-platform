@@ -2,7 +2,7 @@ import { LmsBoundary } from '@/components/lms/LmsBoundary';
 import { getLearningRepository } from '@/lib/lms/services';
 import { LearningCourses } from '@/components/lms/LearningLists';
 import Link from 'next/link';
-import { lmsHref } from '@/lib/platform/domains';
+import { learningItemHref } from '@/lib/platform/domains';
 export default function Lectures() {
   return (
     <LmsBoundary
@@ -27,12 +27,11 @@ export default function Lectures() {
                     <ul>
                       {section.items.map((item) => (
                         <li key={item.id}>
-                          {item.type === 'LESSON' && item.lesson ? (
+                          {(item.type === 'LESSON' && item.lesson) ||
+                          item.completion?.eligible ? (
                             <Link
                               prefetch={false}
-                              href={lmsHref(
-                                `/learn/courses/${course.id}/lessons/${item.id}`,
-                              )}
+                              href={learningItemHref(course.id, item)}
                             >
                               {item.title}{' '}
                               <span>
