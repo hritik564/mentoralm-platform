@@ -8,9 +8,13 @@ export default function Page() {
         await getLmsRepository();
         const items = await (await getAcademics()).assignments.list();
         return (
-          <section className="lms-panel l3-surface">
-            <h1>Assignments</h1>
-            <p>Course tasks, submissions and reviewer feedback.</p>
+          <section className="l3-surface">
+            <header className="lms-heading">
+              <div>
+                <h1>Assignments</h1>
+                <p>Course tasks, submissions and reviewer feedback.</p>
+              </div>
+            </header>
             <AssignmentList items={items} />
           </section>
         );

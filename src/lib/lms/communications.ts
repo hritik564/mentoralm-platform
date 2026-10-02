@@ -1,4 +1,5 @@
 import 'server-only';
+import { getEffectiveRoles, hasRole, requireAdmin } from '../auth/roles';
 import { mutationLimiter } from '../student/abuse';
 import { z } from 'zod';
 import type {
@@ -34,10 +35,7 @@ export class BatchCommunications {
     batchId: string,
     purpose: CommunicationPurpose,
   ) {
-    const actor = await db.user.findUnique({
-      where: { id: this.actorId },
-      select: { role: true },
-    });
+    const actor = await getEffectiveRoles(db, this.actorId);
     const batch = await db.batch.findUnique({
       where: { id: batchId },
       select: {
@@ -51,9 +49,9 @@ export class BatchCommunications {
     if (
       !batch ||
       !(
-        actor?.role === 'ADMIN' ||
+        hasRole(actor, 'ADMIN') ||
         (purpose === 'OPERATIONAL' &&
-          actor?.role === 'INSTRUCTOR' &&
+          actor?.primaryRole === 'INSTRUCTOR' &&
           batch.instructors.length)
       )
     )
@@ -169,11 +167,7 @@ export class BatchCommunications {
     )
       throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {
-      const actor = await db.user.findUnique({
-        where: { id: this.actorId },
-        select: { role: true },
-      });
-      if (actor?.role !== 'ADMIN') throw new StudentError('FORBIDDEN');
+      await requireAdmin(db, this.actorId);
       if (
         !(await db.user.findFirst({
           where: { id: userId, role: 'STUDENT' },

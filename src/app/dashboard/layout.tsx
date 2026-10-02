@@ -2,7 +2,8 @@ import { cookies } from 'next/headers';
 import { DashboardTheme } from '@/components/dashboard/theme/DashboardTheme';
 import {
   dashboardThemeCookie,
-  parseDashboardTheme,
+  productThemeCookie,
+  resolveProductTheme,
 } from '@/lib/dashboard/theme';
 import '@/styles/dashboard-theme.css';
 import '@/styles/dashboard-features.css';
@@ -23,11 +24,20 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   const user = await requireStudentIdentity();
-  const theme = parseDashboardTheme(
-    (await cookies()).get(dashboardThemeCookie)?.value,
+  const preferences = await cookies();
+  const theme = resolveProductTheme(
+    preferences.get(productThemeCookie)?.value,
+    preferences.get(dashboardThemeCookie)?.value,
+    'light',
   );
   return (
-    <DashboardTheme initialTheme={theme}>
+    <DashboardTheme
+      initialTheme={theme}
+      migratePreference={
+        !preferences.get(productThemeCookie) &&
+        !!preferences.get(dashboardThemeCookie)
+      }
+    >
       <DashboardSession user={user}>{children}</DashboardSession>
     </DashboardTheme>
   );

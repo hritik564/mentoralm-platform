@@ -1,4 +1,5 @@
 import 'server-only';
+import { getEffectiveRoles, hasRole, requireAdmin } from '../auth/roles';
 import { learningEvent } from './events';
 import type {
   Prisma,
@@ -18,12 +19,9 @@ export class AcademicStaff {
     batchId: string | undefined,
     course: { id: string; programId: string | null },
   ) {
-    const actor = await db.user.findUnique({
-      where: { id: this.actorId },
-      select: { role: true },
-    });
-    if (actor?.role === 'ADMIN') return;
-    if (actor?.role !== 'INSTRUCTOR' || !batchId)
+    const actor = await getEffectiveRoles(db, this.actorId);
+    if (hasRole(actor, 'ADMIN')) return;
+    if (actor?.primaryRole !== 'INSTRUCTOR' || !batchId)
       throw new StudentError('FORBIDDEN');
     const batch = await db.batch.findFirst({
       where: {
@@ -164,14 +162,11 @@ export class AcademicStaff {
             session.courseId !== session.item.section.courseId))
       )
         throw new StudentError('FORBIDDEN');
-      const actor = await db.user.findUnique({
-        where: { id: this.actorId },
-        select: { role: true },
-      });
-      if (actor?.role !== 'ADMIN') {
+      const actor = await getEffectiveRoles(db, this.actorId);
+      if (!hasRole(actor, 'ADMIN')) {
         if (!course) {
           if (
-            actor?.role !== 'INSTRUCTOR' ||
+            actor?.primaryRole !== 'INSTRUCTOR' ||
             !(await db.batchInstructor.findUnique({
               where: {
                 batchId_instructorId: {
@@ -240,15 +235,7 @@ export class AcademicStaff {
   }
   async revokeCertificate(code: string) {
     return academicTransaction(this.db, async (db) => {
-      if (
-        (
-          await db.user.findUnique({
-            where: { id: this.actorId },
-            select: { role: true },
-          })
-        )?.role !== 'ADMIN'
-      )
-        throw new StudentError('FORBIDDEN');
+      await requireAdmin(db, this.actorId);
       const c = await db.certificate.findUnique({ where: { code } });
       if (!c) throw new StudentError('NOT_FOUND');
       await db.certificate.update({

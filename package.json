@@ -32,7 +32,17 @@
     "test:l3:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/l3-domain.test.ts",
     "test:l3": "playwright test --config=playwright.l3.config.ts",
     "test:l4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/l4-domain.test.ts",
-    "test:l4": "playwright test --config=playwright.l4.config.ts"
+    "test:l4": "playwright test --config=playwright.l4.config.ts",
+    "dev:lms-seed": "NODE_OPTIONS=--conditions=react-server tsx scripts/lms-owner/seed.ts",
+    "test:a1:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-a1-domain.test.ts tests/admin-a1-migration.test.ts",
+    "test:a1": "playwright test --config=playwright.admin-a1.config.ts",
+    "db:migrate:a1:local": "tsx scripts/admin-a1/migrate.ts",
+    "dev:admin-role": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/roles.ts",
+    "test:admin-owner": "playwright test --config=playwright.admin-owner.config.ts",
+    "test:roles:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-roles-domain.test.ts tests/admin-roles-migration.test.ts",
+    "test:a2:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-a2-domain.test.ts",
+    "test:a2": "playwright test --config=playwright.admin-a2.config.ts",
+    "dev:academic-media-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/reconcile-media.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",
@@ -48,6 +58,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.0",
+    "@clerk/backend": "^3.21.0",
     "@clerk/testing": "^2.2.40",
     "@eslint/js": "^10.0.1",
     "@next/eslint-plugin-next": "^16.3.7",

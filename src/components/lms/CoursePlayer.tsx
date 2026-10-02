@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
+import { LmsIcon } from './LmsPrimitives';
 import { useRouter } from 'next/navigation';
 import type { LearningCourse, LearningRepository } from '@/lib/lms/learning';
 import { lmsHref, learningItemHref } from '@/lib/platform/domains';
@@ -57,7 +58,7 @@ function Outline({
           <h3>{section.title}</h3>
           <span>
             {section.progress.completedItems}/{section.progress.requiredItems}{' '}
-            required learning items
+            complete
             {section.progress.percentage !== null
               ? ` · ${section.progress.percentage}%`
               : ''}
@@ -75,7 +76,21 @@ function Outline({
                     aria-current={current === item.id ? 'page' : undefined}
                   >
                     <span aria-hidden="true">
-                      {item.completedAt ? '✓' : current === item.id ? '→' : '○'}
+                      {item.completedAt ? (
+                        '✓'
+                      ) : current === item.id ? (
+                        '▶'
+                      ) : (
+                        <LmsIcon
+                          name={
+                            item.type === 'LESSON'
+                              ? 'lesson'
+                              : item.type === 'ASSIGNMENT'
+                                ? 'assignment'
+                                : 'quiz'
+                          }
+                        />
+                      )}
                     </span>
                     <span>
                       {item.title}
@@ -281,10 +296,6 @@ export function CoursePlayer({
         Course Outline
       </button>
       <div className="l2-workspace">
-        <aside className="l2-outline">
-          <h2>Course Outline</h2>
-          <Outline course={course} current={current} />
-        </aside>
         <article className="l2-content">
           {lesson ? (
             <>
@@ -333,6 +344,9 @@ export function CoursePlayer({
                 <button
                   type="button"
                   onClick={complete}
+                  className={
+                    lesson.completed ? 'lms-complete-state' : undefined
+                  }
                   disabled={saving || lesson.completed || !lesson.available}
                 >
                   {lesson.completed
@@ -383,6 +397,10 @@ export function CoursePlayer({
             </>
           )}
         </article>
+        <aside className="l2-outline">
+          <h2>Course Outline</h2>
+          <Outline course={course} current={current} />
+        </aside>
       </div>
       {drawer && (
         <OutlineDrawer

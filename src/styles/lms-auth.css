@@ -1,0 +1,198 @@
+.lms-auth-shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(
+      ellipse at 8% 40%,
+      var(--lms-page-tint, #17162e),
+      transparent 58%
+    ),
+    var(--lms-bg);
+  color: var(--lms-text);
+  padding: 36px clamp(24px, 6vw, 96px) 24px;
+}
+.lms-auth-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lms-auth-wordmark {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  color: var(--lms-text);
+  text-decoration: none;
+}
+.lms-auth-wordmark span {
+  color: var(--lms-accent);
+}
+.lms-auth-layout {
+  width: 100%;
+  max-width: 1120px;
+  margin: auto;
+  padding: 52px 0;
+  display: grid;
+  grid-template-columns: 1fr 460px;
+  align-items: center;
+  gap: 80px;
+}
+.lms-auth-shell .lms-auth-story h1 {
+  font-size: clamp(40px, 4.2vw, 60px);
+  line-height: 1.08;
+  letter-spacing: -2px;
+  margin: 22px 0;
+  font-weight: 600;
+}
+.lms-auth-story > p:not(.lms-eyebrow) {
+  color: var(--lms-muted);
+  max-width: 370px;
+  line-height: 1.7;
+}
+.lms-auth-shell .lms-auth-account-note {
+  border-top: 1px solid var(--lms-border);
+  margin-top: 44px;
+  padding-top: 22px;
+  font-size: 13px;
+}
+.lms-auth-panel {
+  min-width: 0;
+  border: 1px solid var(--lms-border);
+  background: var(--lms-panel);
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 16px 48px #0000000c;
+}
+.lms-auth-shell .lms-auth-panel h2 {
+  font-size: 25px;
+  margin: 0 0 10px;
+  letter-spacing: -0.6px;
+}
+.lms-auth-panel > .lms-muted {
+  line-height: 1.6;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+.lms-auth-notice {
+  background: var(--lms-raised, #192640);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.lms-auth-shell .lms-auth-switch {
+  text-align: center;
+  margin: 20px 0 0;
+  font-size: 13px;
+  color: var(--lms-muted);
+}
+.lms-auth-switch a {
+  color: var(--lms-accent);
+  font-weight: 600;
+}
+.lms-auth-footer {
+  font-size: 12px;
+  color: var(--lms-muted);
+  text-align: center;
+}
+.lms-auth-shell .lms-clerk-root,
+.lms-auth-shell .lms-clerk-box {
+  width: 100%;
+  max-width: 100%;
+  box-shadow: none;
+}
+.lms-auth-shell .lms-clerk-card {
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
+  border: 0;
+}
+.lms-auth-shell .cl-footer {
+  background: transparent;
+}
+.lms-auth-shell .cl-footerAction {
+  display: none;
+}
+.lms-auth-shell .cl-formFieldInput {
+  min-height: 44px;
+}
+.lms-auth-shell .cl-formButtonPrimary {
+  min-height: 44px;
+}
+.lms-shell .lms-entry-state {
+  max-width: 620px;
+  padding: 24px 0;
+}
+.lms-shell .lms-entry-state h1 {
+  font-size: 30px;
+  line-height: 1.2;
+  margin: 16px 0;
+  letter-spacing: -0.8px;
+}
+.lms-entry-state > p {
+  color: var(--lms-muted);
+  line-height: 1.65;
+}
+.lms-entry-state .lms-account-actions {
+  margin: 24px 0;
+}
+.lms-entry-dashboard {
+  color: var(--lms-accent);
+  font-size: 14px;
+}
+.lms-auth-shell :focus-visible {
+  outline: 3px solid var(--lms-accent);
+  outline-offset: 4px;
+}
+@media (max-width: 1000px) {
+  .lms-auth-layout {
+    grid-template-columns: 1fr 400px;
+    gap: 32px;
+  }
+  .lms-auth-panel {
+    padding: 24px;
+  }
+  .lms-auth-shell .lms-auth-story h1 {
+    font-size: 40px;
+  }
+}
+@media (max-width: 740px) {
+  .lms-auth-shell {
+    padding: 22px 20px;
+  }
+  .lms-auth-layout {
+    grid-template-columns: 1fr;
+    gap: 26px;
+    padding: 34px 0;
+    max-width: 460px;
+  }
+  .lms-auth-shell .lms-auth-story h1 {
+    font-size: 34px;
+    margin: 14px 0;
+    letter-spacing: -1px;
+  }
+  .lms-auth-shell .lms-auth-story h1 br {
+    display: none;
+  }
+  .lms-auth-shell .lms-auth-account-note {
+    display: none;
+  }
+  .lms-auth-story > p:not(.lms-eyebrow) {
+    font-size: 14px;
+  }
+  .lms-auth-panel {
+    padding: 22px 18px;
+    border-radius: 16px;
+  }
+  .lms-auth-shell .lms-auth-panel h2 {
+    font-size: 23px;
+  }
+}
+.lms-auth-shell .cl-socialButtonsBlockButtonText {
+  color: var(--lms-text);
+}
+.lms-auth-shell [data-clerk-dev-mode-notice] {
+  color: var(--lms-muted);
+  background: var(--lms-panel);
+  padding: 4px 8px;
+  border-radius: 4px;
+}

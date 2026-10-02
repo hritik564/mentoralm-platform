@@ -1,0 +1,302 @@
+/* Native account surfaces inherit the approved LMS Light/Dark palette. */
+.lms-muted {
+  color: var(--lms-muted);
+}
+.lms-support-list h2 {
+  font-size: 15px;
+}
+.lms-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 14px;
+  border: 1px solid var(--lms-border);
+  border-radius: 7px;
+  background: var(--lms-accent-soft, #251f49);
+  color: var(--lms-accent);
+  text-decoration: none;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.lms-support-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 20px;
+  align-items: start;
+}
+.lms-support-summary {
+  margin-top: 0;
+}
+.lms-ticket-messages {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 24px;
+  display: grid;
+  gap: 14px;
+}
+.lms-ticket-messages li {
+  padding: 16px;
+  background: var(--lms-raised, #182139);
+  border: 1px solid var(--lms-border);
+  border-radius: 8px;
+}
+.lms-ticket-messages li[data-author='staff'] {
+  border-left: 3px solid var(--lms-accent);
+}
+.lms-ticket-messages header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+.lms-ticket-messages time {
+  color: var(--lms-muted);
+}
+.lms-ticket-messages p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.lms-account-form {
+  display: grid;
+  gap: 10px;
+}
+.lms-account-form input,
+.lms-account-form select,
+.lms-account-form textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  min-height: 44px;
+  border: 1px solid var(--lms-border);
+  border-radius: 6px;
+  background: var(--lms-surface, #101c30);
+  color: var(--lms-text);
+  font: inherit;
+}
+.lms-account-form textarea {
+  resize: vertical;
+}
+.lms-account-form label {
+  font-weight: 600;
+}
+.lms-account-form [aria-invalid='true'] {
+  border-color: var(--lms-danger-ink, #ffb3c0);
+}
+.lms-account-form .lms-muted {
+  font-size: 12px;
+}
+.lms-account-form button:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+.lms-account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.lms-form-error {
+  color: var(--lms-danger-ink, #ffb3c0);
+}
+.lms-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.lms-profile-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.lms-profile-fields {
+  margin: 12px 0 18px;
+}
+.lms-profile-fields > div {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--lms-border);
+}
+.lms-profile-fields dt {
+  color: var(--lms-muted);
+  font-size: 12px;
+}
+.lms-profile-fields dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.lms-profile-courses {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+.lms-profile-courses li {
+  padding: 12px 0;
+  display: grid;
+  gap: 4px;
+}
+.lms-profile-courses a {
+  color: var(--lms-accent);
+}
+.lms-profile-courses span {
+  font-size: 12px;
+}
+.lms-profile-grid .lms-card-header {
+  flex-wrap: wrap;
+}
+.lms-profile-grid .lms-secondary-action {
+  margin-top: 12px;
+}
+.lms-profile-grid .lms-card-header .lms-secondary-action {
+  margin-top: 0;
+}
+.lms-profile-grid [role='alert']:empty,
+.lms-profile-grid [role='status']:empty {
+  display: none;
+}
+.lms-dialog {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100dvh - 40px);
+  padding: 0;
+  color: var(--lms-text);
+  background: var(--lms-panel);
+  border: 1px solid var(--lms-border);
+  border-radius: 12px;
+}
+.lms-dialog::backdrop {
+  background: var(--lms-overlay, #000a);
+}
+.lms-dialog .d3-dialog-inner {
+  padding: 24px;
+}
+.lms-dialog .d3-dialog-inner > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.lms-dialog .d3-icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--lms-raised, #182139);
+  color: var(--lms-text);
+  border: 1px solid var(--lms-border);
+  border-radius: 7px;
+  cursor: pointer;
+}
+.lms-account-menu .account-trigger {
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+}
+.lms-account-menu .account-panel {
+  position: absolute;
+  z-index: 40;
+  right: 0;
+  top: calc(100% + 12px);
+  width: min(280px, calc(100vw - 32px));
+  color: var(--lms-text);
+  background: var(--lms-panel);
+  border: 1px solid var(--lms-border);
+  box-shadow: 0 12px 36px var(--lms-overlay, #000a);
+  border-radius: 10px;
+  padding: 12px;
+}
+.lms-account-menu .account-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--lms-border);
+  padding: 8px 0 12px;
+  margin-bottom: 8px;
+}
+.lms-account-menu .account-identity div {
+  min-width: 0;
+}
+.lms-account-menu .account-identity strong,
+.lms-account-menu .account-identity span:not(.account-avatar) {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.lms-account-menu .account-identity div > span {
+  color: var(--lms-muted);
+  font-size: 12px;
+}
+.lms-appbar .lms-account-menu .account-panel nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.lms-appbar .lms-account-menu .account-panel nav a,
+.lms-appbar .lms-account-menu .account-panel nav button {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  text-align: left;
+  justify-content: start;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--lms-text);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.lms-appbar .lms-account-menu .account-panel nav :is(a, button):hover {
+  background: var(--lms-accent-soft, #251f49);
+}
+.lms-account-menu .account-error {
+  color: var(--lms-danger-ink, #ffb3c0);
+  font-size: 12px;
+}
+@media (max-width: 900px) {
+  .lms-support-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lms-support-summary {
+    order: -1;
+  }
+  .lms-support-summary .lms-profile-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .lms-support-summary .lms-profile-fields > div {
+    display: block;
+  }
+}
+@media (max-width: 600px) {
+  .lms-profile-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lms-profile-fields > div {
+    grid-template-columns: 100px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .lms-support-list > li {
+    flex-wrap: wrap;
+  }
+  .lms-support-list .lms-row-main {
+    flex: 1 1 calc(100% - 60px);
+  }
+  .lms-support-list .lms-status {
+    margin-left: 54px;
+  }
+  .lms-support-list .lms-secondary-action {
+    margin-left: auto;
+  }
+  .lms-dialog .d3-dialog-inner {
+    padding: 18px;
+  }
+}

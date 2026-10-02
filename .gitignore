@@ -9,3 +9,5 @@ test-results/
 .DS_Store
 docs/reviews/
 src/generated/prisma/
+
+.local/

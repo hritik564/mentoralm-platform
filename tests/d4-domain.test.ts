@@ -20,7 +20,11 @@ import {
   validatePreviewContent,
 } from '../src/lib/student/files';
 import { requestBody, studentResponse } from '../src/lib/student/http';
-import { isolatedDatabase, testDatabaseUrl } from './helpers/d4-database';
+import {
+  isolatedDatabase,
+  testDatabaseUrl,
+  migrationCount,
+} from './helpers/d4-database';
 const profile = {
   educationLevel: 'Graduate',
   institution: 'Test university',
@@ -154,7 +158,7 @@ test(
           >(
             `SELECT migration_name, finished_at, rolled_back_at FROM "${isolated.schema}"."_prisma_migrations"`,
           );
-          assert.equal(migrations.length, 7);
+          assert.equal(migrations.length, migrationCount());
           assert.ok(
             migrations.some(
               (row) =>

@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Client } from 'pg';
 import { execFileSync } from 'node:child_process';
-import { isolatedDatabase, testDatabaseUrl } from './helpers/d4-database';
+import {
+  isolatedDatabase,
+  testDatabaseUrl,
+  migrationCount,
+} from './helpers/d4-database';
 import { randomBytes } from 'node:crypto';
 import {
   provisionUser,
@@ -177,14 +181,14 @@ test(
       const repoA = new LmsRepository(db, A),
         repoB = new LmsRepository(db, B);
       await t.test(
-        'all seven migrations complete and student IDs issue once under concurrency',
+        'all repository migrations complete and student IDs issue once under concurrency',
         async () => {
           const records = await db.$queryRawUnsafe<
             Array<{ finished_at: Date }>
           >(
             `SELECT finished_at FROM "${isolated.schema}"."_prisma_migrations"`,
           );
-          assert.equal(records.length, 7);
+          assert.equal(records.length, migrationCount());
           assert.ok(records.every((row) => row.finished_at));
           const same = await Promise.all(
             Array.from({ length: 24 }, () =>

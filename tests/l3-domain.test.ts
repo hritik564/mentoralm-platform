@@ -4,7 +4,11 @@ import { randomUUID } from 'node:crypto';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { isolatedDatabase, testDatabaseUrl } from './helpers/d4-database';
+import {
+  isolatedDatabase,
+  testDatabaseUrl,
+  migrationCount,
+} from './helpers/d4-database';
 import { academicFixture } from './helpers/l3-fixtures';
 import { Academics } from '../src/lib/lms/academics';
 import { AcademicStaff } from '../src/lib/lms/academic-staff';
@@ -183,12 +187,12 @@ test(
         };
       }
       await t.test(
-        'seven clean migrations and subtype/policy constraints',
+        'clean repository migrations and subtype/policy constraints',
         async () => {
           const count = await db.$queryRawUnsafe<{ count: bigint }[]>(
             `SELECT count(*) FROM "${isolated.schema}"."_prisma_migrations" WHERE finished_at IS NOT NULL`,
           );
-          assert.equal(Number(count[0].count), 7);
+          assert.equal(Number(count[0].count), migrationCount());
           await assert.rejects(
             db.academicActivity.create({
               data: {

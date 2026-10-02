@@ -1,0 +1,60 @@
+/* Scoped product palette; dark fallbacks preserve the approved LMS exactly. */
+.lms-shell[data-lms-theme='light'] {
+  color-scheme: light;
+  --lms-ink: #18243e;
+  --lms-muted-ink: #526079;
+  --lms-accent-ink: #6340a2;
+  --lms-page: #f5f6fa;
+  --lms-page-tint: #eeeafa;
+  --lms-surface: #ffffff;
+  --lms-header: #ffffff;
+  --lms-raised: #edf1f8;
+  --lms-accent-soft: #eee8fa;
+  --lms-border-tone: #c5cee0;
+  --lms-success-soft: #ddf3e9;
+  --lms-success-border: #82baa4;
+  --lms-success-ink: #126044;
+  --lms-warning-soft: #fff0d1;
+  --lms-warning-ink: #73500b;
+  --lms-danger-soft: #fae3e9;
+  --lms-danger-ink: #9c2544;
+  --lms-progress-accent: #7040c5;
+}
+.lms-shell[data-lms-theme='light'] .lms-section-card,
+.lms-shell[data-lms-theme='light'] .lms-panel,
+.lms-shell[data-lms-theme='light'] .l2-content,
+.lms-shell[data-lms-theme='light'] .l2-outline {
+  box-shadow: 0 2px 8px #18243e06;
+}
+.lms-header-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+}
+.lms-theme-toggle {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--lms-border);
+  border-radius: 8px;
+  background: var(--lms-panel);
+  color: var(--lms-text);
+  cursor: pointer;
+}
+.lms-theme-toggle:hover {
+  background: var(--lms-accent-soft, #251f49);
+}
+.lms-header-controls .lms-account {
+  margin-left: 0;
+}
+@media (max-width: 600px) {
+  .lms-header-controls {
+    gap: 10px;
+    grid-column: 2;
+    grid-row: 1;
+  }
+}

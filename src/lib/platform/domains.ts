@@ -1,5 +1,6 @@
 export const platformDomains = {
   website: 'https://mentoralm.com',
+  admin: 'https://admin.mentoralm.com',
   lms: 'https://students.mentoralm.com',
 } as const;
 
@@ -44,6 +45,43 @@ export function deploymentOrigins(
   return origins;
 }
 
+export function deploymentAdminOrigin() {
+  const origin = configuredOrigin(
+    process.env.NEXT_PUBLIC_ADMIN_ORIGIN,
+    platformDomains.admin,
+  );
+  if (origin) {
+    const existing = deploymentOrigins();
+    if (!existing.website || [existing.website, existing.lms].includes(origin))
+      throw Error('Admin origin requires a distinct approved website origin.');
+  }
+  return origin;
+}
+export function adminHref(path: string) {
+  if (
+    !/^\/admin(?:\/(?:students|batches|courses|question-banks|assessments|assignments)(?:\/[a-zA-Z0-9_-]{1,500})?)?$/.test(
+      path,
+    )
+  )
+    throw Error('Unapproved Admin path.');
+  const origin = deploymentAdminOrigin();
+  return origin ? `${origin}${path === '/admin' ? '/' : path.slice(6)}` : path;
+}
+export function adminSignInPath(host: string) {
+  return trustedRequestOrigin(host) ===
+    (deploymentAdminOrigin() || platformDomains.admin)
+    ? '/sign-in'
+    : '/admin-auth/sign-in';
+}
+export function adminDestination(value: unknown) {
+  return typeof value === 'string' &&
+    /^\/admin(?:\/(?:students|batches|courses|question-banks|assessments|assignments)(?:\/[a-zA-Z0-9_-]{1,500})?)?$/.test(
+      value,
+    )
+    ? value
+    : '/admin';
+}
+
 const pages = [
   'lectures',
   'assignments',
@@ -52,6 +90,8 @@ const pages = [
   'chat',
   'attendance',
   'certificates',
+  'support',
+  'profile',
 ];
 export function lmsInternalPath(path: string): string | null {
   if (path === '/' || path === '/learn' || path === '/learn/') return '/learn';
@@ -61,6 +101,7 @@ export function lmsInternalPath(path: string): string | null {
       short,
     ) ||
     /^\/discussions\/[a-zA-Z0-9_-]{1,100}$/.test(short) ||
+    /^\/support\/[a-zA-Z0-9_-]{1,100}$/.test(short) ||
     /^\/certificates\/[a-zA-Z0-9_-]{1,100}$/.test(short)
     ? `/learn${short}`
     : null;
@@ -105,13 +146,42 @@ export function domainRoute(
   } catch {
     // Malformed authorities cannot select the LMS surface.
   }
+  const adminOrigin = deploymentAdminOrigin(),
+    adminHost = new URL(adminOrigin || platformDomains.admin).host;
+  if (requestHost === adminHost) {
+    if (/^\/sign-in(?:\/|$)/.test(path))
+      return { kind: 'rewrite', path: `/admin-auth${path}` };
+    if (/^\/admin-auth\/sign-in(?:\/|$)/.test(path))
+      return { kind: 'redirect', path: path.slice('/admin-auth'.length) };
+    if (/^\/(?:api|_next|__clerk)(?:\/|$)/.test(path))
+      return { kind: 'next', path };
+    return {
+      kind: 'rewrite',
+      path:
+        path === '/admin' || path.startsWith('/admin/')
+          ? path
+          : path === '/'
+            ? '/admin'
+            : `/admin${path}`,
+    };
+  }
+  if (
+    adminOrigin &&
+    (path === '/admin' || path.startsWith('/admin/')) &&
+    adminDestination(path) === path
+  )
+    return { kind: 'redirect', path: adminHref(path) };
   if (requestHost === lmsHost) {
     if (path.startsWith('/dashboard') && /^\/dashboard(?:\/|$)/.test(path))
       return {
         kind: 'redirect',
         path: `${origins.website || platformDomains.website}${path}`,
       };
-    if (/^\/(?:sign-in|sign-up|api|_next|__clerk)(?:\/|$)/.test(path))
+    if (/^\/(?:sign-in|sign-up)(?:\/|$)/.test(path))
+      return { kind: 'rewrite', path: `/lms-auth${path}` };
+    if (/^\/lms-auth\/(?:sign-in|sign-up)(?:\/|$)/.test(path))
+      return { kind: 'redirect', path: path.slice('/lms-auth'.length) };
+    if (/^\/(?:api|_next|__clerk)(?:\/|$)/.test(path))
       return { kind: 'next', path };
     const internal = lmsInternalPath(path);
     return {
@@ -156,14 +226,15 @@ export function approvedRequestHost(
       parsed.hash
     )
       return false;
-    const allowed = [origins.website, origins.lms]
+    const allowed = [origins.website, origins.lms, deploymentAdminOrigin()]
       .filter(Boolean)
       .map((o) => new URL(o!).host);
     if (allowed.length) return allowed.includes(parsed.host);
     return (
       ['localhost', '127.0.0.1', '[::1]'].includes(parsed.hostname) ||
       parsed.host === 'students.mentoralm.com' ||
-      parsed.host === 'mentoralm.com'
+      parsed.host === 'mentoralm.com' ||
+      parsed.host === 'admin.mentoralm.com'
     );
   } catch {
     return false;
@@ -172,7 +243,9 @@ export function approvedRequestHost(
 export function authorizedSessionParties() {
   const origins = deploymentOrigins();
   return origins.website && origins.lms
-    ? [origins.website, origins.lms]
+    ? [origins.website, origins.lms, deploymentAdminOrigin()].filter(
+        (o): o is string => !!o,
+      )
     : undefined;
 }
 export function trustedRequestOrigin(host: string) {
@@ -180,7 +253,7 @@ export function trustedRequestOrigin(host: string) {
   if (!approvedRequestHost(host)) throw new Error('Unapproved authority.');
   host = new URL(`https://${host}`).host;
   const origins = deploymentOrigins();
-  for (const origin of [origins.website, origins.lms])
+  for (const origin of [origins.website, origins.lms, deploymentAdminOrigin()])
     if (origin && new URL(origin).host === host) return origin;
-  return `${['mentoralm.com', 'students.mentoralm.com'].includes(host) ? 'https' : 'http'}://${host}`;
+  return `${['mentoralm.com', 'students.mentoralm.com', 'admin.mentoralm.com'].includes(host) ? 'https' : 'http'}://${host}`;
 }

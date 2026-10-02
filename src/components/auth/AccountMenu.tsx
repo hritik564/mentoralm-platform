@@ -8,9 +8,16 @@ import { UserAvatar, type AccountIdentity } from './UserAvatar';
 export function AccountMenu({
   user,
   onSignOut,
+  links = [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Support', href: '/dashboard/support' },
+  ],
+  className = '',
 }: {
   user: AccountIdentity;
   onSignOut: () => Promise<void>;
+  links?: readonly { label: string; href: string }[];
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -48,7 +55,7 @@ export function AccountMenu({
   return (
     <div
       ref={root}
-      className="account-menu"
+      className={`account-menu ${className}`}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
@@ -97,12 +104,16 @@ export function AccountMenu({
           </div>
         </div>
         <nav aria-label="Account navigation">
-          <Link prefetch={false} href="/dashboard">
-            Dashboard
-          </Link>
-          <Link prefetch={false} href="/dashboard/support">
-            Support
-          </Link>
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              prefetch={false}
+              href={link.href}
+              onClick={() => setOpen(false)}
+            >
+              {link.label}
+            </Link>
+          ))}
           <button
             type="button"
             disabled={busy}

@@ -191,3 +191,44 @@ Clerk's [production requirements](https://clerk.com/docs/guides/development/depl
 Private `RESOURCE_FILES_ROOT`, `LMS_FILES_ROOT` and writable `LMS_SUBMISSIONS_ROOT` remain local adapters outside public with least-privilege filesystem permissions. Production must replace them with a durable private object adapter beneath existing domain authorization: opaque object keys, bounded upload/quarantine/scanning, canonical metadata, streaming/range delivery or short-lived strictly authorized download URLs, lifecycle/retention/backups and orphan reconciliation. Keep one certificate object; Dashboard and LMS reference it. Do not expose bucket/object URLs directly or migrate authorization into storage keys. Approved external learning requires `LMS_EXTERNAL_LINKS` plus exact `LMS_EXTERNAL_ORIGINS`; missing roots/registry show honest unavailable states.
 
 No email/WhatsApp/in-app delivery worker or provider credentials are configured by L4. Future providers need verified destinations, finalized operational/marketing consent policy/UI, dispatch-time audience/consent checks, suppression/unsubscribe, idempotency, genuine provider receipts and private auditable status transitions. Shared rate storage/ingress limits, production observability/alerting, recovery drills and abuse/moderation operations are infrastructure/operational prerequisites. Admin/Instructor UI, AI Tutor, Quantum/intelligence interpretation, payments and certificate design stay deferred.
+
+### Local LMS owner fixtures (CLI only)
+
+The completed LMS remains protected by Clerk → MentoraLM Student → business entitlement → Enrollment. To visually exercise it locally, use an **existing Clerk Development identity**; no Clerk account or role is created or edited:
+
+```sh
+npm run dev:lms-seed -- --owner user_YOUR_EXISTING_DEVELOPMENT_ID
+# Alternatively resolve an exact existing email through Clerk Development:
+npm run dev:lms-seed -- --owner your-development-email@example.com
+# Or set LMS_SEED_OWNER in ignored .env.local and run npm run dev:lms-seed.
+```
+
+Only loopback PostgreSQL `mentoralm_dev`, schema `public`, is accepted. The utility verifies the connected database/schema before mutations, rejects connection query overrides, deployed environments/origins and live Clerk keys, and serializes seed/reset commands with a PostgreSQL advisory lock. It is never imported by application routes. A persisted ownership audit marker saves the Student's previous entitlement override; stable account-specific IDs make repeated seeding idempotent without overwriting learning progress. The owner stays a Student. Student ID is issued by the existing database mechanism. Other identities and coursework remain untouched.
+
+Fixtures: CareerIgnite Program → AI Tools for Career Growth → CareerIgnite OCT-26 (account-specific `CI-OCT26-…` code), one Enrollment/membership and explicit `ENABLED` override; three Sections and eleven learning items (five text lessons, one optional video metadata lesson, one private PDF lesson, Quiz, Assessment, Assignment, private worksheet Resource); five questions covering all supported types; five held Sessions with PRESENT/PRESENT/LATE/ABSENT/EXCUSED attendance; three Course/Batch discussion threads with original posts. The welcome lesson is completed through the normal domain service for Dashboard Continue Learning. Video is deliberately metadata-only and shows the normal unavailable-media state. It is optional and has no fabricated video file. The original one-page PDF is created privately with exclusive writes, never in `public`.
+
+Missing `LMS_FILES_ROOT` and `LMS_SUBMISSIONS_ROOT` are added to ignored `.env.local` under ignored `.local/lms-owner/`. Existing roots are preserved and must resolve outside `public`. Restart `npm run dev` after first setup to load these settings. This enables the existing private PDF/resource serving and real text/file assignment submission flow. No storage URLs or answer keys are exposed through new endpoints.
+
+```sh
+# Optional certificate visual state: uses real lesson completion, attempt
+# save/submission and assignment submission services, then checks eligibility.
+npm run dev:lms-seed -- --owner user_YOUR_EXISTING_DEVELOPMENT_ID --completed
+# Remove the fixture course context, including its owner's practice activity:
+npm run dev:lms-seed -- --owner user_YOUR_EXISTING_DEVELOPMENT_ID --reset
+```
+
+The practice Assessment and Assignment deliberately use completion-on-submission policies. Written answers remain pending review, without invented grades or instructor acceptance. The Quiz requires 70%. `--completed` never directly sets Enrollment completion or creates a Certificate: the existing domain evaluator issues it after valid requirements. Certificates are record-only; no certificate PDF or download is fabricated. Repeating completed mode creates no duplicate attempts/submissions/certificate. Reset and reseed return to the default incomplete course.
+
+Reset is transactional, scoped to the account-specific fixture context, and restores the previous override only if the seed's `ENABLED` value remains current. The User, Student ID, profile, support/referral records and unrelated Enrollments/Courses are retained. Attached non-owned authoring, other students' activity or operational records make reset fail safely. Private fixture files, submission files and local root configuration are retained to avoid filesystem deletion of unrelated files; no broad filesystem or database wipe occurs.
+
+Open local `/dashboard`, `/learn`, `/learn/lectures`, the printed `/learn/courses/<seed-course-id>`, `/learn/assignments`, `/learn/attendance`, `/learn/resources`, `/learn/discussions`, and `/learn/certificates` at `http://127.0.0.1:3000`, signed in as the seeded account. Course content, attendance, resources and discussions are populated. Quiz/Assessment results and Assignment versions populate through interaction; Certificates are empty until eligible (or `--completed`). Batch/Student ID stay inside LMS. Dashboard Continue Learning reads real course progress.
+
+Focused verification, intentionally destructive only to this fixture context, with final default reseed:
+
+```sh
+LMS_SEED_OWNER=user_YOUR_EXISTING_DEVELOPMENT_ID NODE_OPTIONS=--conditions=react-server npx tsx --test tests/lms-owner.test.ts
+npm run typecheck
+npm run lint
+```
+
+The owner integration check refuses every database except the guarded local development target, verifies repeated seeds and authorized reads, checks that answer keys are absent before submission, exercises real completion/certificate issuance, verifies reset refusal and unrelated-enrollment preservation, and leaves default fixtures available. With no explicit owner it skips that integration check and runs only guard checks. It does not run the L1–L4 browser suites or deploy anything.

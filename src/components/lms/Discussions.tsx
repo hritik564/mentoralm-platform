@@ -3,6 +3,8 @@ import { useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Discussions } from '@/lib/lms/discussions';
+import { LmsSearch, LmsFilter, filterOptions } from './LmsFilters';
+import { LmsStatusBadge, LmsIcon } from './LmsPrimitives';
 import { lmsHref } from '@/lib/platform/domains';
 type Workspace = Awaited<ReturnType<Discussions['workspace']>>;
 type Thread = Awaited<ReturnType<Discussions['thread']>>;
@@ -24,6 +26,13 @@ export function DiscussionWorkspace({ workspace }: { workspace: Workspace }) {
     [batchId, setBatch] = useState(''),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState('');
+  const [search, setSearch] = useState(''),
+    [scope, setScope] = useState('');
+  const visible = workspace.threads.filter(
+    (t) =>
+      t.title.toLowerCase().includes(search.toLowerCase()) &&
+      (!scope || t.course.title === scope),
+  );
   const course = workspace.courses.find((c) => c.id === courseId);
   const batches = workspace.batches.filter(
     (b) =>
@@ -68,33 +77,63 @@ export function DiscussionWorkspace({ workspace }: { workspace: Workspace }) {
       </div>
       <div className="l4-discussion-grid">
         <section className="lms-panel">
-          <h2>Recent threads</h2>
-          {workspace.threads.length ? (
+          <div className="lms-toolbar">
+            <LmsSearch
+              label="Search discussions"
+              value={search}
+              onChange={setSearch}
+            />
+            <LmsFilter
+              label="Discussion course"
+              value={scope}
+              onChange={setScope}
+              options={filterOptions(
+                workspace.threads.map((t) => t.course.title),
+                'All courses',
+              )}
+            />
+            <a className="lms-action" href="#start-discussion">
+              Start discussion +
+            </a>
+          </div>
+          {visible.length ? (
             <ul className="l4-thread-list">
-              {workspace.threads.map((t) => (
+              {visible.map((t) => (
                 <li key={t.id}>
-                  <Link href={lmsHref(`/learn/discussions/${t.id}`)}>
-                    {t.title}
-                  </Link>
-                  <p>
-                    {t.course.title}
-                    {t.batch ? ` · ${t.batch.name}` : ' · Course discussion'}
-                  </p>
-                  <small>
-                    {t._count.posts} posts{t.locked ? ' · Locked' : ''}
-                  </small>
+                  <span className="lms-row-icon">
+                    <LmsIcon name="chat" />
+                  </span>
+                  <div className="lms-row-main">
+                    <Link href={lmsHref(`/learn/discussions/${t.id}`)}>
+                      {t.title}
+                    </Link>
+                    <p>
+                      {t.course.title}
+                      {t.batch ? ` · ${t.batch.name}` : ' · Course discussion'}
+                    </p>
+                    <small>
+                      {Math.max(0, t._count.posts - 1)} replies ·{' '}
+                      <time dateTime={t.updatedAt}>
+                        {new Date(t.updatedAt).toLocaleDateString('en-IN', {
+                          timeZone: 'Asia/Kolkata',
+                        })}
+                      </time>
+                    </small>
+                  </div>
+                  <LmsStatusBadge status={t.locked ? 'Locked' : 'Active'} />
                 </li>
               ))}
             </ul>
           ) : (
             <p>
-              No discussions yet. Start a learning conversation in an enrolled
-              course.
+              {workspace.threads.length
+                ? 'No discussions match this search or course.'
+                : 'No discussions yet. Start a learning conversation in an enrolled course.'}
             </p>
           )}
         </section>
         <section className="lms-panel">
-          <h2>Start a discussion</h2>
+          <h2 id="start-discussion">Start a discussion</h2>
           {workspace.courses.length ? (
             <form className="l4-discussion-form" onSubmit={submit}>
               <label htmlFor="discussion-course">Course</label>

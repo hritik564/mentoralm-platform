@@ -1,7 +1,19 @@
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { getAcademics } from '@/lib/lms/services';
 import { learningItemHref, lmsHref } from '@/lib/platform/domains';
-export async function AcademicHome() {
+import { LmsSectionCard, LmsStatusBadge } from './LmsPrimitives';
+export async function AcademicHome({
+  continueLearning,
+  batches,
+  discussions,
+  support,
+}: {
+  continueLearning: ReactNode;
+  batches: ReactNode;
+  discussions: ReactNode;
+  support: ReactNode;
+}) {
   const repo = await getAcademics(),
     [assignments, attendance, certificates, result] = await Promise.all([
       repo.assignments.list(),
@@ -12,79 +24,125 @@ export async function AcademicHome() {
   const pending = assignments.filter((a) =>
     ['NOT_SUBMITTED', 'CHANGES_REQUESTED'].includes(a.status),
   );
-  if (
-    !assignments.length &&
-    !attendance.total &&
-    !certificates.length &&
-    !result
-  )
-    return null;
   return (
-    <section className="lms-panel l3-home">
-      <h2>Academic activity</h2>
-      <div className="l3-home-grid">
-        {result && (
-          <div>
-            <h3>Recent result</h3>
-            <p>
-              <Link href={learningItemHref(result.courseId, result.item)}>
-                {result.item.title}
-              </Link>
-            </p>
-            <p>
-              {result.requiresReview
-                ? 'Includes responses awaiting review'
-                : result.percentage === null
-                  ? 'Submitted'
-                  : `${Math.round(result.percentage * 10) / 10}%`}
-              {result.passed === true
-                ? ' · Passed'
-                : result.passed === false
-                  ? ' · Not passed'
-                  : ''}{' '}
-              · Attempt {result.number}
-            </p>
-          </div>
-        )}
-        {assignments.length > 0 && (
-          <div>
-            <h3>Pending assignments · {pending.length}</h3>
+    <div className="lms-home-grid">
+      <div className="lms-home-column">
+        {continueLearning}
+        <LmsSectionCard
+          title="Pending assignments"
+          icon="assignment"
+          className="lms-home-pending"
+          action={<Link href={lmsHref('/learn/assignments')}>View all →</Link>}
+        >
+          <ul className="lms-home-rows">
             {pending.slice(0, 3).map((a) => (
-              <p key={a.id}>
+              <li key={a.id}>
                 <Link
                   href={learningItemHref(a.courseId, {
                     id: a.id,
                     type: 'ASSIGNMENT',
                   })}
                 >
-                  {a.title}
+                  <strong>{a.title}</strong>
+                  <small>{a.course}</small>
                 </Link>
-              </p>
+                <LmsStatusBadge status={a.status} />
+              </li>
             ))}
-            {!pending.length && <p>No pending assignments.</p>}
-          </div>
-        )}
-        {attendance.total > 0 && (
-          <div>
-            <h3>Attendance</h3>
-            <p>
-              {attendance.percentage === null
-                ? 'No percentage available'
-                : `${attendance.percentage}%`}{' '}
-              · {attendance.total} sessions
+          </ul>
+          {!pending.length && (
+            <p className="lms-card-empty">
+              No pending assignments. Your submitted work is in Assignments.
             </p>
-            <Link href={lmsHref('/learn/attendance')}>View attendance →</Link>
+          )}
+        </LmsSectionCard>
+      </div>
+      <div className="lms-home-column">
+        <LmsSectionCard
+          title="Attendance"
+          icon="attendance"
+          action={<Link href={lmsHref('/learn/attendance')}>View all →</Link>}
+        >
+          <div className="lms-home-attendance">
+            <div
+              className="lms-ring"
+              style={{
+                background: `conic-gradient(#4addb0 ${(attendance.percentage || 0) * 3.6}deg, #263650 0deg)`,
+              }}
+            >
+              <strong>
+                {attendance.percentage === null
+                  ? '—'
+                  : `${attendance.percentage}%`}
+              </strong>
+            </div>
+            <div>
+              <strong>
+                {attendance.present + attendance.late} of {attendance.total}{' '}
+                sessions attended
+              </strong>
+              <p>
+                {attendance.absent} absent · {attendance.excused} excused
+              </p>
+            </div>
           </div>
+        </LmsSectionCard>
+        {attendance.sessions.length > 0 && (
+          <LmsSectionCard
+            title="Recent sessions"
+            icon="attendance"
+            action={<Link href={lmsHref('/learn/attendance')}>View all →</Link>}
+          >
+            <ul className="lms-home-rows">
+              {attendance.sessions.slice(0, 3).map((s) => (
+                <li key={s.id}>
+                  <div>
+                    <strong>{s.title}</strong>
+                    <small>
+                      {new Date(s.startsAt).toLocaleDateString('en-IN', {
+                        timeZone: 'Asia/Kolkata',
+                      })}{' '}
+                      · {s.batch}
+                    </small>
+                  </div>
+                  <LmsStatusBadge status={s.status} />
+                </li>
+              ))}
+            </ul>
+          </LmsSectionCard>
         )}
+        {result && (
+          <LmsSectionCard title="Recent result" icon="quiz">
+            <Link href={learningItemHref(result.courseId, result.item)}>
+              {result.item.title}
+            </Link>
+            <p>
+              {result.requiresReview
+                ? 'Responses awaiting review'
+                : result.percentage === null
+                  ? 'Submitted'
+                  : `${result.percentage}%`}{' '}
+              · Attempt {result.number}
+            </p>
+          </LmsSectionCard>
+        )}
+      </div>
+      <div className="lms-home-column">
+        {discussions}
+        {batches}
+        {support}
         {certificates.length > 0 && (
-          <div>
-            <h3>Certificates · {certificates.length}</h3>
+          <LmsSectionCard title="Certificates" icon="certificate">
+            <p>
+              {certificates.length} earned certificate
+              {certificates.length === 1 ? '' : 's'}
+            </p>
             <Link href={lmsHref('/learn/certificates')}>
               View certificates →
             </Link>
-          </div>
+          </LmsSectionCard>
         )}
       </div>
-    </section>
+    </div>
   );
 }

@@ -1,15 +1,21 @@
 'use client';
 import Link from 'next/link';
+import {
+  useDashboardTheme,
+  DashboardThemeToggle,
+} from '../dashboard/theme/DashboardTheme';
 import { usePathname } from 'next/navigation';
 import type { AccountIdentity } from '../auth/UserAvatar';
-import { UserAvatar } from '../auth/UserAvatar';
+import { LmsIcon } from './LmsPrimitives';
+import { AccountMenu } from '../auth/AccountMenu';
+import { useClerk } from '@clerk/nextjs';
 import { Brand } from '../layout/Brand';
 import { lmsHref, websiteHref, lmsInternalPath } from '@/lib/platform/domains';
 const primary = [
   ['Home', '/learn'],
   ['Learn', '/learn/lectures'],
   ['Chat', '/learn/chat'],
-  ['Support', '/dashboard/support'],
+  ['Support', '/learn/support'],
 ] as const;
 const secondary = [
   ['Lectures', '/learn/lectures'],
@@ -26,11 +32,15 @@ export function LmsShell({
   user: AccountIdentity;
   children: React.ReactNode;
 }) {
+  const { signOut } = useClerk();
+  const { theme } = useDashboardTheme();
   const rawPath = usePathname();
   const path = lmsInternalPath(rawPath) || rawPath;
-  const learning = path !== '/learn' && path !== '/learn/chat';
+  const learning =
+    !['/learn', '/learn/chat', '/learn/profile'].includes(path) &&
+    !path.startsWith('/learn/support');
   return (
-    <div className="lms-shell" data-lms-theme="dark">
+    <div className="lms-shell" data-lms-theme={theme}>
       <a className="lms-skip" href="#lms-content">
         Skip to learning content
       </a>
@@ -46,23 +56,36 @@ export function LmsShell({
                 }
                 prefetch={false}
                 aria-current={
-                  (href === '/learn/lectures' ? learning : path === href)
+                  (
+                    href === '/learn/lectures'
+                      ? learning
+                      : href === '/learn/support'
+                        ? path.startsWith(href)
+                        : path === href
+                  )
                     ? 'page'
                     : undefined
                 }
               >
+                <LmsIcon name={label.toLowerCase()} />
                 {label}
               </Link>
             ))}
           </nav>
-          <Link
-            className="lms-account"
-            href={websiteHref('/dashboard/profile')}
-            aria-label="Manage your account"
-          >
-            <UserAvatar user={user} />
-            <span>{user.name || 'Your account'}</span>
-          </Link>
+          <div className="lms-header-controls">
+            <DashboardThemeToggle className="lms-theme-toggle" />
+            <AccountMenu
+              user={user}
+              className="lms-account-menu"
+              links={[
+                { label: 'Profile', href: lmsHref('/learn/profile') },
+                { label: 'Support', href: lmsHref('/learn/support') },
+              ]}
+              onSignOut={async () => {
+                await signOut({ redirectUrl: lmsHref('/learn') });
+              }}
+            />
+          </div>
         </div>
       </header>
       {learning && (
@@ -89,6 +112,21 @@ export function LmsShell({
                   : undefined
               }
             >
+              <LmsIcon
+                name={
+                  label === 'Lectures'
+                    ? 'lesson'
+                    : label === 'Assignments'
+                      ? 'assignment'
+                      : label === 'Resources'
+                        ? 'resource'
+                        : label === 'Discussions'
+                          ? 'chat'
+                          : label === 'Certificates'
+                            ? 'certificate'
+                            : 'attendance'
+                }
+              />
               {label}
             </Link>
           ))}

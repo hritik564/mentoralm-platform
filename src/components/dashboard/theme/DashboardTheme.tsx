@@ -1,7 +1,9 @@
 'use client';
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import {
   dashboardThemeCookie,
+  productThemeCookie,
+  productThemeCookieAttributes,
   type DashboardTheme as Theme,
 } from '../../../lib/dashboard/theme';
 const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({
@@ -11,14 +13,23 @@ const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({
 export function DashboardTheme({
   initialTheme,
   children,
+  migratePreference = false,
 }: {
   initialTheme: Theme;
+  migratePreference?: boolean;
   children: React.ReactNode;
 }) {
   const [theme, setTheme] = useState(initialTheme);
+  useEffect(() => {
+    if (migratePreference) {
+      document.cookie = `${productThemeCookie}=${initialTheme}; ${productThemeCookieAttributes(location.hostname, location.protocol)}`;
+      document.cookie = `${dashboardThemeCookie}=; Path=/dashboard; Max-Age=0; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+    }
+  }, [initialTheme, migratePreference]);
   function toggle() {
     const next = theme === 'light' ? 'dark' : 'light';
-    document.cookie = `${dashboardThemeCookie}=${next}; Path=/dashboard; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
+    document.cookie = `${productThemeCookie}=${next}; ${productThemeCookieAttributes(location.hostname, location.protocol)}`;
+    document.cookie = `${dashboardThemeCookie}=; Path=/dashboard; Max-Age=0; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`;
     setTheme(next);
   }
   return (
@@ -30,12 +41,16 @@ export function DashboardTheme({
 export function useDashboardTheme() {
   return useContext(ThemeContext);
 }
-export function DashboardThemeToggle() {
+export function DashboardThemeToggle({
+  className = 'dashboard-theme-toggle',
+}: {
+  className?: string;
+}) {
   const { theme, toggle } = useDashboardTheme();
   return (
     <button
       type="button"
-      className="dashboard-theme-toggle"
+      className={className}
       aria-label="Dark mode"
       aria-pressed={theme === 'dark'}
       title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}

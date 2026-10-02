@@ -180,6 +180,18 @@ export async function academicFixture(
     data: { batchId: batch.id, userId, joinedAt: new Date('2020-01-01') },
   });
   const session = await db.batchSession.create({
+    select: {
+      id: true,
+      batchId: true,
+      courseId: true,
+      itemId: true,
+      title: true,
+      startsAt: true,
+      endsAt: true,
+      status: true,
+      externalTargetId: true,
+      locationLabel: true,
+    },
     data: {
       batchId: batch.id,
       courseId: course.id,

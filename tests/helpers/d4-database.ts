@@ -36,6 +36,10 @@ export function testDatabaseUrl(): string | null {
   }
   return url.toString();
 }
+export function migrationCount() {
+  return readdirSync('prisma/migrations').filter((m) => /^\d{14}_/.test(m))
+    .length;
+}
 export async function isolatedDatabase(
   requestedSchema?: string,
   throughMigration?: string,

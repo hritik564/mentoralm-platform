@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LmsStatusBadge } from './LmsPrimitives';
 import { lmsHref, websiteHref } from '@/lib/platform/domains';
 import { UserAvatar, type AccountIdentity } from '../auth/UserAvatar';
 import type {
@@ -89,11 +90,13 @@ export function BatchList({ batches }: { batches: LmsBatch[] }) {
               assigned
             </span>
           </div>
-          <span className="lms-status">
-            {batch.membershipStatus === 'INACTIVE'
-              ? 'Inactive membership'
-              : batch.status.toLowerCase()}
-          </span>
+          <LmsStatusBadge
+            status={
+              batch.membershipStatus === 'INACTIVE'
+                ? 'Inactive membership'
+                : batch.status
+            }
+          />
         </li>
       ))}
     </ul>

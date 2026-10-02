@@ -17,7 +17,8 @@ export function AttemptPlayer({
         null,
     ),
     [busy, setBusy] = useState(false),
-    [message, setMessage] = useState('');
+    [message, setMessage] = useState(''),
+    [questionIndex, setQuestionIndex] = useState(0);
   const feedback = useRef<HTMLParagraphElement>(null);
   const result = useRef<HTMLDivElement>(null),
     router = useRouter();
@@ -41,6 +42,7 @@ export function AttemptPlayer({
   }
   async function start() {
     setBusy(true);
+    setQuestionIndex(0);
     setMessage('');
     try {
       setAttempt(await post('/start', {}));
@@ -161,6 +163,19 @@ export function AttemptPlayer({
               </p>
             </div>
           )}
+          {!submitted && (
+            <div className="lms-question-progress">
+              <span role="status">
+                Question {Math.min(questionIndex + 1, attempt.questions.length)}{' '}
+                of {attempt.questions.length}
+              </span>
+              <progress
+                aria-label="Question navigation progress"
+                value={questionIndex + 1}
+                max={attempt.questions.length}
+              />
+            </div>
+          )}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -170,7 +185,11 @@ export function AttemptPlayer({
             <fieldset disabled={busy || submitted}>
               <legend className="sr-only">Attempt answers</legend>
               {attempt.questions.map((q, index) => (
-                <fieldset className="l3-question" key={q.id}>
+                <fieldset
+                  className="l3-question"
+                  key={q.id}
+                  hidden={!submitted && index !== questionIndex}
+                >
                   <legend>
                     <span>{index + 1}.</span> {q.prompt}
                   </legend>
@@ -214,6 +233,22 @@ export function AttemptPlayer({
             </fieldset>
             {!submitted && (
               <div className="l3-form-actions">
+                <button
+                  type="button"
+                  disabled={busy || questionIndex === 0}
+                  onClick={() => setQuestionIndex((i) => i - 1)}
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    busy || questionIndex >= attempt.questions.length - 1
+                  }
+                  onClick={() => setQuestionIndex((i) => i + 1)}
+                >
+                  Next question
+                </button>
                 <button type="submit" disabled={busy}>
                   Save answers
                 </button>

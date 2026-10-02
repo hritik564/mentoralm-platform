@@ -2,10 +2,18 @@ import { PrivateMedia } from './PrivateMedia';
 import type { LearningRepository } from '@/lib/lms/learning';
 import type { LessonContent } from '@/lib/lms/content';
 import type { ReactNode } from 'react';
-export function StructuredContent({ content }: { content: LessonContent }) {
+export function StructuredContent({
+  content,
+  title,
+}: {
+  content: LessonContent;
+  title?: string;
+}) {
   return (
     <div className="l2-structured">
       {content.blocks.map((block, index) => {
+        if (index === 0 && block.type === 'heading' && block.text === title)
+          return null;
         let node: ReactNode;
         switch (block.type) {
           case 'heading':
@@ -68,7 +76,9 @@ export function LessonDelivery({
     );
   return (
     <div className="l2-delivery">
-      {lesson.content && <StructuredContent content={lesson.content} />}{' '}
+      {lesson.content && (
+        <StructuredContent content={lesson.content} title={lesson.title} />
+      )}{' '}
       {(lesson.format === 'VIDEO' || lesson.format === 'IMAGE') && (
         <PrivateMedia
           key={media}

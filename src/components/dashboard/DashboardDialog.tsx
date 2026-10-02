@@ -4,10 +4,12 @@ export function DashboardDialog({
   title,
   onClose,
   children,
+  className = 'd3-dialog',
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  className?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const id = useId();
@@ -25,7 +27,7 @@ export function DashboardDialog({
   }, []);
   return (
     <dialog
-      className="d3-dialog"
+      className={className}
       ref={dialog}
       aria-labelledby={id}
       onCancel={(event) => {

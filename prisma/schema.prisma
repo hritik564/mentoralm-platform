@@ -65,6 +65,8 @@ model User {
   communicationPreferences CommunicationPreference[]
   communicationDeliveries  CommunicationDelivery[]
   communicationMessages    CommunicationMessage[]
+  taughtSessions           BatchSession[]            @relation("SessionInstructor")
+  roleAssignments          UserRoleAssignment[]
   role                     Role                      @default(STUDENT)
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
@@ -79,6 +81,16 @@ model User {
   referrals                ReferralAttribution[]     @relation("Referrer")
 
   @@unique([id, role])
+}
+
+model UserRoleAssignment {
+  userId    String
+  role      Role
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@id([userId, role])
+  @@index([role])
 }
 
 model StudentProfile {
@@ -647,6 +659,11 @@ model BatchSession {
   externalTargetId String?
   attendance       AttendanceRecord[]
 
+  instructorId String?
+  instructor   User?                  @relation("SessionInstructor", fields: [instructorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  recording    BatchSessionRecording?
+
+  @@index([instructorId])
   @@index([batchId, startsAt])
 }
 
@@ -790,4 +807,36 @@ model LearningEvent {
   occurredAt DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([kind, occurredAt])
+}
+
+enum BatchSessionRecordingStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  PUBLISHED
+  FAILED
+}
+
+model BatchSessionRecording {
+  sessionId          String                      @id
+  session            BatchSession                @relation(fields: [sessionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  revision           String                      @unique @default(uuid()) @db.Uuid
+  storageProvider    String
+  assetRef           String?
+  title              String?
+  description        String?
+  fileName           String?
+  mimeType           String?
+  bytes              BigInt?
+  durationSeconds    Int?
+  status             BatchSessionRecordingStatus @default(UPLOADING)
+  readyAt            DateTime?                   @db.Timestamptz(6)
+  publishedAt        DateTime?                   @db.Timestamptz(6)
+  cleanupRequestedAt DateTime?                   @db.Timestamptz(6)
+  createdAt          DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime                    @updatedAt @db.Timestamptz(6)
+
+  @@unique([storageProvider, assetRef])
+  @@index([status, updatedAt])
+  @@index([cleanupRequestedAt])
 }
