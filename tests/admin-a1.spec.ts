@@ -1,9 +1,10 @@
+import { legacyAdminPermissions } from '../src/lib/admin/permissions';
 import { test, expect } from '@playwright/test';
 import { loadEnvConfig } from '@next/env';
 import { createClerkClient } from '@clerk/backend';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { localSeedUrl, verifyDatabase } from '../scripts/lms-owner/safety';
+import { testDatabaseUrl } from './helpers/d4-database';
 import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 import AxeBuilder from '@axe-core/playwright';
@@ -38,12 +39,13 @@ test('Real Admin workflows, persisted role denial, private recording foundation 
 }) => {
   const db = new PrismaClient({
       adapter: new PrismaPg(
-        { connectionString: localSeedUrl(process.env) },
-        { schema: 'public' },
+        { connectionString: testDatabaseUrl()! },
+        { schema: process.env.D4_TEST_SCHEMA! },
       ),
     }),
     clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
-  await verifyDatabase(db);
+  if (!/^d4_[a-f0-9]{24}$/.test(process.env.D4_TEST_SCHEMA || ''))
+    throw Error('Isolated Test schema required');
   const suffix = randomUUID().slice(0, 8),
     identities: string[] = [],
     actors: string[] = [],
@@ -66,6 +68,13 @@ test('Real Admin workflows, persisted role denial, private recording foundation 
       data: {
         clerkUserId: u.id,
         role,
+        ...(role === 'ADMIN'
+          ? {
+              adminAuthorization: {
+                create: { permissions: legacyAdminPermissions },
+              },
+            }
+          : {}),
         ...(role === 'STUDENT'
           ? { lmsAccessOverride: 'ENABLED' as const }
           : {}),
@@ -422,25 +431,7 @@ test('Real Admin workflows, persisted role denial, private recording foundation 
     await page.getByRole('button', { name: 'Log out', exact: true }).click();
     await expect(page).toHaveURL(/\/admin-auth\/sign-in/);
   } finally {
-    await db.academicAudit.deleteMany({ where: { actorId: { in: actors } } });
-    await db.batchSessionRecording.deleteMany({
-      where: { session: { batchId: { in: batches } } },
-    });
-    await db.batchSession.deleteMany({ where: { batchId: { in: batches } } });
-    await db.batchMembership.deleteMany({
-      where: { batchId: { in: batches } },
-    });
-    await db.batchInstructor.deleteMany({
-      where: { batchId: { in: batches } },
-    });
-    await db.batch.deleteMany({ where: { id: { in: batches } } });
-    await db.enrollment.deleteMany({ where: { userId: { in: actors } } });
-    await db.learningItem.deleteMany({
-      where: { section: { courseId: { in: courses } } },
-    });
-    await db.section.deleteMany({ where: { courseId: { in: courses } } });
-    await db.course.deleteMany({ where: { id: { in: courses } } });
-    await db.user.deleteMany({ where: { id: { in: actors } } });
+    // Immutable audit and all business fixtures are removed only by isolated-schema teardown.
     for (const id of identities) await clerk.users.deleteUser(id);
     await db.$disconnect();
   }

@@ -5,7 +5,7 @@ import { join, relative, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { AcademicCore, itemContext } from './core';
 import { StudentError } from '../../student/errors';
-import { requireAdmin } from '../../auth/roles';
+import { requireAdminPermission } from '../../auth/admin-policy';
 import { validatePrivateContent } from '../../storage/private-files';
 import { uploadTypes } from '../../storage/submissions';
 import { lessonMimes } from '../../lms/content';
@@ -168,7 +168,7 @@ export class AcademicMedia extends AcademicCore {
   }
   /** Trusted operator repair for interrupted uploads/replacements. Run after stopping active authoring; no background provider invented. */
   async reconcile() {
-    await requireAdmin(this.db, this.actorId);
+    await requireAdminPermission(this.db, this.actorId, 'ACADEMICS_MANAGE');
     const rows = await this.db.academicAudit.findMany({
       where: {
         action: {

@@ -45,7 +45,11 @@
     "dev:academic-media-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/reconcile-media.ts",
     "test:a3:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-a3-domain.test.ts tests/admin-a3-migration.test.ts",
     "test:a3": "playwright test --config=playwright.admin-a3.config.ts",
-    "db:migrate:a3:local": "tsx scripts/admin-a3/migrate.ts"
+    "db:migrate:a3:local": "tsx scripts/admin-a3/migrate.ts",
+    "test:a4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-a4-domain.test.ts",
+    "test:a4": "playwright test --config=playwright.admin-a4.config.ts",
+    "db:migrate:a4:local": "tsx scripts/admin-a4/migrate.ts",
+    "dev:admin-governance": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/governance.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",

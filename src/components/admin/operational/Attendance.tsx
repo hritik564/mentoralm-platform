@@ -1,4 +1,5 @@
 'use client';
+import { useAdminAccess } from '../AdminShell';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAdminData, adminRequest } from '../client';
@@ -8,6 +9,7 @@ import { OperationalFrame } from './Frame';
 import { adminHref } from '@/lib/platform/domains';
 import type { Session } from './types';
 export function AttendanceSession({ reference }: { reference: string }) {
+  const access = useAdminAccess();
   const [page, setPage] = useState(1),
     [selected, setSelected] = useState<string[]>([]),
     [states, setStates] = useState<Record<string, string>>({}),
@@ -150,9 +152,15 @@ export function AttendanceSession({ reference }: { reference: string }) {
                     />
                   </td>
                   <td>
-                    <Link href={adminHref(`/admin/students/${r.student.ref}`)}>
-                      {r.student.name}
-                    </Link>
+                    {access.permissions.includes('STUDENTS_MANAGE') ? (
+                      <Link
+                        href={adminHref(`/admin/students/${r.student.ref}`)}
+                      >
+                        {r.student.name}
+                      </Link>
+                    ) : (
+                      <span>{r.student.name}</span>
+                    )}
                   </td>
                   <td>
                     <Pill>{r.status}</Pill>

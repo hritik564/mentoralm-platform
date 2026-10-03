@@ -68,6 +68,7 @@ model User {
   communicationMessages    CommunicationMessage[]
   taughtSessions           BatchSession[]            @relation("SessionInstructor")
   roleAssignments          UserRoleAssignment[]
+  adminAuthorization       AdminAuthorization?
   role                     Role                      @default(STUDENT)
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
@@ -722,6 +723,9 @@ model AcademicAudit {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([targetId, createdAt])
+  @@index([createdAt(sort: Desc), id(sort: Desc)])
+  @@index([actorId, createdAt(sort: Desc), id(sort: Desc)])
+  @@index([action, createdAt(sort: Desc), id(sort: Desc)])
 }
 
 enum CommunicationChannel {
@@ -854,4 +858,36 @@ model BatchSessionRecording {
   @@unique([storageProvider, assetRef])
   @@index([status, updatedAt])
   @@index([cleanupRequestedAt])
+}
+
+enum AdminAuthority {
+  SCOPED
+  GOVERNANCE
+}
+
+enum AdminPermission {
+  STUDENTS_MANAGE
+  BATCHES_MANAGE
+  ACADEMICS_MANAGE
+  ATTENDANCE_MANAGE
+  CERTIFICATES_MANAGE
+  DISCUSSIONS_MANAGE
+  SUPPORT_MANAGE
+  COMMUNICATIONS_MANAGE
+  REFERRALS_VIEW
+  USERS_VIEW
+  AUDIT_VIEW
+  SETTINGS_VIEW
+}
+
+model AdminAuthorization {
+  userId      String            @id
+  user        User              @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  authority   AdminAuthority    @default(SCOPED)
+  permissions AdminPermission[] @default([])
+  revision    String            @default(uuid()) @db.Uuid
+  createdAt   DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @db.Timestamptz(6)
+
+  @@index([authority, userId])
 }

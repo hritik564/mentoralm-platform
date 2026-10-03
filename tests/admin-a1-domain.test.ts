@@ -1,3 +1,4 @@
+import { legacyAdminPermissions } from '../src/lib/admin/permissions';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isolatedDatabase, testDatabaseUrl } from './helpers/d4-database';
@@ -55,7 +56,13 @@ test('A1 persisted authority, Students, entitlement, Enrollment, Batches and ses
     db = f.db;
   try {
     const admin = await db.user.create({
-        data: { clerkUserId: 'admin', role: 'ADMIN' },
+        data: {
+          clerkUserId: 'admin',
+          role: 'ADMIN',
+          adminAuthorization: {
+            create: { permissions: legacyAdminPermissions },
+          },
+        },
       }),
       instructor = await db.user.create({
         data: { clerkUserId: 'teacher', role: 'INSTRUCTOR' },
@@ -227,7 +234,13 @@ test('Recording readiness, concurrency, exact Batch policy, cleanup and attendan
     db = f.db;
   try {
     const admin = await db.user.create({
-        data: { clerkUserId: 'admin', role: 'ADMIN' },
+        data: {
+          clerkUserId: 'admin',
+          role: 'ADMIN',
+          adminAuthorization: {
+            create: { permissions: legacyAdminPermissions },
+          },
+        },
       }),
       learner = await db.user.create({
         data: { clerkUserId: 'learner', lmsAccessOverride: 'ENABLED' },

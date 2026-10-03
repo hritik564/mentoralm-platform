@@ -1,5 +1,5 @@
 import 'server-only';
-import { requireAdmin as assertAdmin } from '../auth/roles';
+import { requireAdminPermission } from '../auth/admin-policy';
 import type { PrismaClient, Prisma } from '../../generated/prisma/client';
 import { StudentError } from '../student/errors';
 import { academicTransaction } from '../lms/completion';
@@ -38,7 +38,12 @@ function privateAssetRef(value: string) {
 export function configuredRecordingStore(): RecordingStore | null {
   return null;
 }
-export { requireAdmin as assertAdmin } from '../auth/roles';
+export async function assertAdmin(
+  db: Prisma.TransactionClient,
+  userId: string,
+) {
+  await requireAdminPermission(db, userId, 'BATCHES_MANAGE');
+}
 export async function recordingContext(
   db: Prisma.TransactionClient,
   sessionId: string,
@@ -104,14 +109,26 @@ export class AdminRecordings {
       });
       // The durable row exists before external creation. Uncertain outcomes retain revision for reconciliation.
       const asset = await this.store.begin(record.revision);
-      await this.db.batchSessionRecording.updateMany({
-        where: {
-          sessionId,
-          revision: record.revision,
-          status: 'UPLOADING',
-          cleanupRequestedAt: null,
-        },
-        data: { assetRef: privateAssetRef(asset.assetRef) },
+      await academicTransaction(this.db, async (tx) => {
+        await assertAdmin(tx, this.actorId);
+        const bound = await tx.batchSessionRecording.updateMany({
+          where: {
+            sessionId,
+            revision: record.revision,
+            status: 'UPLOADING',
+            cleanupRequestedAt: null,
+          },
+          data: { assetRef: privateAssetRef(asset.assetRef) },
+        });
+        if (bound.count !== 1) throw new StudentError('CONFLICT');
+        await tx.academicAudit.create({
+          data: {
+            actorId: this.actorId,
+            action: 'RecordingUploadBound',
+            targetId: sessionId,
+            details: { revision: record.revision },
+          },
+        });
       });
       return;
     }
@@ -232,8 +249,8 @@ export class AdminRecordings {
   }
   /** Trusted adapter callback boundary, never a client action. Caller must verify provider signature. */
   async reconcile(sessionId: string, revision: string) {
-    if (!this.store) throw new StudentError('UNAVAILABLE');
     await assertAdmin(this.db, this.actorId);
+    if (!this.store) throw new StudentError('UNAVAILABLE');
     const r = await this.db.batchSessionRecording.findUnique({
       where: { sessionId },
     });

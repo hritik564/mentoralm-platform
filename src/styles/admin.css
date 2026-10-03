@@ -864,3 +864,42 @@
 .admin-recording-drop + .admin-callout {
   margin-top: 16px;
 }
+
+.admin-form-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-block: 16px;
+}
+.admin-form fieldset {
+  min-width: 0;
+  border: 1px solid var(--a-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+.admin-form legend {
+  padding-inline: 6px;
+  font-weight: 600;
+}
+.admin-form .admin-check input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+button.admin-text-link {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  text-align: start;
+}
+.admin-audit-summary {
+  white-space: normal !important;
+  min-width: 200px;
+  max-width: 360px;
+  overflow-wrap: anywhere;
+}

@@ -1,12 +1,13 @@
 'use client';
 import Link from 'next/link';
+import { useAdminAccess } from '../AdminShell';
 import { useState } from 'react';
 import { useAdminData } from '../client';
 import { Table, Pager, Pill, State } from '../Primitives';
 import { Field } from '../academic/forms';
 import { adminHref } from '@/lib/platform/domains';
 import type { OperationalArea } from '@/lib/admin/operational/read';
-import type { Choice, BatchList, StudentList } from '../types';
+import type { Choice, StudentList } from '../types';
 import type { List, OperationalOverview } from './types';
 export const headings = {
   attendance: 'Attendance',
@@ -29,6 +30,7 @@ export const statuses: Record<OperationalArea, string[]> = {
   referrals: [],
 };
 export function OperationalList({ area }: { area: OperationalArea }) {
+  const access = useAdminAccess();
   const [page, setPage] = useState(1),
     [filters, setFilters] = useState<Record<string, string>>({}),
     [q, setQ] = useState(''),
@@ -39,13 +41,25 @@ export function OperationalList({ area }: { area: OperationalArea }) {
       `operations/${area}?${new URLSearchParams({ ...filters, q, page: String(page) })}`,
     ),
     courses = useAdminData<Choice[]>(
-      `choices/courses?q=${encodeURIComponent(courseQuery)}`,
+      [
+        'attendance',
+        'submissions',
+        'attempts',
+        'certificates',
+        'discussions',
+      ].includes(area)
+        ? `choices/courses?q=${encodeURIComponent(courseQuery)}`
+        : null,
     ),
-    batches = useAdminData<BatchList>(
-      `batches?q=${encodeURIComponent(batchQuery)}`,
+    batches = useAdminData<Choice[]>(
+      ['attendance', 'discussions', 'communications'].includes(area)
+        ? `choices/batches?q=${encodeURIComponent(batchQuery)}`
+        : null,
     ),
     students = useAdminData<StudentList>(
-      studentQuery ? `students?q=${encodeURIComponent(studentQuery)}` : null,
+      access.permissions.includes('STUDENTS_MANAGE') && studentQuery
+        ? `students?q=${encodeURIComponent(studentQuery)}`
+        : null,
     );
   function filter(key: string, value: string) {
     setFilters((x) => ({ ...x, [key]: value }));
@@ -61,12 +75,9 @@ export function OperationalList({ area }: { area: OperationalArea }) {
     batchFilter = ['attendance', 'discussions', 'communications'].includes(
       area,
     ),
-    studentFilter = [
-      'submissions',
-      'attempts',
-      'certificates',
-      'support',
-    ].includes(area);
+    studentFilter =
+      ['submissions', 'attempts', 'certificates', 'support'].includes(area) &&
+      access.permissions.includes('STUDENTS_MANAGE');
   return (
     <>
       <div className="admin-page-heading">
@@ -92,14 +103,15 @@ export function OperationalList({ area }: { area: OperationalArea }) {
             Plan communication
           </Link>
         )}
-        {area === 'certificates' && (
-          <Link
-            className="admin-button"
-            href={adminHref('/admin/certificates/issue')}
-          >
-            Check policy / issue
-          </Link>
-        )}
+        {area === 'certificates' &&
+          access.permissions.includes('STUDENTS_MANAGE') && (
+            <Link
+              className="admin-button"
+              href={adminHref('/admin/certificates/issue')}
+            >
+              Check policy / issue
+            </Link>
+          )}
       </div>
       <form
         className="academic-toolbar ops-filters"
@@ -181,12 +193,12 @@ export function OperationalList({ area }: { area: OperationalArea }) {
               >
                 <option value="">All Batches</option>
                 {filters.batch &&
-                  !batches.data?.rows.some((b) => b.ref === filters.batch) && (
+                  !batches.data?.some((b) => b.ref === filters.batch) && (
                     <option value={filters.batch}>Selected Batch</option>
                   )}
-                {batches.data?.rows.map((b) => (
+                {batches.data?.map((b) => (
                   <option key={b.ref} value={b.ref}>
-                    {b.name}
+                    {b.label}
                   </option>
                 ))}
               </select>
@@ -268,11 +280,15 @@ export function OperationalList({ area }: { area: OperationalArea }) {
                   {r.context}
                   {r.student && (
                     <div>
-                      <Link
-                        href={adminHref(`/admin/students/${r.student.ref}`)}
-                      >
-                        {r.student.name}
-                      </Link>
+                      {access.permissions.includes('STUDENTS_MANAGE') ? (
+                        <Link
+                          href={adminHref(`/admin/students/${r.student.ref}`)}
+                        >
+                          {r.student.name}
+                        </Link>
+                      ) : (
+                        <span>{r.student.name}</span>
+                      )}
                     </div>
                   )}
                 </td>
@@ -319,13 +335,15 @@ export function OperationalMetrics() {
               data.data.suspendedCertificates,
               'certificates',
             ],
-          ].map(([label, count, area]) => (
-            <Link key={String(area)} href={adminHref(`/admin/${area}`)}>
-              <strong>{count}</strong>
-              <span>{label}</span>
-            </Link>
-          ))}
-          {data.data.deliveries.map((d) => (
+          ]
+            .filter(([, count]) => count !== undefined)
+            .map(([label, count, area]) => (
+              <Link key={String(area)} href={adminHref(`/admin/${area}`)}>
+                <strong>{count}</strong>
+                <span>{label}</span>
+              </Link>
+            ))}
+          {data.data.deliveries?.map((d) => (
             <div key={d.status}>
               <strong>{d.count}</strong>
               <span>{d.status} deliveries</span>

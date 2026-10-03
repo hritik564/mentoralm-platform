@@ -93,7 +93,8 @@ test('Additional ADMIN is persisted, revocable and preserves Student domain hist
       );
       assert.ok(hasRole(await getEffectiveRoles(db, student.id), 'STUDENT'));
       assert.ok(hasRole(await getEffectiveRoles(db, student.id), 'ADMIN'));
-      await admin.overview();
+      assert.deepEqual((await admin.overview()).metrics, {});
+      await assert.rejects(admin.students(), { code: 'FORBIDDEN' });
     });
     await t.test(
       'Student LMS still enforces entitlement and Enrollment',

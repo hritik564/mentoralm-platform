@@ -1,3 +1,4 @@
+import { legacyAdminPermissions } from '../../src/lib/admin/permissions';
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile, rm, mkdtemp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -18,6 +19,8 @@ import { LearningRepository } from '../../src/lib/lms/learning';
 import { StudentRepository } from '../../src/lib/student/repository';
 import { AdminOperationalRepository } from '../../src/lib/admin/operational/read';
 import { adminHandle as h } from '../../src/lib/admin/handles';
+const a4 = process.env.ADMIN_REVIEW_PHASE === 'a4';
+const reviewDirectory = `docs/reviews/admin-${a4 ? 'a4' : 'a3'}`;
 async function main() {
   const f = await isolatedDatabase(process.env.A3_TEST_SCHEMA),
     root = await mkdtemp(join(tmpdir(), 'mentoralm-a3-browser-')),
@@ -31,7 +34,7 @@ async function main() {
     await rm(root, { recursive: true, force: true });
     if (temporaryClerkId) await clerk.users.deleteUser(temporaryClerkId);
     await dev.$disconnect();
-    await rm('docs/reviews/admin-a3/fixture.json', { force: true });
+    await rm(`${reviewDirectory}/fixture.json`, { force: true });
   }
   try {
     await verifyDatabase(dev);
@@ -47,13 +50,21 @@ async function main() {
     });
     await requireAdmin(dev, realOwner.id);
     const before = await studentSnapshot(dev, realOwner.id);
-    await mkdir('docs/reviews/admin-a3', { recursive: true });
+    await mkdir(reviewDirectory, { recursive: true });
     // Same real Clerk owner; only an isolated Test representation, never another Development identity.
     const owner = await f.db.user.create({
       data: { clerkUserId: realOwner.clerkUserId, role: 'STUDENT' },
     });
     await f.db.userRoleAssignment.create({
       data: { userId: owner.id, role: 'ADMIN' },
+    });
+    await f.db.adminAuthorization.create({
+      data: {
+        userId: owner.id,
+        ...(a4
+          ? { authority: 'GOVERNANCE' as const }
+          : { permissions: legacyAdminPermissions }),
+      },
     });
     const temporary = await clerk.users.createUser({
       emailAddress: [`a3-${randomUUID()}+clerk_test@example.com`],
@@ -147,7 +158,7 @@ async function main() {
         body: 'This is a provider-pending test plan. Nothing is sent.',
       });
     await writeFile(
-      'docs/reviews/admin-a3/fixture.json',
+      `${reviewDirectory}/fixture.json`,
       JSON.stringify({
         schema: f.schema,
         filesRoot: root,
@@ -159,6 +170,8 @@ async function main() {
         courseId: x.course.id,
         lessonId: x.lesson.id,
         refs: {
+          user: h('user', student.id),
+          course: h('course', x.course.id),
           attendance: h('session', x.session.id),
           submissions: h('submission', submission.id),
           attempts: h('attempt', a.id),
@@ -185,7 +198,7 @@ async function main() {
         '--hostname',
         '127.0.0.1',
         '--port',
-        '3103',
+        a4 ? '3104' : '3103',
       ],
       { stdio: 'inherit', env },
     );

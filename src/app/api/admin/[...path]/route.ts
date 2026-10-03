@@ -17,7 +17,6 @@ async function handler(
     const actor = await requireAdminActor(),
       db = getDatabase(),
       repo = new AdminRepository(db, actor.id, clerkDirectory);
-    await repo.authorize();
     const { path } = await params,
       [area, ref, action] = path;
     const q = Object.fromEntries(new URL(request.url).searchParams);
@@ -35,7 +34,7 @@ async function handler(
       if (
         area === 'choices' &&
         path.length === 2 &&
-        ['courses', 'programs', 'instructors', 'items'].includes(ref)
+        ['courses', 'programs', 'instructors', 'items', 'batches'].includes(ref)
       )
         return privateJson(
           await repo.choices(

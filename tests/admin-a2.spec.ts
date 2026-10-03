@@ -1,9 +1,10 @@
+import { refreshTestSession } from './helpers/clerk-session';
 import { test, expect } from '@playwright/test';
 import { loadEnvConfig } from '@next/env';
 import { createClerkClient } from '@clerk/backend';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { localSeedUrl, verifyDatabase } from '../scripts/lms-owner/safety';
+import { testDatabaseUrl } from './helpers/d4-database';
 import { studentSnapshot } from '../scripts/admin-owner/snapshot';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
@@ -30,8 +31,8 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
 }) => {
   const db = new PrismaClient({
       adapter: new PrismaPg(
-        { connectionString: localSeedUrl(process.env) },
-        { schema: 'public' },
+        { connectionString: testDatabaseUrl()! },
+        { schema: process.env.D4_TEST_SCHEMA! },
       ),
     }),
     clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY }),
@@ -45,7 +46,8 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
     bankId: string | undefined,
     batchId: string | undefined;
   try {
-    await verifyDatabase(db);
+    if (!/^d4_[a-f0-9]{24}$/.test(process.env.D4_TEST_SCHEMA || ''))
+      throw Error('Isolated Test schema required');
     await mkdir('docs/reviews/admin-a2', { recursive: true });
     const users = (
       await clerk.users.getUserList({
@@ -91,7 +93,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
     async function post(path: string, body: unknown) {
       const r = await page.request.post(`/api/admin/${path}`, {
         data: body,
-        headers: { origin: 'http://127.0.0.1:3000' },
+        headers: { origin: 'http://127.0.0.1:3100' },
       });
       expect(r.status(), `${path}: ${await r.text()}`).toBe(200);
       return (await r.json()) as { ref: string };
@@ -326,9 +328,10 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
         {
           name: 'mentoralm-product-theme',
           value: theme,
-          url: 'http://127.0.0.1:3000',
+          url: 'http://127.0.0.1:3100',
         },
       ]);
+      await refreshTestSession(page);
       await page.goto(`/admin/courses/${courseRef}`);
       await expect(
         page.getByRole('button', { name: 'Welcome to AI', exact: true }),
@@ -365,6 +368,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
       ).toBeVisible();
       await screenshot(`1440-live-session-academic-${theme}`, true);
       await close();
+      await refreshTestSession(page);
       await page.goto(`/admin/question-banks/${bank.ref}`);
       await expect(
         page.getByText('Which practice supports clear prompts?', {
@@ -384,6 +388,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
       await screenshot(`1440-programs-courses-${theme}`, true);
     }
     // Publish the real configured hierarchy through UI; no Enrollment gets created by publishing.
+    await refreshTestSession(page);
     await page.goto(`/admin/courses/${courseRef}`);
     await page
       .getByRole('button', { name: 'Welcome to AI', exact: true })
@@ -421,7 +426,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
             structuredContent: '<iframe>',
             durationSeconds: null,
           },
-          headers: { origin: 'http://127.0.0.1:3000' },
+          headers: { origin: 'http://127.0.0.1:3100' },
         })
       ).status(),
     ).toBe(400);
@@ -437,7 +442,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
       (
         await page.request.post('/api/admin/academic/programs', {
           data: { title: 'x', role: 'ADMIN' },
-          headers: { origin: 'http://127.0.0.1:3000' },
+          headers: { origin: 'http://127.0.0.1:3100' },
         })
       ).status(),
     ).toBe(400);
@@ -445,7 +450,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
       (
         await page.request.post('/api/admin/academic/programs', {
           data: { title: 'x'.repeat(17000) },
-          headers: { origin: 'http://127.0.0.1:3000' },
+          headers: { origin: 'http://127.0.0.1:3100' },
         })
       ).status(),
     ).toBe(400);
@@ -456,6 +461,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
     ).toBe(404);
     for (const width of [1024, 820, 390]) {
       await page.setViewportSize({ width, height: 1000 });
+      await refreshTestSession(page);
       await page.goto(`/admin/courses/${courseRef}`);
       await expect(
         page.getByRole('button', { name: 'Welcome to AI', exact: true }),
@@ -488,48 +494,7 @@ test('Real owner A2 authoring, draft/publish gates, responsive editors, keyboard
       JSON.stringify({ before, after, unchanged: true }, null, 2),
     );
   } finally {
-    // Delete only the exact randomized review fixtures; existing owner identity/roles/history are untouched.
-    if (courseId) {
-      const parts = await db.section.findMany({
-        where: { courseId },
-        include: { items: { select: { id: true } } },
-      });
-      fixtureTargets.push(
-        ...parts.flatMap((s) => [s.id, ...s.items.map((i) => i.id)]),
-      );
-    }
-    if (bankId)
-      fixtureTargets.push(
-        ...(
-          await db.question.findMany({
-            where: { bankId },
-            select: { id: true },
-          })
-        ).map((q) => q.id),
-      );
-    if (batchId)
-      fixtureTargets.push(
-        ...(
-          await db.batchSession.findMany({
-            where: { batchId },
-            select: { id: true },
-          })
-        ).map((s) => s.id),
-      );
-    if (batchId) {
-      await db.batchSession.deleteMany({ where: { batchId } });
-      await db.batch.delete({ where: { id: batchId } });
-    }
-    if (courseId) await db.course.delete({ where: { id: courseId } });
-    if (bankId) {
-      await db.question.deleteMany({ where: { bankId } });
-      await db.questionBank.delete({ where: { id: bankId } });
-    }
-    if (programId) await db.program.delete({ where: { id: programId } });
-    if (fixtureTargets.length)
-      await db.academicAudit.deleteMany({
-        where: { targetId: { in: fixtureTargets } },
-      });
+    // Immutable audit and all business fixtures are removed only by isolated-schema teardown.
     if (sessionId)
       await clerk.sessions.revokeSession(sessionId).catch(() => {});
     if (tokenId)

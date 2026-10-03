@@ -59,7 +59,7 @@ export function deploymentAdminOrigin() {
 }
 export function adminHref(path: string) {
   if (
-    !/^\/admin(?:\/(?:students|batches|courses|question-banks|assessments|assignments|attendance|submissions|attempts|certificates|discussions|support|communications|referrals)(?:\/[a-zA-Z0-9_-]{1,500})?)?$/.test(
+    !/^\/admin(?:\/(?:students|batches|courses|question-banks|assessments|assignments|attendance|submissions|attempts|certificates|discussions|support|communications|referrals|users|audit|settings|instructors)(?:\/[a-zA-Z0-9_-]{1,500})?)?$/.test(
       path,
     )
   )
@@ -75,7 +75,7 @@ export function adminSignInPath(host: string) {
 }
 export function adminDestination(value: unknown) {
   return typeof value === 'string' &&
-    /^\/admin(?:\/(?:students|batches|courses|question-banks|assessments|assignments|attendance|submissions|attempts|certificates|discussions|support|communications|referrals)(?:\/[a-zA-Z0-9_-]{1,500})?)?$/.test(
+    /^\/admin(?:\/(?:students|batches|courses|question-banks|assessments|assignments|attendance|submissions|attempts|certificates|discussions|support|communications|referrals|users|audit|settings|instructors)(?:\/[a-zA-Z0-9_-]{1,500})?)?$/.test(
       value,
     )
     ? value

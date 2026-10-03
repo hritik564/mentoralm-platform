@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
+import { BulkAccess } from './governance/BulkAccess';
 import { useAdminData } from './client';
 import { State, Pager, Table, AccessPill, DateText, Pill } from './Primitives';
 import { BatchEditor } from './editors';
@@ -48,71 +49,84 @@ export function AdminOverview() {
                 data.metrics.support,
                 'Open or in-progress tickets',
               ],
-            ].map(([label, value, caption]) => (
-              <section key={label} className="admin-card metric">
-                <span className="admin-metric-icon" aria-hidden="true">
-                  ◇
-                </span>
-                <div>
-                  <h2>{label}</h2>
-                  <strong>{Number(value).toLocaleString()}</strong>
-                  <p>{caption}</p>
-                </div>
-              </section>
-            ))}
+            ]
+              .filter(([, value]) => value !== undefined)
+              .map(([label, value, caption]) => (
+                <section key={label} className="admin-card metric">
+                  <span className="admin-metric-icon" aria-hidden="true">
+                    ◇
+                  </span>
+                  <div>
+                    <h2>{label}</h2>
+                    <strong>{Number(value).toLocaleString()}</strong>
+                    <p>{caption}</p>
+                  </div>
+                </section>
+              ))}
           </div>
           <div className="admin-grid">
-            <section className="admin-card">
-              <h2>Needs attention</h2>
-              <div className="admin-attention-row">
-                <span>Support tickets awaiting resolution</span>
-                <Pill>{data.metrics.support}</Pill>
-              </div>
-              <div className="admin-attention-row">
-                <span>Students without effective LMS access</span>
-                <Pill>{data.metrics.students - data.metrics.enabled}</Pill>
-              </div>
-              <Link
-                className="admin-text-link"
-                href={`${adminHref('/admin/students')}?access=disabled`}
-              >
-                Review student access →
-              </Link>
-            </section>
-            <section className="admin-card">
-              <h2>Learning snapshot</h2>
-              <dl className="admin-key-values">
-                <div>
-                  <dt>Effective LMS access</dt>
-                  <dd>{data.metrics.enabled} students</dd>
-                </div>
-                <div>
-                  <dt>Active Enrollments</dt>
-                  <dd>{data.metrics.enrollments}</dd>
-                </div>
-                <div>
-                  <dt>Active Batches</dt>
-                  <dd>{data.metrics.batches}</dd>
-                </div>
-              </dl>
-            </section>
-            <section className="admin-card admin-wide">
-              <h2>Recent activity</h2>
-              {data.events.length ? (
-                data.events.map((e, i) => (
-                  <div key={i} className="admin-activity">
-                    <span>{e.action.replace(/([a-z])([A-Z])/g, '$1 $2')}</span>
-                    <time dateTime={e.at}>
-                      {new Date(e.at).toLocaleString('en-GB')}
-                    </time>
+            {data.metrics.students !== undefined && (
+              <section className="admin-card">
+                <h2>Needs attention</h2>
+                {data.metrics.support !== undefined && (
+                  <div className="admin-attention-row">
+                    <span>Support tickets awaiting resolution</span>
+                    <Pill>{data.metrics.support}</Pill>
                   </div>
-                ))
-              ) : (
-                <p className="admin-muted">
-                  No audit activity has been recorded yet.
-                </p>
+                )}
+                <div className="admin-attention-row">
+                  <span>Students without effective LMS access</span>
+                  <Pill>{data.metrics.students - data.metrics.enabled}</Pill>
+                </div>
+                <Link
+                  className="admin-text-link"
+                  href={`${adminHref('/admin/students')}?access=disabled`}
+                >
+                  Review student access →
+                </Link>
+              </section>
+            )}
+            {data.metrics.batches !== undefined &&
+              data.metrics.enabled !== undefined && (
+                <section className="admin-card">
+                  <h2>Learning snapshot</h2>
+                  <dl className="admin-key-values">
+                    <div>
+                      <dt>Effective LMS access</dt>
+                      <dd>{data.metrics.enabled} students</dd>
+                    </div>
+                    <div>
+                      <dt>Active Enrollments</dt>
+                      <dd>{data.metrics.enrollments}</dd>
+                    </div>
+                    <div>
+                      <dt>Active Batches</dt>
+                      <dd>{data.metrics.batches}</dd>
+                    </div>
+                  </dl>
+                </section>
               )}
-            </section>
+            {!!data.events.length && (
+              <section className="admin-card admin-wide">
+                <h2>Recent activity</h2>
+                {data.events.length ? (
+                  data.events.map((e, i) => (
+                    <div key={i} className="admin-activity">
+                      <span>
+                        {e.action.replace(/([a-z])([A-Z])/g, '$1 $2')}
+                      </span>
+                      <time dateTime={e.at}>
+                        {new Date(e.at).toLocaleString('en-GB')}
+                      </time>
+                    </div>
+                  ))
+                ) : (
+                  <p className="admin-muted">
+                    No audit activity has been recorded yet.
+                  </p>
+                )}
+              </section>
+            )}
           </div>
         </>
       )}
@@ -122,11 +136,16 @@ export function AdminOverview() {
 export function AdminLists({ kind }: { kind: 'students' | 'batches' }) {
   const router = useRouter(),
     search = useSearchParams(),
-    [creating, setCreating] = useState(false);
+    [creating, setCreating] = useState(false),
+    [selection, setSelection] = useState<{ query: string; ids: string[] }>({
+      query: '',
+      ids: [],
+    });
   const query = search.toString(),
     { data, error, loading, reload } = useAdminData<StudentList | BatchList>(
       `${kind}?${query}`,
     );
+  const selected = selection.query === query ? selection.ids : [];
   function update(values: Record<string, string>) {
     const next = new URLSearchParams(query);
     for (const [k, v] of Object.entries(values))
@@ -217,11 +236,19 @@ export function AdminLists({ kind }: { kind: 'students' | 'batches' }) {
           </button>
         </form>
         <State {...{ loading, error, reload }} />
+        {kind === 'students' && (
+          <BulkAccess
+            selected={selected}
+            clear={() => setSelection({ query, ids: [] })}
+            reload={reload}
+          />
+        )}
         {data &&
           (kind === 'students' ? (
             <Table
               caption="Students"
               headers={[
+                'Select',
                 'Name',
                 'Student ID',
                 'Email',
@@ -233,6 +260,21 @@ export function AdminLists({ kind }: { kind: 'students' | 'batches' }) {
             >
               {(data as StudentList).rows.map((s) => (
                 <tr key={s.ref}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${s.identity.name}`}
+                      checked={selected.includes(s.ref)}
+                      onChange={(e) =>
+                        setSelection({
+                          query,
+                          ids: e.target.checked
+                            ? [...selected, s.ref].slice(0, 50)
+                            : selected.filter((id) => id !== s.ref),
+                        })
+                      }
+                    />
+                  </td>
                   <td>
                     <Link
                       className="admin-row-link"

@@ -1,5 +1,9 @@
 import 'server-only';
-import { getEffectiveRoles, hasRole, requireAdmin } from '../auth/roles';
+import { getEffectiveRoles, hasRole } from '../auth/roles';
+import {
+  requireAdminPermission,
+  adminCapabilities,
+} from '../auth/admin-policy';
 import { mutationLimiter } from '../student/abuse';
 import { z } from 'zod';
 import type {
@@ -36,6 +40,11 @@ export class BatchCommunications {
     purpose: CommunicationPurpose,
   ) {
     const actor = await getEffectiveRoles(db, this.actorId);
+    const adminAllowed =
+      hasRole(actor, 'ADMIN') &&
+      (await adminCapabilities(db, this.actorId)).permissions.includes(
+        'COMMUNICATIONS_MANAGE',
+      );
     const batch = await db.batch.findUnique({
       where: { id: batchId },
       select: {
@@ -49,7 +58,7 @@ export class BatchCommunications {
     if (
       !batch ||
       !(
-        hasRole(actor, 'ADMIN') ||
+        adminAllowed ||
         (purpose === 'OPERATIONAL' &&
           actor?.primaryRole === 'INSTRUCTOR' &&
           batch.instructors.length)
@@ -111,7 +120,8 @@ export class BatchCommunications {
     )
       throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {
-      if (context) await requireAdmin(db, this.actorId);
+      if (context)
+        await requireAdminPermission(db, this.actorId, 'COMMUNICATIONS_MANAGE');
       return this.resolve(db, batchId, channel, purpose);
     });
   }
@@ -120,7 +130,8 @@ export class BatchCommunications {
     const p = messageInput.safeParse(input);
     if (!p.success) throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {
-      if (context) await requireAdmin(db, this.actorId);
+      if (context)
+        await requireAdminPermission(db, this.actorId, 'COMMUNICATIONS_MANAGE');
       const audience = await this.resolve(
         db,
         p.data.batchId,
@@ -177,7 +188,7 @@ export class BatchCommunications {
     )
       throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {
-      await requireAdmin(db, this.actorId);
+      await requireAdminPermission(db, this.actorId, 'COMMUNICATIONS_MANAGE');
       if (
         !(await db.user.findFirst({
           where: { id: userId, role: 'STUDENT' },

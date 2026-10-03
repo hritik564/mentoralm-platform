@@ -1,6 +1,8 @@
 import 'server-only';
 import type { Prisma, PrismaClient } from '../../../generated/prisma/client';
-import { requireAdmin } from '../../auth/roles';
+import { requireAdminPermission } from '../../auth/admin-policy';
+import { adminWritePermission } from '../permissions';
+import type { AdminPermission } from '../../../generated/prisma/client';
 import { academicTransaction } from '../../lms/completion';
 import { StudentError } from '../../student/errors';
 export type TX = Prisma.TransactionClient;
@@ -9,8 +11,8 @@ export class AcademicCore {
     protected db: PrismaClient,
     protected actorId: string,
   ) {}
-  async authorize() {
-    await requireAdmin(this.db, this.actorId);
+  async authorize(permission: AdminPermission = 'ACADEMICS_MANAGE') {
+    await requireAdminPermission(this.db, this.actorId, permission);
   }
   protected async write<T>(
     action: string,
@@ -21,7 +23,9 @@ export class AcademicCore {
     }>,
   ) {
     return academicTransaction(this.db, async (tx) => {
-      await requireAdmin(tx, this.actorId);
+      const permission = adminWritePermission(action);
+      if (!permission) throw new StudentError('FORBIDDEN');
+      await requireAdminPermission(tx, this.actorId, permission);
       const r = await work(tx);
       await tx.academicAudit.create({
         data: {

@@ -14,7 +14,8 @@ export default async function teardown() {
     throw Error('Invalid A3 teardown schema');
   const configured = testDatabaseUrl();
   if (!configured) throw Error('A3 isolated Test database required');
-  const metadataPath = 'docs/reviews/admin-a3/fixture.json';
+  const reviewDirectory = `docs/reviews/admin-${process.env.ADMIN_REVIEW_PHASE === 'a4' ? 'a4' : 'a3'}`;
+  const metadataPath = `${reviewDirectory}/fixture.json`;
   const f = JSON.parse(await readFile(metadataPath, 'utf8')) as {
     schema: string;
     ownerClerkId: string;
@@ -46,7 +47,7 @@ export default async function teardown() {
     if (JSON.stringify(after) !== JSON.stringify(baseline))
       throw Error('Owner Student history changed');
     await writeFile(
-      'docs/reviews/admin-a3/owner-student-preservation.json',
+      `${reviewDirectory}/owner-student-preservation.json`,
       JSON.stringify({ before: baseline, after, unchanged: true }, null, 2),
     );
     await db.connect();

@@ -36,7 +36,6 @@ async function route(
         actor.id,
         clerkDirectory,
       );
-    await repo.authorize();
     const { path } = await params,
       [area, ref, action, file] = path,
       q = Object.fromEntries(new URL(request.url).searchParams);

@@ -1,3 +1,5 @@
+import { adminCapabilities } from '@/lib/auth/admin-policy';
+import { getDatabase } from '@/lib/db/client';
 import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -33,9 +35,11 @@ export default async function Layout({
     ),
     entry = adminSignInPath((await headers()).get('host') || 'localhost');
   let identity;
+  let access;
   let failure: unknown;
   try {
-    await requireAdminActor();
+    const actor = await requireAdminActor();
+    access = await adminCapabilities(getDatabase(), actor.id);
     identity = await requireStudentIdentity(entry);
   } catch (error) {
     if (error && typeof error === 'object' && 'digest' in error) throw error;
@@ -45,8 +49,10 @@ export default async function Layout({
   }
   return (
     <DashboardTheme initialTheme={theme}>
-      {identity ? (
-        <AdminShell user={identity}>{children}</AdminShell>
+      {identity && access ? (
+        <AdminShell user={identity} access={access}>
+          {children}
+        </AdminShell>
       ) : (
         <AdminEntryFrame>
           <AdminUnavailable

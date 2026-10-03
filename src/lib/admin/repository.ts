@@ -1,4 +1,9 @@
+import { safeAuditAction } from './governance/audit-projection';
 import 'server-only';
+import {
+  adminCapabilities,
+  requireAnyAdminPermission,
+} from '../auth/admin-policy';
 import type { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { StudentError } from '../student/errors';
 import { entitledStudentWhere } from '../lms/entitlement';
@@ -36,37 +41,62 @@ export class AdminRepository extends AdminOperations {
     super(db, actorId);
   }
   async overview() {
-    await this.authorize();
-    const [students, enabled, batches, enrollments, courses, support, events] =
+    const c = await adminCapabilities(this.db, this.actorId),
+      allowed = (p: (typeof c.permissions)[number]) =>
+        c.permissions.includes(p);
+    const students = allowed('STUDENTS_MANAGE'),
+      batches = allowed('BATCHES_MANAGE'),
+      academics = allowed('ACADEMICS_MANAGE'),
+      support = allowed('SUPPORT_MANAGE'),
+      audit = allowed('AUDIT_VIEW');
+    const [registered, enabled, active, enrollments, courses, tickets, events] =
       await Promise.all([
-        this.db.user.count({ where: { role: 'STUDENT' } }),
-        this.db.user.count({
-          where: { ...entitledStudentWhere(''), id: undefined },
-        }),
-        this.db.batch.count({ where: { status: 'ACTIVE' } }),
-        this.db.enrollment.count({
-          where: { status: { in: ['ENROLLED', 'IN_PROGRESS'] } },
-        }),
-        this.db.course.count({ where: { published: true } }),
-        this.db.supportTicket.count({
-          where: { status: { in: ['OPEN', 'IN_PROGRESS'] } },
-        }),
-        this.db.academicAudit.findMany({
-          orderBy: { createdAt: 'desc' },
-          take: 8,
-          select: { action: true, createdAt: true },
-        }),
+        students ? this.db.user.count({ where: { role: 'STUDENT' } }) : -1,
+        students
+          ? this.db.user.count({
+              where: { ...entitledStudentWhere(''), id: undefined },
+            })
+          : -1,
+        batches ? this.db.batch.count({ where: { status: 'ACTIVE' } }) : -1,
+        students
+          ? this.db.enrollment.count({
+              where: { status: { in: ['ENROLLED', 'IN_PROGRESS'] } },
+            })
+          : -1,
+        academics ? this.db.course.count({ where: { published: true } }) : -1,
+        support
+          ? this.db.supportTicket.count({
+              where: { status: { in: ['OPEN', 'IN_PROGRESS'] } },
+            })
+          : -1,
+        audit
+          ? this.db.academicAudit.findMany({
+              orderBy: { createdAt: 'desc' },
+              take: 8,
+              select: { action: true, createdAt: true },
+            })
+          : [],
       ]);
+    const metrics: Record<string, number> = Object.fromEntries(
+      Object.entries({
+        students: registered,
+        enabled,
+        batches: active,
+        enrollments,
+        courses,
+        support: tickets,
+      }).filter(([, value]) => value >= 0),
+    );
     return {
-      metrics: { students, enabled, batches, enrollments, courses, support },
+      metrics,
       events: events.map((e) => ({
-        action: e.action.replaceAll('_', ' '),
+        action: safeAuditAction(e.action),
         at: e.createdAt.toISOString(),
       })),
     };
   }
   async students(input: Record<string, string | undefined> = {}) {
-    await this.authorize();
+    await this.authorize('STUDENTS_MANAGE');
     const p = params(input),
       ids = p.q ? await this.directory.search(p.q) : [];
     const where: Prisma.UserWhereInput = {
@@ -142,7 +172,10 @@ export class AdminRepository extends AdminOperations {
     };
   }
   async effective(userId: string) {
-    await this.authorize();
+    await requireAnyAdminPermission(this.db, this.actorId, [
+      'STUDENTS_MANAGE',
+      'BATCHES_MANAGE',
+    ]);
     const user = await this.db.user.findFirst({
       where: { id: userId, role: 'STUDENT' },
       select: { lmsAccessOverride: true },
@@ -190,7 +223,7 @@ export class AdminRepository extends AdminOperations {
     };
   }
   async student(id: string) {
-    await this.authorize();
+    await this.authorize('STUDENTS_MANAGE');
     const r = await this.db.user.findFirst({
       where: { id, role: 'STUDENT' },
       include: {
@@ -277,7 +310,7 @@ export class AdminRepository extends AdminOperations {
           select: { action: true, createdAt: true },
         })
       ).map((e) => ({
-        action: e.action.replaceAll('_', ' '),
+        action: safeAuditAction(e.action).replaceAll('_', ' '),
         at: e.createdAt.toISOString(),
       })),
     };
@@ -453,11 +486,40 @@ export class AdminRepository extends AdminOperations {
     };
   }
   async choices(
-    kind: 'courses' | 'programs' | 'instructors' | 'items',
+    kind: 'courses' | 'programs' | 'instructors' | 'items' | 'batches',
     q = '',
   ) {
-    await this.authorize();
+    await requireAnyAdminPermission(
+      this.db,
+      this.actorId,
+      kind === 'batches'
+        ? [
+            'BATCHES_MANAGE',
+            'ATTENDANCE_MANAGE',
+            'DISCUSSIONS_MANAGE',
+            'COMMUNICATIONS_MANAGE',
+          ]
+        : kind === 'instructors' || kind === 'items'
+          ? ['BATCHES_MANAGE', 'ACADEMICS_MANAGE']
+          : [
+              'STUDENTS_MANAGE',
+              'BATCHES_MANAGE',
+              'ACADEMICS_MANAGE',
+              'ATTENDANCE_MANAGE',
+              'CERTIFICATES_MANAGE',
+              'DISCUSSIONS_MANAGE',
+            ],
+    );
     if (q.length > 100) throw new StudentError('INVALID_INPUT');
+    if (kind === 'batches')
+      return (
+        await this.db.batch.findMany({
+          where: q ? { name: { contains: q, mode: 'insensitive' } } : {},
+          orderBy: [{ name: 'asc' }, { id: 'asc' }],
+          take: 20,
+          select: { id: true, name: true },
+        })
+      ).map((b) => ({ ref: handle('batch', b.id), label: b.name }));
     if (kind === 'courses')
       return (
         await this.db.course.findMany({

@@ -7,7 +7,7 @@ import { Pager, Pill, Table } from '../Primitives';
 import { OperationalFrame } from './Frame';
 import { adminHref } from '@/lib/platform/domains';
 import type { Message } from './types';
-import type { BatchList } from '../types';
+import type { Choice } from '../types';
 export function CommunicationCompose() {
   const [query, setQuery] = useState(''),
     [preview, setPreview] = useState<{
@@ -18,7 +18,9 @@ export function CommunicationCompose() {
     [notice, setNotice] = useState(''),
     [previewBusy, setPreviewBusy] = useState(false),
     form = useRef<HTMLFormElement>(null),
-    batches = useAdminData<BatchList>(`batches?q=${encodeURIComponent(query)}`),
+    batches = useAdminData<Choice[]>(
+      `choices/batches?q=${encodeURIComponent(query)}`,
+    ),
     router = useRouter(),
     mutation = useAdminMutation(() => {});
   const audience = () => {
@@ -63,9 +65,9 @@ export function CommunicationCompose() {
           <Field label="Batch audience">
             <select name="batch" required onChange={() => setPreview(null)}>
               <option value="">Select Batch</option>
-              {batches.data?.rows.map((b) => (
+              {batches.data?.map((b) => (
                 <option key={b.ref} value={b.ref}>
-                  {b.name}
+                  {b.label}
                 </option>
               ))}
             </select>

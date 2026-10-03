@@ -13,19 +13,20 @@ import {
   parseInput,
 } from './validation';
 import { approvedExternalLink } from '../lms/content';
-import { assertAdmin } from './recordings';
+import { requireAdminPermission } from '../auth/admin-policy';
+import type { AdminPermission } from '../../generated/prisma/client';
 /** Mutations are separate from Admin read projections and reuse authoritative LMS rules. */
 export class AdminOperations {
   constructor(
     protected db: PrismaClient,
     protected actorId: string,
   ) {}
-  async authorize() {
-    await assertAdmin(this.db, this.actorId);
+  async authorize(permission: AdminPermission = 'BATCHES_MANAGE') {
+    await requireAdminPermission(this.db, this.actorId, permission);
   }
   async override(id: string, input: unknown) {
     const c = parseInput(overrideInput, input);
-    await this.authorize();
+    await this.authorize('STUDENTS_MANAGE');
     await new LmsAccessAdmin(this.db, this.actorId).change({
       kind: 'STUDENT_OVERRIDE',
       userId: id,
@@ -34,7 +35,7 @@ export class AdminOperations {
   }
   async enrollment(id: string, input: unknown) {
     const c = parseInput(enrollmentInput, input);
-    await this.authorize();
+    await this.authorize('STUDENTS_MANAGE');
     if (
       !(await this.db.course.findUnique({
         where: { id: c.courseId },
@@ -52,7 +53,7 @@ export class AdminOperations {
   async saveBatch(id: string | null, input: unknown) {
     const c = parseInput(batchInput, input);
     return academicTransaction(this.db, async (tx) => {
-      await assertAdmin(tx, this.actorId);
+      await requireAdminPermission(tx, this.actorId, 'BATCHES_MANAGE');
       if (
         c.courseId &&
         !(await tx.course.findUnique({
@@ -143,7 +144,7 @@ export class AdminOperations {
   async membership(batchId: string, input: unknown) {
     const c = parseInput(membershipInput, input);
     return academicTransaction(this.db, async (tx) => {
-      await assertAdmin(tx, this.actorId);
+      await requireAdminPermission(tx, this.actorId, 'BATCHES_MANAGE');
       if (
         !(await tx.batch.findUnique({
           where: { id: batchId },
@@ -194,7 +195,7 @@ export class AdminOperations {
   async instructor(batchId: string, input: unknown) {
     const c = parseInput(instructorInput, input);
     return academicTransaction(this.db, async (tx) => {
-      await assertAdmin(tx, this.actorId);
+      await requireAdminPermission(tx, this.actorId, 'BATCHES_MANAGE');
       if (
         !(await tx.user.findFirst({
           where: { id: c.instructorId, role: 'INSTRUCTOR' },
@@ -235,7 +236,7 @@ export class AdminOperations {
     if (c.externalTargetId && !approvedExternalLink(c.externalTargetId))
       throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (tx) => {
-      await assertAdmin(tx, this.actorId);
+      await requireAdminPermission(tx, this.actorId, 'BATCHES_MANAGE');
       const batch = await tx.batch.findUnique({ where: { id: batchId } });
       if (!batch) throw new StudentError('NOT_FOUND');
       if (

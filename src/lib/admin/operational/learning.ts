@@ -1,7 +1,7 @@
 import 'server-only';
 import { AcademicCore } from '../academic/core';
 import { StudentError, errorMessages } from '../../student/errors';
-import { requireAdmin } from '../../auth/roles';
+import { requireAdminPermission } from '../../auth/admin-policy';
 import { parseInput } from '../validation';
 import {
   reviewInput,
@@ -168,7 +168,7 @@ export class AdminLearningOperations extends AcademicCore {
   }
   async attendance(sessionId: string, input: unknown) {
     const c = parseInput(attendanceInput, input);
-    await this.authorize();
+    await this.authorize('ATTENDANCE_MANAGE');
     const results = [];
     for (const row of c.rows) {
       try {
@@ -192,7 +192,7 @@ export class AdminLearningOperations extends AcademicCore {
   }
   async assignment(versionId: string, input: unknown) {
     const c = parseInput(assignmentReviewInput, input);
-    await requireAdmin(this.db, this.actorId);
+    await requireAdminPermission(this.db, this.actorId, 'ACADEMICS_MANAGE');
     if (c.versionId !== versionId) throw new StudentError('NOT_FOUND');
     await new AcademicStaff(this.db, this.actorId).review(
       versionId,

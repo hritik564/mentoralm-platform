@@ -69,7 +69,7 @@ export class AdminOperationalActions extends AdminLearningOperations {
     });
   }
   async audience(input: unknown) {
-    await this.authorize();
+    await this.authorize('COMMUNICATIONS_MANAGE');
     const c = parseInput(audienceInput, input);
     const rows = await new BatchCommunications(this.db, this.actorId).audience(
       c.batchId,
@@ -85,7 +85,7 @@ export class AdminOperationalActions extends AdminLearningOperations {
     };
   }
   async plan(input: unknown) {
-    await this.authorize();
+    await this.authorize('COMMUNICATIONS_MANAGE');
     const c = parseInput(communicationInput, input);
     return new BatchCommunications(this.db, this.actorId).plan(c, {
       adminOnly: true,

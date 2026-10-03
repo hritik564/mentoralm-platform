@@ -1,3 +1,4 @@
+import { legacyAdminPermissions } from '../src/lib/admin/permissions';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -476,7 +477,13 @@ test(
             data: { clerkUserId: 'l1_instructor_2', role: 'INSTRUCTOR' },
           });
           const admin = await db.user.create({
-            data: { clerkUserId: 'l1_admin', role: 'ADMIN' },
+            data: {
+              clerkUserId: 'l1_admin',
+              role: 'ADMIN',
+              adminAuthorization: {
+                create: { permissions: legacyAdminPermissions },
+              },
+            },
           });
           assert.equal(I.studentId, null);
           assert.equal(admin.studentId, null);

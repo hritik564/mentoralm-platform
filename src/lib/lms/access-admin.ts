@@ -1,5 +1,5 @@
 import 'server-only';
-import { requireAdmin } from '../auth/roles';
+import { requireAdminPermission } from '../auth/admin-policy';
 import type {
   Prisma,
   PrismaClient,
@@ -26,8 +26,13 @@ export async function applyLmsAccessChange(
   db: Prisma.TransactionClient,
   actorId: string,
   command: LmsAccessCommand,
+  reason?: string,
 ) {
-  await requireAdmin(db, actorId);
+  await requireAdminPermission(
+    db,
+    actorId,
+    command.kind === 'BATCH_ACCESS' ? 'BATCHES_MANAGE' : 'STUDENTS_MANAGE',
+  );
   let before: string | boolean | null, targetId: string;
   if (command.kind === 'STUDENT_OVERRIDE') {
     if (![null, 'ENABLED', 'DISABLED'].includes(command.value))
@@ -88,7 +93,7 @@ export async function applyLmsAccessChange(
       actorId,
       action: `${command.kind}_${String(before)}_TO_${String(command.value)}`,
       targetId,
-      details: { before, after: command.value },
+      details: { before, after: command.value, ...(reason ? { reason } : {}) },
     },
   });
 }
@@ -97,9 +102,9 @@ export class LmsAccessAdmin {
     private db: PrismaClient,
     private actorId: string,
   ) {}
-  async change(command: LmsAccessCommand) {
+  async change(command: LmsAccessCommand, reason?: string) {
     return academicTransaction(this.db, (tx) =>
-      applyLmsAccessChange(tx, this.actorId, command),
+      applyLmsAccessChange(tx, this.actorId, command, reason),
     );
   }
 }

@@ -1,4 +1,6 @@
 import 'server-only';
+import { operationalPermissions } from '../permissions';
+import { adminCapabilities } from '../../auth/admin-policy';
 import { Prisma, type PrismaClient } from '../../../generated/prisma/client';
 import { AdminOperationalActions } from './actions';
 import { adminHandle as h } from '../handles';
@@ -50,53 +52,82 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     );
   }
   async overview() {
-    await this.authorize();
+    const c = await adminCapabilities(this.db, this.actorId),
+      allowed = (p: (typeof c.permissions)[number]) =>
+        c.permissions.includes(p);
+    const academic = allowed('ACADEMICS_MANAGE');
     const [
       submissions,
+      under,
       attempts,
       support,
-      heldSessions,
+      sessions,
       certificates,
       deliveries,
     ] = await Promise.all([
-      this.db.$queryRaw<{ count: bigint }[]>(
-        Prisma.sql`SELECT count(*) ${latestSubmissions(this.schema, { status: 'SUBMITTED' })}`,
-      ),
-      this.db.academicAttempt.count({
-        where: { status: 'SUBMITTED', requiresReview: true },
-      }),
-      this.db.supportTicket.count({
-        where: { status: { in: ['OPEN', 'IN_PROGRESS'] } },
-      }),
-      this.db.batchSession.count({
-        where: { status: 'HELD', attendance: { none: {} } },
-      }),
-      this.db.certificate.count({ where: { status: 'SUSPENDED' } }),
-      this.db.communicationDelivery.groupBy({
-        by: ['status'],
-        _count: { _all: true },
-      }),
+      academic
+        ? this.db.$queryRaw<{ count: bigint }[]>(
+            Prisma.sql`SELECT count(*) ${latestSubmissions(this.schema, { status: 'SUBMITTED' })}`,
+          )
+        : [],
+      academic
+        ? this.db.$queryRaw<{ count: bigint }[]>(
+            Prisma.sql`SELECT count(*) ${latestSubmissions(this.schema, { status: 'UNDER_REVIEW' })}`,
+          )
+        : [],
+      academic
+        ? this.db.academicAttempt.count({
+            where: { status: 'SUBMITTED', requiresReview: true },
+          })
+        : 0,
+      allowed('SUPPORT_MANAGE')
+        ? this.db.supportTicket.count({
+            where: { status: { in: ['OPEN', 'IN_PROGRESS'] } },
+          })
+        : 0,
+      allowed('ATTENDANCE_MANAGE')
+        ? this.db.batchSession.count({
+            where: { status: 'HELD', attendance: { none: {} } },
+          })
+        : 0,
+      allowed('CERTIFICATES_MANAGE')
+        ? this.db.certificate.count({ where: { status: 'SUSPENDED' } })
+        : 0,
+      allowed('COMMUNICATIONS_MANAGE')
+        ? this.db.communicationDelivery.groupBy({
+            by: ['status'],
+            _count: { _all: true },
+          })
+        : [],
     ]);
-    const under = await this.db.$queryRaw<{ count: bigint }[]>(
-      Prisma.sql`SELECT count(*) ${latestSubmissions(this.schema, { status: 'UNDER_REVIEW' })}`,
-    );
     return {
-      pendingAssignments: Number(submissions[0].count) + Number(under[0].count),
-      pendingText: attempts,
-      openSupport: support,
-      heldWithoutRecords: heldSessions,
-      suspendedCertificates: certificates,
-      deliveries: deliveries.map((d) => ({
-        status: d.status,
-        count: d._count._all,
-      })),
+      ...(academic
+        ? {
+            pendingAssignments:
+              Number(submissions[0].count) + Number(under[0].count),
+            pendingText: attempts,
+          }
+        : {}),
+      ...(allowed('SUPPORT_MANAGE') ? { openSupport: support } : {}),
+      ...(allowed('ATTENDANCE_MANAGE') ? { heldWithoutRecords: sessions } : {}),
+      ...(allowed('CERTIFICATES_MANAGE')
+        ? { suspendedCertificates: certificates }
+        : {}),
+      ...(allowed('COMMUNICATIONS_MANAGE')
+        ? {
+            deliveries: deliveries.map((d) => ({
+              status: d.status,
+              count: d._count._all,
+            })),
+          }
+        : {}),
     };
   }
   async list(
     area: OperationalArea,
     q: Record<string, string | undefined> = {},
   ) {
-    await this.authorize();
+    await this.authorize(operationalPermissions[area]);
     const p = listParams(q),
       common = { skip: p.skip, take: 20 },
       query = { contains: p.search, mode: 'insensitive' as const };
@@ -393,7 +424,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     return { rows, total, page: p.page };
   }
   async session(sessionId: string, q: Record<string, string | undefined> = {}) {
-    await this.authorize();
+    await this.authorize('ATTENDANCE_MANAGE');
     const p = listParams(q),
       s = await this.db.batchSession.findUnique({
         where: { id: sessionId },
@@ -440,7 +471,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     submissionId: string,
     q: Record<string, string | undefined> = {},
   ) {
-    await this.authorize();
+    await this.authorize('ACADEMICS_MANAGE');
     const p = listParams(q),
       s = await this.db.assignmentSubmission.findUnique({
         where: { id: submissionId },
@@ -506,7 +537,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     };
   }
   async attempt(attemptId: string) {
-    await this.authorize();
+    await this.authorize('ACADEMICS_MANAGE');
     const a = await this.db.academicAttempt.findUnique({
       where: { id: attemptId },
       include: {
@@ -567,7 +598,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     };
   }
   async certificateDetail(id: string) {
-    await this.authorize();
+    await this.authorize('CERTIFICATES_MANAGE');
     const c = await this.db.certificate.findUnique({
       where: { id },
       include: { course: true },
@@ -594,7 +625,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     threadId: string,
     q: Record<string, string | undefined> = {},
   ) {
-    await this.authorize();
+    await this.authorize('DISCUSSIONS_MANAGE');
     const p = listParams(q),
       t = await this.db.discussionThread.findUnique({
         where: { id: threadId },
@@ -629,7 +660,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     };
   }
   async ticket(ticketId: string, q: Record<string, string | undefined> = {}) {
-    await this.authorize();
+    await this.authorize('SUPPORT_MANAGE');
     const p = listParams(q),
       t = await this.db.supportTicket.findUnique({
         where: { id: ticketId },
@@ -663,7 +694,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     };
   }
   async message(messageId: string, q: Record<string, string | undefined> = {}) {
-    await this.authorize();
+    await this.authorize('COMMUNICATIONS_MANAGE');
     const p = listParams(q),
       m = await this.db.communicationMessage.findUnique({
         where: { id: messageId },
@@ -702,7 +733,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     };
   }
   async referral(userId: string, q: Record<string, string | undefined> = {}) {
-    await this.authorize();
+    await this.authorize('REFERRALS_VIEW');
     const p = listParams(q),
       i = await this.db.referralIdentity.findUnique({ where: { userId } });
     if (!i) throw new StudentError('NOT_FOUND');
@@ -729,7 +760,7 @@ export class AdminOperationalRepository extends AdminOperationalActions {
     };
   }
   async file(submissionId: string, fileId: string) {
-    await this.authorize();
+    await this.authorize('ACADEMICS_MANAGE');
     const f = await this.db.submissionFile.findFirst({
       where: { id: fileId, version: { submissionId } },
     });

@@ -1,3 +1,4 @@
+import { legacyAdminPermissions } from '../src/lib/admin/permissions';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -142,7 +143,13 @@ test(
           data: { clerkUserId: 'l3-unscoped', role: 'INSTRUCTOR' },
         }),
         Admin = await db.user.create({
-          data: { clerkUserId: 'l3-admin', role: 'ADMIN' },
+          data: {
+            clerkUserId: 'l3-admin',
+            role: 'ADMIN',
+            adminAuthorization: {
+              create: { permissions: legacyAdminPermissions },
+            },
+          },
         });
       const f = await academicFixture(db, A.id, 'domain'),
         repo = new Academics(db, A),

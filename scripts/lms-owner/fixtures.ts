@@ -19,9 +19,17 @@ export async function seedFixtures(
   const { prefix, id } = seedIds(clerkId);
   await db.$transaction(
     async (tx) => {
-      const marker = await tx.academicAudit.findUnique({
-        where: { id: id('marker') },
+      const lifecycle = await tx.academicAudit.findFirst({
+        where: {
+          targetId: prefix,
+          action: { in: ['LOCAL_OWNER_SEED', 'LOCAL_OWNER_SEED_RESET'] },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       });
+      if (lifecycle && lifecycle.actorId !== userId)
+        throw Error('Seed lifecycle ownership mismatch.');
+      const marker =
+        lifecycle?.action === 'LOCAL_OWNER_SEED_RESET' ? null : lifecycle;
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       if (user.role !== 'STUDENT')
         throw Error('Owner account must already have the STUDENT role.');
@@ -38,7 +46,6 @@ export async function seedFixtures(
             );
         await tx.academicAudit.create({
           data: {
-            id: id('marker'),
             actorId: userId,
             action: 'LOCAL_OWNER_SEED',
             targetId: prefix,
@@ -486,9 +493,17 @@ export async function resetFixtures(
   const { prefix, id } = seedIds(clerkId);
   await db.$transaction(
     async (tx) => {
-      const marker = await tx.academicAudit.findUnique({
-        where: { id: id('marker') },
+      const lifecycle = await tx.academicAudit.findFirst({
+        where: {
+          targetId: prefix,
+          action: { in: ['LOCAL_OWNER_SEED', 'LOCAL_OWNER_SEED_RESET'] },
+        },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       });
+      if (lifecycle && lifecycle.actorId !== userId)
+        throw Error('Seed lifecycle ownership mismatch.');
+      const marker =
+        lifecycle?.action === 'LOCAL_OWNER_SEED_RESET' ? null : lifecycle;
       if (!marker) return;
       if (
         marker.actorId !== userId ||
@@ -659,7 +674,17 @@ export async function resetFixtures(
               null) as Prisma.UserUpdateInput['lmsAccessOverride'],
           },
         });
-      await tx.academicAudit.delete({ where: { id: marker.id } });
+      await tx.academicAudit.create({
+        data: {
+          actorId: userId,
+          action: 'LOCAL_OWNER_SEED_RESET',
+          targetId: prefix,
+          details: {
+            seedEvent: marker.id,
+            source: 'local-development-operator',
+          },
+        },
+      });
     },
     { isolationLevel: 'Serializable', timeout: 30000 },
   );

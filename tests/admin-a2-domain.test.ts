@@ -1,3 +1,4 @@
+import { legacyAdminPermissions } from '../src/lib/admin/permissions';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
@@ -109,6 +110,9 @@ test('A2 persisted academic authoring, publication, immutable history and privat
     });
     await db.userRoleAssignment.create({
       data: { userId: admin.id, role: 'ADMIN' },
+    });
+    await db.adminAuthorization.create({
+      data: { userId: admin.id, permissions: legacyAdminPermissions },
     });
     const student = await db.user.create({
         data: { clerkUserId: 'a2_student', lmsAccessOverride: 'ENABLED' },

@@ -1,3 +1,4 @@
+import { legacyAdminPermissions } from '../src/lib/admin/permissions';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -27,6 +28,9 @@ test('A3 approved academic review and certificate state invariants', async (t) =
     });
     await db.userRoleAssignment.create({
       data: { userId: admin.id, role: 'ADMIN' },
+    });
+    await db.adminAuthorization.create({
+      data: { userId: admin.id, permissions: legacyAdminPermissions },
     });
     const student = await db.user.create({
         data: { clerkUserId: 'a3_student', lmsAccessOverride: 'ENABLED' },
@@ -398,6 +402,9 @@ test('A3 operational authorization, attendance, immutable assignments, private f
     });
     await db.userRoleAssignment.create({
       data: { userId: admin.id, role: 'ADMIN' },
+    });
+    await db.adminAuthorization.create({
+      data: { userId: admin.id, permissions: legacyAdminPermissions },
     });
     const student = await db.user.create({
         data: { clerkUserId: 'ops_student', lmsAccessOverride: 'ENABLED' },
@@ -807,7 +814,13 @@ test('A3 simultaneous reviews and corrections reconcile one effective aggregate 
   const f = await isolatedDatabase();
   try {
     const admin = await f.db.user.create({
-        data: { clerkUserId: 'concurrent-a3-admin', role: 'ADMIN' },
+        data: {
+          clerkUserId: 'concurrent-a3-admin',
+          role: 'ADMIN',
+          adminAuthorization: {
+            create: { permissions: legacyAdminPermissions },
+          },
+        },
       }),
       student = await f.db.user.create({
         data: {

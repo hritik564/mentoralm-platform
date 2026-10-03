@@ -516,6 +516,10 @@ test('A3 real owner operations, student denial, forms, immutable history, consen
     expect(
       (await page.request.get('/api/admin/operations/overview')).status(),
     ).toBe(403);
+    // Restore only the disposable Test fixture for the independent account-switch case.
+    await db.userRoleAssignment.create({
+      data: { userId: f.ownerId, role: 'ADMIN' },
+    });
   } finally {
     for (const id of sessions)
       await clerk.sessions.revokeSession(id).catch(() => {});

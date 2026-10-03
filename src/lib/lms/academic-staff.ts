@@ -1,5 +1,9 @@
 import 'server-only';
-import { getEffectiveRoles, hasRole, requireAdmin } from '../auth/roles';
+import { getEffectiveRoles, hasRole } from '../auth/roles';
+import {
+  requireAdminPermission,
+  adminCapabilities,
+} from '../auth/admin-policy';
 import { learningEvent } from './events';
 import type {
   Prisma,
@@ -20,7 +24,21 @@ export class AcademicStaff {
     course: { id: string; programId: string | null },
   ) {
     const actor = await getEffectiveRoles(db, this.actorId);
-    if (hasRole(actor, 'ADMIN')) return;
+    if (
+      hasRole(actor, 'ADMIN') &&
+      (await adminCapabilities(db, this.actorId)).permissions.includes(
+        'ACADEMICS_MANAGE',
+      )
+    )
+      return;
+    await this.authorizeInstructor(db, batchId, course);
+  }
+  private async authorizeInstructor(
+    db: Prisma.TransactionClient,
+    batchId: string | undefined,
+    course: { id: string; programId: string | null },
+  ) {
+    const actor = await getEffectiveRoles(db, this.actorId);
     if (actor?.primaryRole !== 'INSTRUCTOR' || !batchId)
       throw new StudentError('FORBIDDEN');
     const batch = await db.batch.findFirst({
@@ -74,7 +92,7 @@ export class AcademicStaff {
       });
       if (!version) throw new StudentError('NOT_FOUND');
       if (context) {
-        await requireAdmin(db, this.actorId);
+        await requireAdminPermission(db, this.actorId, 'ACADEMICS_MANAGE');
         if (
           context.userId !== version.submission.userId ||
           context.itemId !== version.submission.assignmentId ||
@@ -148,7 +166,8 @@ export class AcademicStaff {
     if (!['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'].includes(status))
       throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {
-      if (context) await requireAdmin(db, this.actorId);
+      if (context)
+        await requireAdminPermission(db, this.actorId, 'ATTENDANCE_MANAGE');
       const session = await db.batchSession.findUnique({
         where: { id: sessionId },
         include: {
@@ -188,7 +207,12 @@ export class AcademicStaff {
       )
         throw new StudentError('FORBIDDEN');
       const actor = await getEffectiveRoles(db, this.actorId);
-      if (!hasRole(actor, 'ADMIN')) {
+      if (!(
+        hasRole(actor, 'ADMIN') &&
+        (await adminCapabilities(db, this.actorId)).permissions.includes(
+          'ATTENDANCE_MANAGE',
+        )
+      )) {
         if (!course) {
           if (
             actor?.primaryRole !== 'INSTRUCTOR' ||
@@ -202,7 +226,7 @@ export class AcademicStaff {
             }))
           )
             throw new StudentError('FORBIDDEN');
-        } else await this.authorize(db, session.batchId, course);
+        } else await this.authorizeInstructor(db, session.batchId, course);
       }
       if (
         course &&
@@ -267,7 +291,7 @@ export class AcademicStaff {
   }
   async revokeCertificate(code: string) {
     return academicTransaction(this.db, async (db) => {
-      await requireAdmin(db, this.actorId);
+      await requireAdminPermission(db, this.actorId, 'CERTIFICATES_MANAGE');
       const c = await db.certificate.findUnique({ where: { code } });
       if (!c) throw new StudentError('NOT_FOUND');
       await db.certificate.update({
