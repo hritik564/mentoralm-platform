@@ -76,25 +76,25 @@ test('strict mutations reject role, owner, staff, publication, HTML and length a
 });
 test('HTTP mutation boundary rejects cross-origin, wrong content type and oversized JSON', async () => {
   const request = (origin: string, data: string, type = 'application/json') =>
-    new Request('https://mentoralm.test/api/student/profile', {
+    new Request('http://127.0.0.1:3000/api/student/profile', {
       method: 'PATCH',
       headers: { origin, 'content-type': type },
       body: data,
     });
   await assert.rejects(requestBody(request('https://attacker.test', '{}')));
   await assert.rejects(
-    requestBody(request('https://mentoralm.test', '{}', 'text/plain')),
+    requestBody(request('http://127.0.0.1:3000', '{}', 'text/plain')),
   );
   await assert.rejects(
     requestBody(
       request(
-        'https://mentoralm.test',
+        'http://127.0.0.1:3000',
         JSON.stringify({ message: 'a'.repeat(17000) }),
       ),
     ),
   );
   assert.deepEqual(
-    await requestBody(request('https://mentoralm.test', '{"ok":true}')),
+    await requestBody(request('http://127.0.0.1:3000', '{"ok":true}')),
     { ok: true },
   );
 });

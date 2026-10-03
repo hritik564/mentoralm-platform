@@ -11,3 +11,10 @@ docs/reviews/
 src/generated/prisma/
 
 .local/
+
+# Private infrastructure exports/backups and operator evidence.
+*.dump
+*.backup
+*.sql.gz
+*.pem
+*.key

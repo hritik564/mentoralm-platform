@@ -126,7 +126,7 @@ export class BatchCommunications {
     });
   }
   async plan(input: unknown, context?: { adminOnly: true }) {
-    mutationLimiter.check(this.actorId, 'communication');
+    await mutationLimiter.check(this.actorId, 'communication');
     const p = messageInput.safeParse(input);
     if (!p.success) throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {

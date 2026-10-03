@@ -75,7 +75,7 @@ D1 explicitly authorizes Clerk identity and the Student Dashboard shell. Use the
 
 ## D4 PostgreSQL setup and validation
 
-Supply a development PostgreSQL `DATABASE_URL` in ignored `.env.local`; never paste credentials into chat. Clerk Development keys still authenticate the Dashboard. Install generates the ignored typed Prisma client; generation and schema validation do not need a connection. Run `npm run db:migrate` to apply committed migrations only to the intended development database, then build/start. `db:migrate:dev` is a developer authoring tool with reset/shadow-database implications; never point it at production. Initial migration has no runtime/demo seed.
+Supply a development PostgreSQL `DATABASE_URL` in ignored `.env.local`; never paste credentials into chat. Clerk Development keys still authenticate the Dashboard. Install generates the ignored typed Prisma client; generation and schema validation do not need a connection. Run `npm run db:migrate:a4:local` to apply committed migrations only to the intended development database, then build/start. P1 disables generic `db:migrate`/`db:migrate:dev` aliases. New migration authoring requires a separately reviewed local workflow; do not use reset/shadow tools against Production. Initial migration has no runtime/demo seed.
 
 Optional `REFERRAL_APP_ORIGIN` must be the approved HTTPS origin without path/query/credentials. Missing origin keeps the saved referral identity but disables sharing. Optional `RESOURCE_FILES_ROOT` is an operator-controlled private directory outside `public`; resources without a configured file provider show metadata without false delivery promises. Files must be scanned/validated before future Admin publication. No student upload feature exists.
 
@@ -97,7 +97,7 @@ Prisma CLI transitive dependency overrides pin patched `deepmerge-ts@8.0.2` and 
 
 ## L1 migration and learning validation
 
-Two additive migrations follow D4: `20261001005000_instructor_role` and `20261001010000_lms_foundation`. Enum extension is committed before the new tables use INSTRUCTOR, consistent with [PostgreSQL's enum transaction rule](https://www.postgresql.org/docs/current/sql-altertype.html). `npm run db:migrate` applies them to the configured local `mentoralm_dev`; never reset D4 tables. Student IDs are database-issued and existing students are backfilled automatically. Future ORM-generated migrations must preserve the custom issuance trigger, sequence and SQL checks.
+Two additive migrations follow D4: `20261001005000_instructor_role` and `20261001010000_lms_foundation`. Enum extension is committed before the new tables use INSTRUCTOR, consistent with [PostgreSQL's enum transaction rule](https://www.postgresql.org/docs/current/sql-altertype.html). `npm run db:migrate:a4:local` applies them to the configured local `mentoralm_dev`; never reset D4 tables. Student IDs are database-issued and existing students are backfilled automatically. Future ORM-generated migrations must preserve the custom issuance trigger, sequence and SQL checks.
 
 ```sh
 npm run test:l1:domain
@@ -111,7 +111,7 @@ L1 uses the same local `mentoralm_test` opt-in, random-schema guards, test serve
 
 ## L1 domain/access configuration
 
-`20261001020000_lms_entitlement` adds nullable User LMS override and disabled-by-default Batch access without resetting data. Apply with `npm run db:migrate` to local mentoralm_dev. Existing students remain inherited; enrollment or login alone no longer enables LMS. Only authorized internal business-data fixtures/operations can set an ENABLED override or enable an applicable active batch; there is no student setter or Admin interface.
+`20261001020000_lms_entitlement` adds nullable User LMS override and disabled-by-default Batch access without resetting data. Apply with `npm run db:migrate:a4:local` to local mentoralm_dev. Existing students remain inherited; enrollment or login alone no longer enables LMS. Only authorized internal business-data fixtures/operations can set an ENABLED override or enable an applicable active batch; there is no student setter or Admin interface.
 
 For a future authorized production deployment, configure **both** `NEXT_PUBLIC_SITE_URL=https://mentoralm.com` and `NEXT_PUBLIC_LMS_ORIGIN=https://students.mentoralm.com`, then rebuild. Route both TLS hostnames to this same application; LMS-root/course rewrites and controlled cross-domain links are already implemented. Dashboard and Support stay on the website origin. Leave LMS origin unset for current local same-host `/learn` development; distinct loopback HTTP origins are permitted for local host testing. No DNS or deployment is changed by L1.
 
@@ -119,7 +119,7 @@ Use the same Clerk production instance/keys with mentoralm.com as the root domai
 
 ## L2 local learning validation
 
-`20261001030000_lesson_delivery_progress` adds required item policy, bounded structured/media Lesson metadata, unique LessonState and LearningResource subtype with SQL invariants. Apply with `npm run db:migrate` only to intended local mentoralm_dev; never reset. Existing L1 identities, enrollment and curriculum are preserved.
+`20261001030000_lesson_delivery_progress` adds required item policy, bounded structured/media Lesson metadata, unique LessonState and LearningResource subtype with SQL invariants. Apply with `npm run db:migrate:a4:local` only to intended local mentoralm_dev; never reset. Existing L1 identities, enrollment and curriculum are preserved.
 
 ```sh
 npm run db:generate
@@ -137,12 +137,12 @@ Optional `LMS_FILES_ROOT` supplies private lesson/course-resource files separate
 
 ## L3 local academic validation
 
-Apply additive `20261001100000_academic_engine` to intended local `mentoralm_dev` with `npm run db:migrate`; never reset. All six committed migrations are required. The populated upgrade fixture preserves prior Student IDs, BatchMembership and completed LessonState. Ordinary runtime has no seeded question banks, attempts, submissions, attendance or certificates.
+Apply additive `20261001100000_academic_engine` to intended local `mentoralm_dev` with `npm run db:migrate:a4:local`; never reset. All six committed migrations are required. The populated upgrade fixture preserves prior Student IDs, BatchMembership and completed LessonState. Ordinary runtime has no seeded question banks, attempts, submissions, attendance or certificates.
 
 ```sh
 npm run db:generate
 npm run db:validate
-npm run db:migrate
+npm run db:migrate:a4:local
 npx prisma migrate status
 npm run test:l3:domain
 npm run build
@@ -165,7 +165,7 @@ L4 adds `20261001120000_lms_integration`; deploy additively to the intended loca
 ```sh
 npm run db:generate
 npm run db:validate
-npm run db:migrate
+npm run db:migrate:a4:local
 npx prisma migrate status
 npm run typecheck
 npm run lint
@@ -232,3 +232,9 @@ npm run lint
 ```
 
 The owner integration check refuses every database except the guarded local development target, verifies repeated seeds and authorized reads, checks that answer keys are absent before submission, exercises real completion/certificate issuance, verifies reset refusal and unrelated-enrollment preservation, and leaves default fixtures available. With no explicit owner it skips that integration check and runs only guard checks. It does not run the L1–L4 browser suites or deploy anything.
+
+## P1 runtime separation
+
+Set `MENTORALM_ENV=local` in ignored `.env.local` for this local project. The supported `npm run start` validates configuration and the public build fingerprint before spawning Next. Isolated browser harnesses explicitly use test classification and only disposable mentoralm_test schemas. Production uses the separate Replit/Neon [deployment runbook](PRODUCTION-DEPLOYMENT.md); do not copy local secrets/files or bypass the guarded entrypoint.
+
+P1 selected provider preparation: Replit Reserved VM compute, independent Neon Singapore PostgreSQL, server-only Upstash/Better Stack adapters. Keep provider credentials absent in local/test; those modes refuse Production provider bindings. Run `test:p1`, `test:p1:providers`, then `test:p1:runtime` after build. See PRODUCTION-PROVIDERS.md for deployment/operator boundaries. Historical phase descriptions above do not override current approved providers.

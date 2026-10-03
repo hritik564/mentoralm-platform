@@ -1,22 +1,9 @@
 import 'server-only';
 import { StudentError } from './errors';
-export type MutationPolicy =
-  | 'learning'
-  | 'academic'
-  | 'upload'
-  | 'discussion'
-  | 'support'
-  | 'referral'
-  | 'communication';
-const limits: Record<MutationPolicy, number> = {
-  learning: 120,
-  academic: 120,
-  upload: 10,
-  discussion: 20,
-  support: 10,
-  referral: 10,
-  communication: 5,
-};
+import { platformEnvironment } from '../production/config';
+import { UpstashMutationLimiter } from '../production/upstash';
+import { limits, type MutationPolicy } from './mutation-policy';
+export type { MutationPolicy } from './mutation-policy';
 /** Per-process fixed windows; bounded memory and fail closed on saturation. Replace with shared atomic store at multi-instance deployment. */
 export class LocalMutationLimiter {
   private windows = new Map<string, { expires: number; count: number }>();
@@ -34,4 +21,21 @@ export class LocalMutationLimiter {
     if (++entry.count > limits[policy]) throw new StudentError('RATE_LIMITED');
   }
 }
-export const mutationLimiter = new LocalMutationLimiter();
+export interface MutationLimiter {
+  check(userId: string, policy: MutationPolicy): Promise<void>;
+}
+const localLimiter = new LocalMutationLimiter();
+const distributedLimiter = new UpstashMutationLimiter();
+/** Production authority is distributed; unavailable configuration never falls back locally. */
+export const mutationLimiter: MutationLimiter = {
+  async check(userId, policy) {
+    let mode;
+    try {
+      mode = platformEnvironment();
+    } catch {
+      throw new StudentError('UNAVAILABLE');
+    }
+    if (mode === 'production') return distributedLimiter.check(userId, policy);
+    localLimiter.check(userId, policy);
+  },
+};

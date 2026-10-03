@@ -16,8 +16,7 @@ async function main() {
   const child = spawn(
     process.execPath,
     [
-      'node_modules/next/dist/bin/next',
-      'start',
+      'scripts/production/start.mjs',
       '--hostname',
       '127.0.0.1',
       '--port',
@@ -27,6 +26,7 @@ async function main() {
       stdio: 'inherit',
       env: {
         ...process.env,
+        MENTORALM_ENV: 'test',
         DATABASE_URL: isolated?.url || '',
         RESOURCE_FILES_ROOT: files,
         REFERRAL_APP_ORIGIN: 'https://mentoralm.example.test',

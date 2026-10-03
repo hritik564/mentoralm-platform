@@ -1,8 +1,9 @@
 import 'server-only';
+import { sameOrigin } from '../production/origin';
+import { logUnavailable } from '../production/request-context';
 import { StudentError, errorMessages, errorStatus } from './errors';
 export async function requestBody(request: Request): Promise<unknown> {
-  if (request.headers.get('origin') !== new URL(request.url).origin)
-    throw new StudentError('FORBIDDEN');
+  if (!sameOrigin(request)) throw new StudentError('FORBIDDEN');
   if (!request.headers.get('content-type')?.startsWith('application/json'))
     throw new StudentError('INVALID_INPUT');
   const reader = request.body?.getReader();
@@ -30,7 +31,7 @@ export async function studentResponse(operation: () => Promise<Response>) {
     return await operation();
   } catch (error) {
     const code = error instanceof StudentError ? error.code : 'UNAVAILABLE';
-    if (code === 'UNAVAILABLE') console.error('student_api_unavailable');
+    if (code === 'UNAVAILABLE') logUnavailable('STUDENT_API_UNAVAILABLE');
     return Response.json(
       { error: errorMessages[code] },
       {

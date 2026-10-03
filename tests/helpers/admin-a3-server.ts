@@ -186,6 +186,7 @@ async function main() {
     );
     const env: NodeJS.ProcessEnv = {
       ...process.env,
+      MENTORALM_ENV: 'test',
       DATABASE_URL: f.url,
       LMS_SUBMISSIONS_ROOT: root,
     };
@@ -193,8 +194,7 @@ async function main() {
     const child = spawn(
       process.execPath,
       [
-        'node_modules/next/dist/bin/next',
-        'start',
+        'scripts/production/start.mjs',
         '--hostname',
         '127.0.0.1',
         '--port',

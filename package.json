@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
     "build": "next build",
-    "start": "next start --hostname 127.0.0.1",
+    "start": "node scripts/production/start.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
@@ -19,8 +19,8 @@
     "test:d3": "playwright test --config=playwright.d3.config.ts",
     "db:generate": "prisma generate",
     "db:validate": "prisma validate",
-    "db:migrate": "prisma migrate deploy",
-    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate": "tsx scripts/production/refuse.ts",
+    "db:migrate:dev": "tsx scripts/production/refuse.ts",
     "prebuild": "prisma generate",
     "postinstall": "prisma generate",
     "test:d4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/d4-domain.test.ts",
@@ -49,7 +49,14 @@
     "test:a4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-a4-domain.test.ts",
     "test:a4": "playwright test --config=playwright.admin-a4.config.ts",
     "db:migrate:a4:local": "tsx scripts/admin-a4/migrate.ts",
-    "dev:admin-governance": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/governance.ts"
+    "dev:admin-governance": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/governance.ts",
+    "prod:preflight": "tsx scripts/production/offline-preflight.ts",
+    "prod:db:preflight": "tsx scripts/production/database.ts preflight",
+    "prod:db:deploy": "tsx scripts/production/database.ts deploy",
+    "prod:db:status": "tsx scripts/production/database.ts status",
+    "test:p1": "NODE_OPTIONS=--conditions=react-server tsx --test tests/production-p1.test.ts",
+    "test:p1:runtime": "NODE_OPTIONS=--conditions=react-server tsx --test tests/production-p1-runtime.test.ts",
+    "test:p1:providers": "NODE_OPTIONS=--conditions=react-server tsx --test tests/production-providers.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",

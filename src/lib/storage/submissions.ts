@@ -1,4 +1,5 @@
 import 'server-only';
+import { sameOrigin } from '../production/origin';
 import { realpath, open, unlink } from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
@@ -93,7 +94,7 @@ export async function removeSubmissionFiles(files: SavedUpload[]) {
 }
 export async function multipartBody(request: Request) {
   if (
-    request.headers.get('origin') !== new URL(request.url).origin ||
+    !sameOrigin(request) ||
     !request.headers.get('content-type')?.startsWith('multipart/form-data;')
   )
     throw new StudentError('FORBIDDEN');

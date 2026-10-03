@@ -2,7 +2,10 @@
 
 import { createContext, useContext } from 'react';
 import { ClerkProvider } from '@clerk/nextjs';
-import { deploymentOrigins } from '@/lib/platform/domains';
+import {
+  deploymentAdminOrigin,
+  deploymentOrigins,
+} from '@/lib/platform/domains';
 
 const Availability = createContext(false);
 export const useAuthAvailable = () => useContext(Availability);
@@ -24,7 +27,11 @@ export function AuthProvider({
       signUpUrl="/sign-up"
       signInFallbackRedirectUrl="/dashboard"
       signUpFallbackRedirectUrl="/dashboard"
-      allowedRedirectOrigins={origins.lms ? [origins.lms] : []}
+      allowedRedirectOrigins={[
+        origins.website,
+        origins.lms,
+        deploymentAdminOrigin(),
+      ].filter((value): value is string => !!value)}
       appearance={{
         variables: {
           colorPrimary: '#6550b9',

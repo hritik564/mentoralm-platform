@@ -1,0 +1,11 @@
+# Preparation only. Select Reserved VM / Asia and deployment secrets manually after owner approval.
+# Never attach Replit's managed database; DATABASE_URL is the independent Neon binding.
+[deployment]
+build = ["sh", "-c", "npm ci --include=dev && npm run build"]
+run = ["npm", "run", "start"]
+ignorePorts = false
+
+# One external web port. If a deployment supplies another PORT, update this mapping to match.
+[[ports]]
+localPort = 3000
+externalPort = 80

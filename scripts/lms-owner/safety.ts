@@ -2,7 +2,9 @@ import type { PrismaClient } from '../../src/generated/prisma/client';
 
 export function localSeedUrl(env: Record<string, string | undefined>): string {
   if (
+    (env.MENTORALM_ENV && env.MENTORALM_ENV !== 'local') ||
     (env.NODE_ENV && env.NODE_ENV !== 'development') ||
+    env.REPLIT_DEPLOYMENT === '1' ||
     env.CI ||
     env.VERCEL ||
     env.NETLIFY ||
