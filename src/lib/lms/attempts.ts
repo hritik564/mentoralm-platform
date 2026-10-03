@@ -8,7 +8,10 @@ import { academicTransaction, evaluateCompletion } from './completion';
 const responsesInclude = {
   responses: {
     orderBy: { position: 'asc' as const },
-    include: { options: { orderBy: { position: 'asc' as const } } },
+    include: {
+      options: { orderBy: { position: 'asc' as const } },
+      review: true,
+    },
   },
 };
 type Attempt = Prisma.AcademicAttemptGetPayload<{
@@ -44,8 +47,9 @@ function studentAttempt(a: Attempt) {
       ...(review
         ? {
             explanation: q.explanation,
-            awardedPoints: q.awardedPoints,
-            requiresReview: q.requiresReview,
+            awardedPoints: q.review?.awardedPoints ?? q.awardedPoints,
+            feedback: q.review?.feedback ?? null,
+            requiresReview: q.requiresReview && !q.review,
           }
         : {}),
     })),

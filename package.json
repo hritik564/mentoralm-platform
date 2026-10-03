@@ -42,7 +42,10 @@
     "test:roles:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-roles-domain.test.ts tests/admin-roles-migration.test.ts",
     "test:a2:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-a2-domain.test.ts",
     "test:a2": "playwright test --config=playwright.admin-a2.config.ts",
-    "dev:academic-media-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/reconcile-media.ts"
+    "dev:academic-media-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/admin-owner/reconcile-media.ts",
+    "test:a3:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/admin-a3-domain.test.ts tests/admin-a3-migration.test.ts",
+    "test:a3": "playwright test --config=playwright.admin-a3.config.ts",
+    "db:migrate:a3:local": "tsx scripts/admin-a3/migrate.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",

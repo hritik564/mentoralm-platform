@@ -3,6 +3,7 @@ import base from './playwright.d4.config';
 process.env.L2_TEST_MEDIA = '1';
 export default defineConfig({
   ...base,
+  use: { ...base.use, actionTimeout: 15000, navigationTimeout: 30000 },
   testMatch: 'lms-l3.spec.ts',
   projects: [
     {

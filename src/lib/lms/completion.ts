@@ -30,7 +30,7 @@ export function finalizeCourseProjection(
     },
   };
 }
-export async function evaluateCompletion(
+export async function completionProjection(
   db: Prisma.TransactionClient,
   userId: string,
   courseId: string,
@@ -43,11 +43,21 @@ export async function evaluateCompletion(
     },
     select: outlineSelect(userId),
   });
-  if (!record) return;
+  if (!record) return null;
   const projected = finalizeCourseProjection(
     projectCourse(record),
     await attendanceProjection(db, userId, record),
   );
+  return { record, projected };
+}
+export async function evaluateCompletion(
+  db: Prisma.TransactionClient,
+  userId: string,
+  courseId: string,
+) {
+  const result = await completionProjection(db, userId, courseId);
+  if (!result) return;
+  const { record, projected } = result;
   if (!record.academicCompletionEnabled) return;
   const enrollment = await db.enrollment.findUniqueOrThrow({
     where: { userId_courseId: { userId, courseId } },
@@ -91,7 +101,10 @@ export async function evaluateCompletion(
         courseId,
         userId,
       });
-    } else if (certificate.status === 'SUSPENDED')
+    } else if (
+      certificate.status === 'SUSPENDED' &&
+      !certificate.adminSuspended
+    )
       await db.certificate.update({
         where: { id: certificate.id },
         data: { status: 'ACTIVE' },

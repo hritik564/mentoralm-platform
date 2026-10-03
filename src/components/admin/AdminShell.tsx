@@ -15,15 +15,15 @@ const nav = [
   ['Students', '/admin/students'],
   ['Programs & Courses', '/admin/courses'],
   ['Batches', '/admin/batches'],
-  ['Attendance', null],
+  ['Attendance', '/admin/attendance'],
   ['Assessments', '/admin/assessments'],
   ['Assignments', '/admin/assignments'],
-  ['Certificates', null],
-  ['Discussions', null],
-  ['Support', null],
-  ['Communications', null],
+  ['Certificates', '/admin/certificates'],
+  ['Discussions', '/admin/discussions'],
+  ['Support', '/admin/support'],
+  ['Communications', '/admin/communications'],
   ['Instructors', null],
-  ['Referrals', null],
+  ['Referrals', '/admin/referrals'],
   ['Users & Access', null],
   ['Audit Logs', null],
   ['Settings', null],
@@ -70,7 +70,10 @@ export function AdminShell({
                       ? path === '/admin' || path === '/'
                       : path.includes(href.slice(6)) ||
                         (href === '/admin/assessments' &&
-                          path.includes('/question-banks/'))
+                          (path.includes('/question-banks/') ||
+                            path.includes('/attempts'))) ||
+                        (href === '/admin/assignments' &&
+                          path.includes('/submissions'))
                   )
                     ? 'page'
                     : undefined

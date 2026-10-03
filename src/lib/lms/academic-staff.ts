@@ -44,6 +44,12 @@ export class AcademicStaff {
     status: SubmissionStatus,
     feedback: string,
     batchId?: string,
+    context?: {
+      adminOnly: true;
+      userId: string;
+      courseId: string;
+      itemId: string;
+    },
   ) {
     if (
       !['UNDER_REVIEW', 'CHANGES_REQUESTED', 'ACCEPTED'].includes(status) ||
@@ -67,6 +73,16 @@ export class AcademicStaff {
         },
       });
       if (!version) throw new StudentError('NOT_FOUND');
+      if (context) {
+        await requireAdmin(db, this.actorId);
+        if (
+          context.userId !== version.submission.userId ||
+          context.itemId !== version.submission.assignmentId ||
+          context.courseId !==
+            version.submission.assignment.item.section.courseId
+        )
+          throw new StudentError('NOT_FOUND');
+      }
       const { submission: s } = version,
         course = s.assignment.item.section.course;
       await this.authorize(db, batchId, course);
@@ -105,6 +121,12 @@ export class AcademicStaff {
           actorId: this.actorId,
           action: 'ASSIGNMENT_REVIEW',
           targetId: versionId,
+          details: {
+            userId: s.userId,
+            beforeStatus: version.status,
+            afterStatus: status,
+            feedbackChanged: true,
+          },
         },
       });
       await learningEvent(db, {
@@ -121,10 +143,12 @@ export class AcademicStaff {
     sessionId: string,
     membershipId: string,
     status: AttendanceStatus,
+    context?: { adminOnly: true; userId: string; reason: string },
   ) {
     if (!['PRESENT', 'ABSENT', 'LATE', 'EXCUSED'].includes(status))
       throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {
+      if (context) await requireAdmin(db, this.actorId);
       const session = await db.batchSession.findUnique({
         where: { id: sessionId },
         include: {
@@ -139,6 +163,7 @@ export class AcademicStaff {
       if (
         !session ||
         !member ||
+        (context && member.userId !== context.userId) ||
         session.status !== 'HELD' ||
         (session.batch.startsAt && session.startsAt < session.batch.startsAt) ||
         (session.batch.endsAt && session.startsAt > session.batch.endsAt) ||
@@ -202,6 +227,13 @@ export class AcademicStaff {
           actorId: this.actorId,
           action: `ATTENDANCE_${prior?.status || 'UNRECORDED'}_TO_${status}`,
           targetId: sessionId,
+          details: {
+            userId: member.userId,
+            membershipId,
+            beforeStatus: prior?.status ?? null,
+            afterStatus: status,
+            reason: context?.reason ?? null,
+          },
         },
       });
       if (course) await evaluateCompletion(db, member.userId, course.id);
@@ -240,13 +272,19 @@ export class AcademicStaff {
       if (!c) throw new StudentError('NOT_FOUND');
       await db.certificate.update({
         where: { id: c.id },
-        data: { status: 'REVOKED' },
+        data: { status: 'REVOKED', adminSuspended: false },
       });
       await db.academicAudit.create({
         data: {
           actorId: this.actorId,
           action: 'CERTIFICATE_REVOKE',
           targetId: c.id,
+          details: {
+            beforeStatus: c.status,
+            afterStatus: 'REVOKED',
+            beforeHold: c.adminSuspended,
+            afterHold: false,
+          },
         },
       });
     });

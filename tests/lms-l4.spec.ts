@@ -1,9 +1,9 @@
 import { test, expect, type Page } from '@playwright/test';
 import {
-  clerk,
-  clerkSetup,
-  setupClerkTestingToken,
-} from '@clerk/testing/playwright';
+  signInTestAccount,
+  signOutTestAccount,
+  refreshTestSession,
+} from './helpers/clerk-session';
 import { createClerkClient } from '@clerk/nextjs/server';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
@@ -30,11 +30,6 @@ async function scan(page: Page) {
     ),
   ).toBe(true);
 }
-test.beforeAll(async () => {
-  if (!process.env.CLERK_SECRET_KEY?.startsWith('sk_test_'))
-    throw Error('Clerk Development required');
-  await clerkSetup();
-});
 test('academic routes and files require authentication', async ({
   request,
 }) => {
@@ -122,10 +117,9 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
   try {
     const A = await account(),
       B = await account();
-    await setupClerkTestingToken({ page });
-    await page.goto('/sign-in');
-    await clerk.signIn({ page, emailAddress: A.email });
-    await page.goto('/dashboard');
+    await page.goto('/sign-in', { waitUntil: 'domcontentloaded' });
+    await signInTestAccount(page, A.user.id);
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
     const student = await db.user.findUniqueOrThrow({
       where: { clerkUserId: A.user.id },
@@ -148,7 +142,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
       quizPath = `${coursePath}/activities/${f.quiz.id}`,
       assignPath = `${coursePath}/assignments/${f.assignment.id}`,
       api = `/api/lms/academic/courses/${f.course.id}`;
-    await page.goto('/dashboard/courses');
+    await page.goto('/dashboard/courses', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('link', { name: `Open LMS: ${f.course.title}` }),
     ).toHaveAttribute('href', `${coursePath}/lessons/${f.lesson.id}`);
@@ -165,7 +159,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
     await expect(
       page.getByRole('link', { name: /Next learning item: Foundations quiz/ }),
     ).toHaveAttribute('href', quizPath);
-    await page.goto('/dashboard/courses');
+    await page.goto('/dashboard/courses', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('link', { name: `Continue Learning: ${f.course.title}` }),
     ).toHaveAttribute('href', quizPath);
@@ -194,11 +188,21 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
       window.scrollTo({ top: 0, behavior: 'instant' });
     });
     await page.getByLabel('Vague', { exact: true }).check();
+    await page
+      .getByRole('button', { name: 'Next question', exact: true })
+      .click();
     await page.getByLabel('Interrupt', { exact: true }).check();
+    await page
+      .getByRole('button', { name: 'Next question', exact: true })
+      .click();
     await page.getByLabel('False', { exact: true }).check();
     await page.getByRole('button', { name: 'Save answers' }).click();
-    await expect(page.getByRole('status')).toContainText('Answers saved');
-    await page.goto('/dashboard/courses');
+    await expect(
+      page.getByText('Answers saved. You can resume this attempt later.', {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page.goto('/dashboard/courses', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('link', { name: `Continue Learning: ${f.course.title}` }),
     ).toHaveAttribute('href', quizPath);
@@ -216,8 +220,14 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
     await page.getByRole('button', { name: 'Start another attempt' }).click();
     await expect(page.getByText('Attempt 2 · In progress')).toBeVisible();
     await page.getByLabel('Clear', { exact: true }).check();
+    await page
+      .getByRole('button', { name: 'Next question', exact: true })
+      .click();
     await page.getByLabel('Listen', { exact: true }).check();
     await page.getByLabel('Clarify', { exact: true }).check();
+    await page
+      .getByRole('button', { name: 'Next question', exact: true })
+      .click();
     await page.getByLabel('True', { exact: true }).check();
     page.once('dialog', (d) => d.accept());
     await page.getByRole('button', { name: 'Submit attempt' }).click();
@@ -231,7 +241,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         window.scrollTo({ top: 0, behavior: 'instant' });
       });
     }
-    await page.goto('/learn/assignments');
+    await page.goto('/learn/assignments', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('heading', { name: 'Practice assignment' }),
     ).toBeVisible();
@@ -243,7 +253,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
       });
     }
     await capture('assignments');
-    await page.goto(assignPath);
+    await page.goto(assignPath, { waitUntil: 'domcontentloaded' });
     await page.getByLabel('Submission type').selectOption('TEXT_AND_FILE');
     await page.getByLabel('Your response').fill('Original work');
     await page.getByLabel('Files', { exact: true }).setInputFiles({
@@ -277,7 +287,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
       feedback: 'Please refine your answer.',
       batchId: f.batch.id,
     });
-    await page.reload();
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Please refine your answer.')).toBeVisible();
     await page.getByLabel('Submission type').selectOption('TEXT');
     await page.getByLabel('Your response').fill('Refined work');
@@ -299,7 +309,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
       feedback: 'Accepted after review.',
       batchId: f.batch.id,
     });
-    await page.reload();
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByText('Accepted after review.')).toBeVisible();
     await expect(page.getByLabel('Your response')).toHaveCount(0);
     await scan(page);
@@ -361,11 +371,13 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
       membershipId: f.membership.id,
       batchId: f.batch.id,
     });
-    await page.goto('/learn/attendance');
+    await page.goto('/learn/attendance', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('heading', { name: 'Practice session' }),
     ).toBeVisible();
-    await expect(page.getByText('present', { exact: true })).toBeVisible();
+    await expect(
+      page.locator('.lms-dense-list').getByText('present', { exact: true }),
+    ).toBeVisible();
     await scan(page);
     if (info.project.name === 'l4-desktop') {
       await page.evaluate(() => {
@@ -373,13 +385,25 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         window.scrollTo({ top: 0, behavior: 'instant' });
       });
     }
-    await page.goto(`${coursePath}/activities/${f.assessment.id}`);
+    await page.goto(`${coursePath}/activities/${f.assessment.id}`, {
+      waitUntil: 'domcontentloaded',
+    });
     await page
       .getByRole('button', { name: 'Start assessment', exact: true })
       .click();
     await page.getByLabel('Clear', { exact: true }).check();
-    await page.getByLabel('Your answer').nth(0).fill('My approach');
-    await page.getByLabel('Your answer').nth(1).fill('My reasoning');
+    await page
+      .getByRole('button', { name: 'Next question', exact: true })
+      .click();
+    await page
+      .getByRole('textbox', { name: 'Your answer', exact: true })
+      .fill('My approach');
+    await page
+      .getByRole('button', { name: 'Next question', exact: true })
+      .click();
+    await page
+      .getByRole('textbox', { name: 'Your answer', exact: true })
+      .fill('My reasoning');
     page.once('dialog', (d) => d.accept());
     await page.getByRole('button', { name: 'Submit attempt' }).click();
     await expect(page.locator('.l3-result')).toContainText(
@@ -388,7 +412,9 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
     await expect(page.locator('.l3-result')).toContainText(
       'No personal or career interpretation',
     );
-    await page.goto(`${coursePath}/lessons/${f.lesson.id}`);
+    await page.goto(`${coursePath}/lessons/${f.lesson.id}`, {
+      waitUntil: 'domcontentloaded',
+    });
 
     await expect(
       page.getByRole('button', { name: '✓ Lesson completed' }),
@@ -401,17 +427,17 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         window.scrollTo({ top: 0, behavior: 'instant' });
       });
       await page.setViewportSize({ width: 820, height: 1000 });
-      await page.goto(quizPath);
+      await page.goto(quizPath, { waitUntil: 'domcontentloaded' });
       await scan(page);
       await expect(
         page.getByRole('button', { name: 'Course Outline', exact: true }),
       ).toBeVisible();
       await page.setViewportSize({ width: 1440, height: 1000 });
     }
-    await page.goto('/learn/lectures');
+    await page.goto('/learn/lectures', { waitUntil: 'domcontentloaded' });
     await expect(
       page
-        .locator('.l2-discovery')
+        .locator('.lms-dense-list')
         .getByRole('link', { name: /Foundations quiz/ }),
     ).toHaveAttribute('href', quizPath);
     const enrollment = await db.enrollment.findUniqueOrThrow({
@@ -421,7 +447,9 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
     const cert = await db.certificate.findUniqueOrThrow({
       where: { userId_courseId: { userId: student.id, courseId: f.course.id } },
     });
-    await page.goto(`/learn/certificates/${cert.code}`);
+    await page.goto(`/learn/certificates/${cert.code}`, {
+      waitUntil: 'domcontentloaded',
+    });
     await expect(page.getByText(cert.code, { exact: true })).toBeVisible();
     await expect(
       page.getByText('A certificate document has not been attached yet.'),
@@ -439,10 +467,11 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         mimeType: 'application/pdf',
       },
     });
-    await page.reload();
+    await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('link', { name: 'Download certificate PDF' }),
     ).toBeVisible();
+    await refreshTestSession(page);
     expect(
       (
         await req.get(`/api/lms/academic/certificates/${cert.code}/download`)
@@ -450,28 +479,28 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
     ).toBe(200);
     await scan(page);
     await capture('certificate');
-    await page.goto('/dashboard/courses');
+    await page.goto('/dashboard/courses', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('link', { name: `View certificate: ${f.course.title}` }),
     ).toBeVisible();
     await expect(page.locator('body')).not.toContainText(student.studentId!);
-    await page.goto('/dashboard/resources');
+    await page.goto('/dashboard/resources', { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('heading', { name: `${f.course.title} certificate` }),
     ).toBeVisible();
-    await page.goto('/learn');
+    await page.goto('/learn', { waitUntil: 'domcontentloaded' });
     await expect(
-      page.getByRole('heading', { name: 'Academic activity' }),
+      page.getByRole('heading', { name: 'Recent result', exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole('heading', { name: 'Certificates · 1' }),
+      page.getByRole('heading', { name: 'Certificates', exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Recent result' }),
     ).toBeVisible();
     await scan(page);
     await capture('home');
-    await page.goto('/learn/discussions');
+    await page.goto('/learn/discussions', { waitUntil: 'domcontentloaded' });
     await page.getByLabel('Audience', { exact: true }).selectOption(f.batch.id);
     await page
       .getByLabel('Title', { exact: true })
@@ -527,7 +556,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         })
       ).status(),
     ).toBe(403);
-    await page.goto('/learn/discussions');
+    await page.goto('/learn/discussions', { waitUntil: 'domcontentloaded' });
     await scan(page);
     await capture('discussions');
     const widths = info.project.name === 'l4-desktop' ? [1440, 820] : [390];
@@ -545,7 +574,7 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         '/learn/discussions',
         `/learn/certificates/${cert.code}`,
       ]) {
-        await page.goto(path);
+        await page.goto(path, { waitUntil: 'domcontentloaded' });
         if (path === '/learn')
           await expect(
             page.getByRole('link', { name: 'How can we practice together?' }),
@@ -553,10 +582,10 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         await scan(page);
       }
     }
-    await clerk.signOut({ page });
-    await page.goto('/sign-in');
-    await clerk.signIn({ page, emailAddress: B.email });
-    await page.goto('/dashboard');
+    await signOutTestAccount(page);
+    await page.goto('/sign-in', { waitUntil: 'domcontentloaded' });
+    await signInTestAccount(page, B.user.id);
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     const other = await db.user.findUniqueOrThrow({
       where: { clerkUserId: B.user.id },
     });
@@ -570,13 +599,15 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
     expect((await req.get(`/api/lms/discussions/${threadId}`)).status()).toBe(
       404,
     );
-    await page.goto(`/learn/discussions/${threadId}`);
+    await page.goto(`/learn/discussions/${threadId}`, {
+      waitUntil: 'domcontentloaded',
+    });
     await expect(
       page.getByRole('heading', { name: 'Discussion not available' }),
     ).toBeVisible();
     await expect(
       page.getByRole('link', { name: 'Contact Support' }),
-    ).toHaveAttribute('href', '/dashboard/support');
+    ).toHaveAttribute('href', '/learn/support');
     expect(
       (
         await req.post(`/api/lms/discussions/${threadId}/reply`, {
@@ -621,11 +652,11 @@ test('populated academic workflow, scoring, assignment history, attendance, comp
         })
       ).status(),
     ).toBe(404);
-    await page.goto(quizPath);
+    await page.goto(quizPath, { waitUntil: 'domcontentloaded' });
     await expect(
       page.getByRole('heading', { name: 'Learning access unavailable' }),
     ).toBeVisible();
-    await page.goto('/dashboard');
+    await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('heading', { name: /Welcome/ })).toBeVisible();
     expect((await req.get('/api/student/profile')).status()).toBe(200);
     expect((await req.get('/api/lms/discussions')).status()).toBe(403);

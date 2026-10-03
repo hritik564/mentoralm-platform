@@ -16,7 +16,17 @@ export type HandleKind =
   | 'session'
   | 'section'
   | 'bank'
-  | 'question';
+  | 'question'
+  | 'attempt'
+  | 'response'
+  | 'submission'
+  | 'version'
+  | 'file'
+  | 'certificate'
+  | 'thread'
+  | 'ticket'
+  | 'message'
+  | 'membership';
 function key() {
   if (!process.env.CLERK_SECRET_KEY) throw new StudentError('UNAVAILABLE');
   return createHash('sha256')

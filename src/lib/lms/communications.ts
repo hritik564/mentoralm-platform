@@ -103,21 +103,24 @@ export class BatchCommunications {
     batchId: string,
     channel: CommunicationChannel,
     purpose: CommunicationPurpose,
+    context?: { adminOnly: true },
   ) {
     if (
       !z.enum(['EMAIL', 'WHATSAPP', 'IN_APP']).safeParse(channel).success ||
       !z.enum(['OPERATIONAL', 'MARKETING']).safeParse(purpose).success
     )
       throw new StudentError('INVALID_INPUT');
-    return academicTransaction(this.db, (db) =>
-      this.resolve(db, batchId, channel, purpose),
-    );
+    return academicTransaction(this.db, async (db) => {
+      if (context) await requireAdmin(db, this.actorId);
+      return this.resolve(db, batchId, channel, purpose);
+    });
   }
-  async plan(input: unknown) {
+  async plan(input: unknown, context?: { adminOnly: true }) {
     mutationLimiter.check(this.actorId, 'communication');
     const p = messageInput.safeParse(input);
     if (!p.success) throw new StudentError('INVALID_INPUT');
     return academicTransaction(this.db, async (db) => {
+      if (context) await requireAdmin(db, this.actorId);
       const audience = await this.resolve(
         db,
         p.data.batchId,
@@ -145,6 +148,13 @@ export class BatchCommunications {
           actorId: this.actorId,
           action: 'COMMUNICATION_PLANNED',
           targetId: message.id,
+          details: {
+            batchId: p.data.batchId,
+            channel: p.data.channel,
+            purpose: p.data.purpose,
+            pendingProvider: audience.filter((m) => m.allowed).length,
+            suppressed: audience.filter((m) => !m.allowed).length,
+          },
         },
       });
       return message;

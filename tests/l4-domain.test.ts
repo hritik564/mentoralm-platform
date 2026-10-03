@@ -130,16 +130,42 @@ test(
       const academic = new Academics(db, A),
         staff = new AcademicStaff(db, I.id),
         learning = new LearningRepository(db, A);
-      const attempt = await academic.attempts.start(f.course.id, f.quiz.id);
-      await academic.attempts.save(f.course.id, f.quiz.id, attempt.id, {
-        answers: attempt.questions.map((q) => ({
-          questionId: q.id,
-          optionIds:
-            q.id === f.multi.id
-              ? f.multi.options.filter((o) => o.correct).map((o) => o.id)
-              : [q.options[0].id],
+      // Seed the historical schema directly: current services include A3 review relations.
+      const attempt = {
+        ...(await db.academicAttempt.create({
+          data: {
+            userId: A.id,
+            activityId: f.quiz.id,
+            number: 1,
+            passingPercent: 100,
+            reviewAnswers: true,
+            responses: {
+              create: [f.single, f.multi, f.boolean].map((q, i) => ({
+                questionId: q.id,
+                type: q.type,
+                prompt: q.prompt,
+                explanation: q.explanation,
+                position: i + 1,
+                points: i + 1,
+                options: {
+                  create: q.options.map((o, j) => ({
+                    optionId: o.id,
+                    label: o.label,
+                    position: j + 1,
+                    correct: o.correct,
+                    selected: o.correct,
+                  })),
+                },
+              })),
+            },
+          },
+          select: { id: true },
         })),
-      });
+        questions: [f.single, f.multi, f.boolean].map((q) => ({
+          id: q.id,
+          options: q.options.map((o) => ({ id: o.id })),
+        })),
+      };
       // L4 event tables do not exist until upgrade; seed old submitted snapshot through existing schema mechanics.
       const version = await db.assignmentSubmission.create({
         data: {
@@ -173,14 +199,14 @@ test(
           status: 'PRESENT',
         },
       });
-      const certificate = await db.certificate.create({
-        data: {
-          userId: A.id,
-          courseId: f.course.id,
-          code: 'L3-PRESERVED-CERT',
-          status: 'SUSPENDED',
-        },
-      });
+      const certificate = { id: randomUUID() };
+      await db.$executeRawUnsafe(
+        `INSERT INTO "${isolated.schema}"."Certificate" (id,"userId","courseId",code,status) VALUES ($1,$2,$3,$4,'SUSPENDED')`,
+        certificate.id,
+        A.id,
+        f.course.id,
+        'L3-PRESERVED-CERT',
+      );
       await db.assignmentReview.create({
         data: {
           versionId: version.versions[0].id,

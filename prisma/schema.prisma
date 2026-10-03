@@ -58,6 +58,7 @@ model User {
   submissions              AssignmentSubmission[]
   attendance               AttendanceRecord[]
   certificates             Certificate[]
+  academicResponseReviews  AcademicResponseReview[]
   reviews                  AssignmentReview[]
   academicAudit            AcademicAudit[]
   discussionThreads        DiscussionThread[]
@@ -544,9 +545,9 @@ model AcademicAttempt {
 
 // Immutable question/scoring snapshots keep previously started/submitted attempts independent of later authoring.
 model AcademicResponse {
-  id             String           @id @default(cuid())
+  id             String                  @id @default(cuid())
   attemptId      String
-  attempt        AcademicAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attempt        AcademicAttempt         @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   questionId     String
   type           QuestionType
   prompt         String
@@ -555,11 +556,24 @@ model AcademicResponse {
   points         Int
   text           String?
   awardedPoints  Int?
-  requiresReview Boolean          @default(false)
+  requiresReview Boolean                 @default(false)
   options        ResponseOption[]
+  review         AcademicResponseReview?
 
   @@unique([attemptId, questionId])
   @@unique([attemptId, position])
+}
+
+model AcademicResponseReview {
+  responseId    String           @id
+  response      AcademicResponse @relation(fields: [responseId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  reviewerId    String
+  reviewer      User             @relation(fields: [reviewerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  awardedPoints Int
+  feedback      String?          @db.VarChar(2000)
+  reviewedAt    DateTime         @default(now()) @db.Timestamptz(6)
+
+  @@index([reviewerId, reviewedAt(sort: Desc)])
 }
 
 model ResponseOption {
@@ -682,17 +696,18 @@ model AttendanceRecord {
 }
 
 model Certificate {
-  id         String            @id @default(cuid())
-  code       String            @unique
-  userId     String
-  user       User              @relation(fields: [userId], references: [id], onDelete: Restrict)
-  courseId   String
-  course     Course            @relation(fields: [courseId], references: [id], onDelete: Restrict)
-  issuedAt   DateTime          @default(now()) @db.Timestamptz(6)
-  status     CertificateStatus @default(ACTIVE)
-  storageKey String?
-  fileName   String?
-  mimeType   String?
+  id             String            @id @default(cuid())
+  code           String            @unique
+  userId         String
+  user           User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId       String
+  course         Course            @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  issuedAt       DateTime          @default(now()) @db.Timestamptz(6)
+  status         CertificateStatus @default(ACTIVE)
+  adminSuspended Boolean           @default(false)
+  storageKey     String?
+  fileName       String?
+  mimeType       String?
 
   @@unique([userId, courseId])
 }

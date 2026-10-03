@@ -14,6 +14,7 @@ import {
 } from '@/components/admin/AdminShell';
 import '@/styles/admin.css';
 import '@/styles/admin-academic.css';
+import '@/styles/admin-operational.css';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: 'Mentora Admin',

@@ -279,6 +279,7 @@ export function AttemptPlayer({
                       <p key={o.id}>Correct answer: {o.label}</p>
                     ))}
                   {q.explanation && <p>{q.explanation}</p>}
+                  {q.feedback && <p>Review feedback: {q.feedback}</p>}
                 </div>
               ))}
             </section>
