@@ -87,6 +87,18 @@ function loginRedirect(request: NextRequest, path = request.nextUrl.pathname) {
 }
 
 function handleProxy(request: NextRequest, event: NextFetchEvent) {
+  const requestHost = (
+    request.headers.get('host') || request.nextUrl.host
+  ).toLowerCase();
+
+  if (requestHost === 'www.mentoralm.com') {
+    const url = request.nextUrl.clone();
+    url.protocol = 'https:';
+    url.hostname = 'mentoralm.com';
+    url.port = '';
+    return NextResponse.redirect(url, 308);
+  }
+
   const infrastructurePath = infrastructureProbePath(
     request.headers.get('host') || request.nextUrl.host,
     request.nextUrl.pathname,
