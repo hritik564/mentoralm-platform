@@ -19,10 +19,17 @@ register(
     'LOCAL_GOVERNANCE_BOOTSTRAP',
     'LOCAL_ADMIN_ROLE_GRANTED',
     'LOCAL_ADMIN_ROLE_REVOKED',
+    'PRODUCTION_FIRST_ADMIN_BOOTSTRAP',
+    'PRODUCTION_FIRST_GOVERNOR_BOOTSTRAP',
   ],
   'Access',
   'User',
 );
+
+auditRegistry.PRODUCTION_FIRST_ADMIN_BOOTSTRAP.label =
+  'First production admin bootstrap';
+auditRegistry.PRODUCTION_FIRST_GOVERNOR_BOOTSTRAP.label =
+  'First production Governor bootstrap';
 register(
   ['BatchCreated', 'BatchUpdated', 'BatchInstructorChanged'],
   'Batches',
@@ -176,6 +183,8 @@ const fields = [
   'before',
   'after',
   'role',
+  'primaryRole',
+  'additionalRole',
   'operation',
   'changed',
   'replyCreated',
