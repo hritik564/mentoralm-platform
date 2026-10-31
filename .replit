@@ -8,9 +8,5 @@ run = ["npm", "run", "start"]
 ignorePorts = false
 
 [[ports]]
-localPort = 8080
-externalPort = 8080
-
-[[ports]]
-localPort = 22370
+localPort = 3000
 externalPort = 80
