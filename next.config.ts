@@ -4,6 +4,9 @@ import { validateEnvironment } from './src/lib/production/config';
 import { securityHeaders } from './src/lib/production/security';
 validateEnvironment();
 const nextConfig: NextConfig = {
+  images: {
+    unoptimized: true,
+  },
   env: { MENTORALM_BUILD_PUBLIC_CONFIG_HASH: publicConfigurationHash() },
   poweredByHeader: false,
   async headers() {

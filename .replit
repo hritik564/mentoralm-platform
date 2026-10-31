@@ -8,6 +8,7 @@ modules = ["nodejs-22"]
 build = ["sh", "-c", "unset PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGOPTIONS; npm ci --include=dev && npm run build"]
 run = ["sh", "-c", "unset PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGOPTIONS; exec npm run start"]
 ignorePorts = false
+deploymentTarget = "cloudrun"
 
 [[ports]]
 localPort = 3000
