@@ -1,10 +1,12 @@
 modules = ["nodejs-22"]
 
-# Preparation only. Select Autoscale / Asia and deployment secrets manually after owner approval.
-# Never attach Replit's managed database; DATABASE_URL is the independent Neon binding.
+# Autoscale production runtime. Use independent Neon DATABASE_URL only.
+# Replit may inject PG* variables even when its managed database is not used;
+# strip those provider variables before build/start so the production guard
+# sees only the approved explicit DATABASE_URL.
 [deployment]
-build = ["sh", "-c", "npm ci --include=dev && npm run build"]
-run = ["npm", "run", "start"]
+build = ["sh", "-c", "unset PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGOPTIONS; npm ci --include=dev && npm run build"]
+run = ["sh", "-c", "unset PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGOPTIONS; exec npm run start"]
 ignorePorts = false
 
 [[ports]]
