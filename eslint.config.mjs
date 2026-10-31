@@ -18,6 +18,7 @@ export default defineConfig([
     },
   },
   globalIgnores([
+    '.local/**',
     '.next/**',
     'src/generated/**',
     'out/**',
