@@ -185,24 +185,33 @@ test('P1 Production URL is one explicit authenticated, verified TLS database wit
   assert.ok(!pool.connectionString?.includes('sslmode'));
   assert.equal(pool.query_timeout, 10000);
 });
+const operatorProduction = (): Environment => ({
+  ...production(),
+  PRODUCTION_DATABASE_NAME: 'mentoralm',
+  DATABASE_URL:
+    'postgresql://mentoralm_runtime:synthetic@ep-synthetic.ap-southeast-1.aws.neon.tech/mentoralm?schema=public&sslmode=require&sslaccept=strict',
+  MIGRATION_DATABASE_URL:
+    'postgresql://mentoralm_migrator:synthetic@ep-synthetic.ap-southeast-1.aws.neon.tech/mentoralm?schema=public&sslmode=require&sslaccept=strict',
+});
+
 test('P1 operator tools default refuse and require exact intent/target/ticket/recent backup', () => {
   const args = [
-    '--confirm-production=mentoralm_prod',
+    '--confirm-production=mentoralm',
     '--expected-host=ep-synthetic.ap-southeast-1.aws.neon.tech',
     '--change-ticket=CHANGE-123',
   ];
-  assert.throws(() => operatorIntent(production(), 'deploy', args));
+  assert.throws(() => operatorIntent(operatorProduction(), 'deploy', args));
   assert.equal(
-    operatorIntent(production(), 'preflight', args).schema,
+    operatorIntent(operatorProduction(), 'preflight', args).schema,
     'public',
   );
   assert.equal(
-    operatorIntent(production(), 'deploy', [
+    operatorIntent(operatorProduction(), 'deploy', [
       ...args,
       '--backup-reference=backup-123',
       `--backup-timestamp=${new Date(Date.now() - 1000).toISOString()}`,
     ]).database,
-    'mentoralm_prod',
+    'mentoralm',
   );
   for (const bad of [
     '--confirm-production=wrong',
@@ -210,18 +219,18 @@ test('P1 operator tools default refuse and require exact intent/target/ticket/re
     '--reset=yes',
   ])
     assert.throws(() =>
-      operatorIntent(production(), 'preflight', [...args, bad]),
+      operatorIntent(operatorProduction(), 'preflight', [...args, bad]),
     );
   assert.throws(() =>
-    operatorIntent({ ...production(), MENTORALM_ENV: 'local' }, 'status', args),
+    operatorIntent({ ...operatorProduction(), MENTORALM_ENV: 'local' }, 'status', args),
   );
-  assert.throws(() => operatorIntent(production(), 'reset', args));
+  assert.throws(() => operatorIntent(operatorProduction(), 'reset', args));
   assert.throws(() =>
     operatorIntent(
       {
-        ...production(),
-        MIGRATION_DATABASE_URL: production().MIGRATION_DATABASE_URL!.replace(
-          'mentoralm_prod',
+        ...operatorProduction(),
+        MIGRATION_DATABASE_URL: operatorProduction().MIGRATION_DATABASE_URL!.replace(
+          'mentoralm',
           'mentoralm_test',
         ),
       },
