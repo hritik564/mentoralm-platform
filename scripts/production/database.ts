@@ -57,7 +57,7 @@ async function main() {
         command,
         target: { database: intent.database, schema: intent.schema },
         applied: rows.filter((r) => !r.rolled_back_at).length,
-        releaseMigrations: 11,
+        releaseMigrations: 12,
         changeTicket: intent.ticket,
       }),
     );

@@ -55,4 +55,9 @@ export const migrationManifest = [
     checksum:
       'f64fe4c2d6b91f57d5b881623cb95477ec9aea16afc7cd4454b2577e5eaf151d',
   },
+  {
+    name: '20261101093000_student_id_prefix_st',
+    checksum:
+      '8e1f016036042ef7f82e921d100a47bfbf8333e239985217c2f86c67a14647e8',
+  },
 ] as const;

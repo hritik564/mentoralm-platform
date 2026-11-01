@@ -100,7 +100,7 @@ function parseInput(args: string[]): Input {
   if (!/^user_[a-zA-Z0-9]+$/.test(clerkUserId))
     throw Error('Exact existing Clerk user ID required.');
 
-  if (!/^MLM-STU-\d{4}-\d{6}$/.test(confirmStudentId))
+  if (!/^ST-\d{4}-\d{6}$/.test(confirmStudentId))
     throw Error('Exact production Student ID required.');
 
   if (confirmProduction !== 'mentoralm')

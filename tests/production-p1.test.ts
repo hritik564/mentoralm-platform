@@ -287,7 +287,7 @@ test('P1 structured logging drops body/headers/errors/queries/tokens and bounds 
   assert.ok(!(await response.text()).includes(secret));
 });
 test('P1 migration release readiness rejects checksum drift, incomplete, duplicate and unknown rows', () => {
-  assert.equal(verifyReleaseManifest(), 11);
+  assert.equal(verifyReleaseManifest(), 12);
   const rows = migrationManifest.map((m) => ({
     migration_name: m.name,
     checksum: m.checksum,
@@ -296,7 +296,7 @@ test('P1 migration release readiness rejects checksum drift, incomplete, duplica
   }));
   assert.ok(migrationsReady(rows));
   assert.ok(migrationsReady(rows.slice(0, 3), false));
-  assert.ok(!migrationsReady(rows.slice(0, 10)));
+  assert.ok(!migrationsReady(rows.slice(0, migrationManifest.length - 1)));
   assert.ok(!migrationsReady([...rows, rows[0]]));
   assert.ok(
     !migrationsReady([{ ...rows[0], checksum: 'tampered' }, ...rows.slice(1)]),
@@ -412,7 +412,7 @@ test('P1 HTTPS/host/origin and safe return controls ignore forwarded authorities
     }
   }
 });
-test('P1 clean eleven-migration installation, audit guards and schema drift on isolated Test only', async () => {
+test('P1 clean twelve-migration installation, audit guards and schema drift on isolated Test only', async () => {
   const f = await isolatedDatabase();
   try {
     const rows = await f.db.$queryRawUnsafe<
@@ -483,7 +483,7 @@ test('P1 full historical upgrade retains earliest Student/Profile/Enrollment and
       where: { id: 'p1-student' },
     });
     assert.equal(user.clerkUserId, 'p1-history');
-    assert.match(user.studentId!, /^MLM-STU-/);
+    assert.match(user.studentId!, /^ST-/);
     assert.equal(user.role, 'STUDENT');
     assert.equal(
       (

@@ -140,7 +140,7 @@ test('real LMS identity, empty/future states, cohorts, course structure, ownersh
     await expect(
       page.getByRole('heading', { name: 'Welcome, L1 learner.' }),
     ).toBeVisible();
-    expect(student.studentId).toMatch(/^MLM-STU-\d{4}-\d{6,}$/);
+    expect(student.studentId).toMatch(/^ST-\d{4}-\d{6,}$/);
     await expect(page.locator('.lms-identity')).toContainText(
       student.studentId!,
     );

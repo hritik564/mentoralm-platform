@@ -6,7 +6,7 @@ export function verifyReleaseManifest() {
     .filter((n) => /^\d{14}_/.test(n))
     .sort();
   if (
-    names.length !== 11 ||
+    names.length !== migrationManifest.length ||
     names.join() !== migrationManifest.map((m) => m.name).join()
   )
     throw Error('Release migration manifest mismatch.');

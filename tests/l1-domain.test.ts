@@ -71,7 +71,7 @@ test('controlled launch and redirect paths reject arbitrary URLs and student ide
   for (const id of [
     'lms-course-../secret',
     'lms-course-https://evil.test',
-    'MLM-STU-2026-000001',
+    'ST-2026-000001',
   ])
     assert.equal(resolveLearningLaunch({ destinationId: id }), null);
   assert.equal(
@@ -86,7 +86,7 @@ test('controlled launch and redirect paths reject arbitrary URLs and student ide
   ])
     assert.equal(dashboardDestination(destination), '/dashboard');
   assert.equal(
-    profileInput.safeParse({ studentId: 'MLM-STU-2026-000001' }).success,
+    profileInput.safeParse({ studentId: 'ST-2026-000001' }).success,
     false,
   );
 });
@@ -212,7 +212,7 @@ test(
           );
           assert.ok(
             identifiers.every((row) =>
-              /^MLM-STU-\d{4}-\d{6,}$/.test(row.studentId!),
+              /^ST-\d{4}-\d{6,}$/.test(row.studentId!),
             ),
           );
           const initial = await repoA.studentId();
@@ -812,7 +812,7 @@ test(
       assert.equal(rows[0].id, 'legacy_student');
       assert.equal(rows[0].clerkUserId, 'legacy_clerk');
       assert.equal(rows[0].institution, 'Preserved institution');
-      assert.match(rows[0].studentId, /^MLM-STU-\d{4}-\d{6,}$/);
+      assert.match(rows[0].studentId, /^ST-\d{4}-\d{6,}$/);
       assert.equal(rows[0].studentId, issued);
     } finally {
       await admin.query('SET search_path TO public');
