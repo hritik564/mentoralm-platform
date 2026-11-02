@@ -1,7 +1,6 @@
 // Offline P1 creates this future operator command; never invoke it against Production during P1.
 import { Client } from 'pg';
 import { execFileSync } from 'node:child_process';
-import { databasePoolConfig } from '../../src/lib/production/database';
 import {
   migrationsReady,
   type MigrationRow,
@@ -13,9 +12,22 @@ async function main() {
   const command = process.argv[2],
     intent = operatorIntent(process.env, command, process.argv.slice(3));
   verifyReleaseManifest();
-  const connection = new Client(
-    databasePoolConfig({ ...process.env, DATABASE_URL: intent.url.toString() }),
-  );
+  const clientUrl = new URL(intent.url.toString());
+
+  // operatorIntent() has already validated this as the exact Production
+  // direct-Neon migration target. pg receives explicit TLS settings here
+  // without re-running the full application environment validator.
+  clientUrl.searchParams.delete('sslmode');
+  clientUrl.searchParams.delete('sslaccept');
+  clientUrl.searchParams.delete('schema');
+
+  const connection = new Client({
+    connectionString: clientUrl.toString(),
+    connectionTimeoutMillis: 5000,
+    query_timeout: 10000,
+    statement_timeout: 10000,
+    ssl: { rejectUnauthorized: true },
+  });
   await connection.connect();
   try {
     const identity = (
