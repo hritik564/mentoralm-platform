@@ -86,11 +86,17 @@ export function Pager({
 export function Tabs({
   labels,
   children,
+  active: controlled,
+  onChange,
 }: {
   labels: string[];
+  active?: string;
+  onChange?: (label: string) => void;
   children: (active: string) => React.ReactNode;
 }) {
-  const [active, setActive] = useState(labels[0]);
+  const [localActive, setActive] = useState(labels[0]);
+  const active =
+    controlled && labels.includes(controlled) ? controlled : localActive;
   return (
     <>
       <div className="admin-tabs" role="group" aria-label="Detail sections">
@@ -98,7 +104,7 @@ export function Tabs({
           <button
             key={label}
             aria-pressed={active === label}
-            onClick={() => setActive(label)}
+            onClick={() => (onChange ? onChange(label) : setActive(label))}
           >
             {label}
           </button>

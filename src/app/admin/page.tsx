@@ -1,10 +1,4 @@
-import { OperationalMetrics } from '@/components/admin/operational/List';
-import { AdminOverview } from '@/components/admin/Lists';
+import { AdminDashboard } from '@/components/admin/Dashboard';
 export default function Page() {
-  return (
-    <>
-      <AdminOverview />
-      <OperationalMetrics />
-    </>
-  );
+  return <AdminDashboard />;
 }

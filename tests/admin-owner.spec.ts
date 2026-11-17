@@ -152,7 +152,9 @@ test('Real owner uses Admin and Student surfaces; revoke is immediate and learni
       await page.goto('/admin-auth/sign-in');
       await expect(page).toHaveURL('/admin');
       await expect(
-        page.getByRole('heading', { name: 'Overview', exact: true }),
+        page.getByRole('heading', {
+          name: /(?:Good Morning|Good Afternoon|Good Evening|Welcome back),/,
+        }),
       ).toBeVisible();
       await expect(page.locator('.admin-metrics')).toBeVisible();
     }

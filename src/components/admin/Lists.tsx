@@ -5,138 +5,18 @@ import { useState } from 'react';
 import { BulkAccess } from './governance/BulkAccess';
 import { useAdminData } from './client';
 import { State, Pager, Table, AccessPill, DateText, Pill } from './Primitives';
+import { useAdminCreateDialog } from './useCreateDialog';
 import { BatchEditor } from './editors';
 import { adminHref } from '@/lib/platform/domains';
-import type { Overview, StudentList, BatchList } from './types';
-export function AdminOverview() {
-  const { data, error, loading, reload } = useAdminData<Overview>('overview');
-  return (
-    <>
-      <div className="admin-page-heading">
-        <div>
-          <h1>Overview</h1>
-          <p>Current platform totals and operational activity.</p>
-        </div>
-      </div>
-      <State {...{ loading, error, reload }} />
-      {data && (
-        <>
-          <div className="admin-metrics">
-            {[
-              [
-                'Students',
-                data.metrics.students,
-                'Registered student accounts',
-              ],
-              ['Active Batches', data.metrics.batches, 'Batches marked active'],
-              [
-                'Enrollments',
-                data.metrics.enrollments,
-                'Enrolled or in progress',
-              ],
-              [
-                'LMS enabled',
-                data.metrics.enabled,
-                'Effective learning access',
-              ],
-              [
-                'Published Courses',
-                data.metrics.courses,
-                'Available learning courses',
-              ],
-              [
-                'Open Support',
-                data.metrics.support,
-                'Open or in-progress tickets',
-              ],
-            ]
-              .filter(([, value]) => value !== undefined)
-              .map(([label, value, caption]) => (
-                <section key={label} className="admin-card metric">
-                  <span className="admin-metric-icon" aria-hidden="true">
-                    ◇
-                  </span>
-                  <div>
-                    <h2>{label}</h2>
-                    <strong>{Number(value).toLocaleString()}</strong>
-                    <p>{caption}</p>
-                  </div>
-                </section>
-              ))}
-          </div>
-          <div className="admin-grid">
-            {data.metrics.students !== undefined && (
-              <section className="admin-card">
-                <h2>Needs attention</h2>
-                {data.metrics.support !== undefined && (
-                  <div className="admin-attention-row">
-                    <span>Support tickets awaiting resolution</span>
-                    <Pill>{data.metrics.support}</Pill>
-                  </div>
-                )}
-                <div className="admin-attention-row">
-                  <span>Students without effective LMS access</span>
-                  <Pill>{data.metrics.students - data.metrics.enabled}</Pill>
-                </div>
-                <Link
-                  className="admin-text-link"
-                  href={`${adminHref('/admin/students')}?access=disabled`}
-                >
-                  Review student access →
-                </Link>
-              </section>
-            )}
-            {data.metrics.batches !== undefined &&
-              data.metrics.enabled !== undefined && (
-                <section className="admin-card">
-                  <h2>Learning snapshot</h2>
-                  <dl className="admin-key-values">
-                    <div>
-                      <dt>Effective LMS access</dt>
-                      <dd>{data.metrics.enabled} students</dd>
-                    </div>
-                    <div>
-                      <dt>Active Enrollments</dt>
-                      <dd>{data.metrics.enrollments}</dd>
-                    </div>
-                    <div>
-                      <dt>Active Batches</dt>
-                      <dd>{data.metrics.batches}</dd>
-                    </div>
-                  </dl>
-                </section>
-              )}
-            {!!data.events.length && (
-              <section className="admin-card admin-wide">
-                <h2>Recent activity</h2>
-                {data.events.length ? (
-                  data.events.map((e, i) => (
-                    <div key={i} className="admin-activity">
-                      <span>
-                        {e.action.replace(/([a-z])([A-Z])/g, '$1 $2')}
-                      </span>
-                      <time dateTime={e.at}>
-                        {new Date(e.at).toLocaleString('en-GB')}
-                      </time>
-                    </div>
-                  ))
-                ) : (
-                  <p className="admin-muted">
-                    No audit activity has been recorded yet.
-                  </p>
-                )}
-              </section>
-            )}
-          </div>
-        </>
-      )}
-    </>
-  );
-}
+import type { StudentList, BatchList } from './types';
 export function AdminLists({ kind }: { kind: 'students' | 'batches' }) {
   const router = useRouter(),
     search = useSearchParams(),
-    [creating, setCreating] = useState(false),
+    creation = useAdminCreateDialog(
+      'batch',
+      '/admin/batches',
+      kind === 'batches',
+    ),
     [selection, setSelection] = useState<{ query: string; ids: string[] }>({
       query: '',
       ids: [],
@@ -165,7 +45,7 @@ export function AdminLists({ kind }: { kind: 'students' | 'batches' }) {
           </p>
         </div>
         {kind === 'batches' && (
-          <button className="admin-button" onClick={() => setCreating(true)}>
+          <button className="admin-button" onClick={creation.show}>
             ＋ Create Batch
           </button>
         )}
@@ -351,8 +231,8 @@ export function AdminLists({ kind }: { kind: 'students' | 'batches' }) {
           />
         )}
       </div>
-      {creating && (
-        <BatchEditor onClose={() => setCreating(false)} onSaved={reload} />
+      {creation.open && (
+        <BatchEditor onClose={creation.close} onSaved={reload} />
       )}
     </>
   );

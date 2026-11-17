@@ -1,13 +1,21 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useRef, createContext, useContext } from 'react';
+import { useState, useRef, useEffect, createContext, useContext } from 'react';
 import { useClerk } from '@clerk/nextjs';
 import {
   DashboardThemeToggle,
   useDashboardTheme,
 } from '../dashboard/theme/DashboardTheme';
 import { AccountMenu } from '../auth/AccountMenu';
+import { DashboardDialog } from '../dashboard/DashboardDialog';
+import { AdminIcon } from './AdminIcon';
+import {
+  adminWorkspaces,
+  visibleAdminNavigation,
+  workspaceDestinations,
+  adminWorkspaceForPath,
+} from '@/lib/admin/navigation';
 import type { AccountIdentity } from '../auth/UserAvatar';
 import { adminHref } from '@/lib/platform/domains';
 import { adminPathPermission } from '@/lib/admin/permissions';
@@ -20,24 +28,86 @@ const AccessContext = createContext<{
   permissions: AdminPermission[];
 }>({ authority: null, permissions: [] });
 export const useAdminAccess = () => useContext(AccessContext);
-const nav = [
-  ['Overview', '/admin'],
-  ['Students', '/admin/students'],
-  ['Programs & Courses', '/admin/courses'],
-  ['Batches', '/admin/batches'],
-  ['Attendance', '/admin/attendance'],
-  ['Assessments', '/admin/assessments'],
-  ['Assignments', '/admin/assignments'],
-  ['Certificates', '/admin/certificates'],
-  ['Discussions', '/admin/discussions'],
-  ['Support', '/admin/support'],
-  ['Communications', '/admin/communications'],
-  ['Instructors', '/admin/instructors'],
-  ['Referrals', '/admin/referrals'],
-  ['Users & Access', '/admin/users'],
-  ['Audit Logs', '/admin/audit'],
-  ['Settings', '/admin/settings'],
-] as const;
+const IdentityContext = createContext<AccountIdentity>({
+  name: 'Admin',
+  firstName: null,
+  email: '',
+  imageUrl: null,
+});
+export const useAdminIdentity = () => useContext(IdentityContext);
+function AdminNavigation({
+  path,
+  permissions,
+  onNavigate,
+}: {
+  path: string;
+  permissions: AdminPermission[];
+  onNavigate: () => void;
+}) {
+  return (
+    <nav className="admin-primary-navigation" aria-label="Admin navigation">
+      {visibleAdminNavigation(permissions).map((item) => (
+        <Link
+          key={item.id}
+          href={adminHref(item.href)}
+          aria-current={
+            adminWorkspaceForPath(path) === item.id ? 'page' : undefined
+          }
+          onClick={onNavigate}
+        >
+          <AdminIcon name={item.id} />
+          <span>{item.label}</span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+function WorkspaceNavigation({
+  path,
+  permissions,
+}: {
+  path: string;
+  permissions: AdminPermission[];
+}) {
+  const group = adminWorkspaceForPath(path);
+  if (!group || group === 'overview') return null;
+  const workspace = adminWorkspaces.find((w) => w.id === group)!;
+  const internal =
+    path === '/'
+      ? '/admin'
+      : path === '/admin' || path.startsWith('/admin/')
+        ? path
+        : `/admin${path}`;
+  if (
+    ['learning', 'people', 'inbox'].includes(group) &&
+    internal === workspace.href
+  )
+    return null;
+  const destinations = workspaceDestinations(group, permissions).filter(
+    (item) => group !== 'learning' || item.primary,
+  );
+  return (
+    <nav
+      className="admin-workspace-navigation"
+      aria-label={`${workspace.label} workspace`}
+    >
+      <span>{workspace.label}</span>
+      {destinations.map((item) => (
+        <Link
+          key={item.href}
+          href={adminHref(item.href)}
+          aria-current={
+            internal === item.href || internal.startsWith(`${item.href}/`)
+              ? 'page'
+              : undefined
+          }
+        >
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
 export function AdminShell({
   children,
   user,
@@ -52,120 +122,124 @@ export function AdminShell({
     path = usePathname(),
     [open, setOpen] = useState(false),
     navigationTrigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const media = matchMedia('(min-width: 851px)');
+    const close = () => {
+      if (media.matches) setOpen(false);
+    };
+    media.addEventListener('change', close);
+    return () => media.removeEventListener('change', close);
+  }, []);
   return (
     <AccessContext.Provider value={access}>
-      <div className="admin-shell" data-admin-theme={theme}>
-        <a className="admin-skip" href="#admin-content">
-          Skip to Admin content
-        </a>
-        <aside
-          id="admin-sidebar"
-          onKeyDown={(event) => {
-            if (event.key === 'Escape') {
-              setOpen(false);
-              navigationTrigger.current?.focus();
-            }
-          }}
-          className={`admin-sidebar ${open ? 'is-open' : ''}`}
-        >
-          <Link className="admin-wordmark" href={adminHref('/admin')}>
-            Mentora<span>.</span>
-          </Link>
-          <nav aria-label="Admin navigation">
-            {nav
-              .filter(
-                ([, href]) =>
-                  !adminPathPermission(href) ||
-                  access.permissions.includes(adminPathPermission(href)!),
-              )
-              .map(([label, href], i) =>
-                href ? (
-                  <Link
-                    key={label}
-                    href={adminHref(href)}
-                    aria-current={
-                      (
-                        href === '/admin'
-                          ? path === '/admin' || path === '/'
-                          : path.includes(href.slice(6)) ||
-                            (href === '/admin/assessments' &&
-                              (path.includes('/question-banks/') ||
-                                path.includes('/attempts'))) ||
-                            (href === '/admin/assignments' &&
-                              path.includes('/submissions'))
-                      )
-                        ? 'page'
-                        : undefined
-                    }
-                    onClick={() => setOpen(false)}
-                  >
-                    <span aria-hidden="true">
-                      {['◈', '♧', '▤', '▦'][i % 4]}
-                    </span>
-                    {label}
-                  </Link>
-                ) : null,
-              )}
-          </nav>
-          <p className="admin-sidebar-caption">Admin workspace</p>
-        </aside>
-        <div className="admin-workspace">
-          <header className="admin-topbar">
-            <button
-              ref={navigationTrigger}
-              className="admin-icon-button admin-mobile-nav"
-              aria-expanded={open}
-              aria-controls="admin-sidebar"
-              onClick={() => setOpen(!open)}
-              aria-label={
-                open ? 'Close Admin navigation' : 'Open Admin navigation'
-              }
-            >
-              ☰
-            </button>
-            <span className="admin-search-placeholder">Admin Console</span>
-            <div className="admin-topbar-controls">
-              <DashboardThemeToggle className="admin-icon-button" />
-              <span className="admin-role">
-                {access.authority === 'GOVERNANCE' ? 'Governance' : 'Admin'}
-              </span>
-              <AccountMenu
-                className="admin-account"
-                user={user}
-                links={[]}
-                onSignOut={() => signOut({ redirectUrl: adminHref('/admin') })}
-              />
+      <IdentityContext.Provider value={user}>
+        <div className="admin-shell" data-admin-theme={theme}>
+          <a className="admin-skip" href="#admin-content">
+            Skip to Admin content
+          </a>
+          <aside id="admin-sidebar" className="admin-sidebar">
+            <Link className="admin-wordmark" href={adminHref('/admin')}>
+              Mentora<span>.</span>
+            </Link>
+            <p className="admin-sidebar-context">ADMIN CONSOLE</p>
+            <AdminNavigation
+              path={path}
+              permissions={access.permissions}
+              onNavigate={() => setOpen(false)}
+            />
+            <div className="admin-sidebar-footer">
+              <span className="admin-sidebar-monogram">M.</span>
+              <div>
+                <strong>One connected platform</strong>
+                <p>Built for better learning.</p>
+              </div>
             </div>
-          </header>
-          <main id="admin-content" className="admin-content">
-            {!access.permissions.length ? (
-              <section className="admin-card">
-                <h1>No permissions assigned</h1>
-                <p>
-                  Your account can enter the Admin Console. A Governance
-                  administrator must assign permissions before you can use its
-                  operational areas.
-                </p>
-              </section>
-            ) : adminPathPermission(
-                path.startsWith('/admin') ? path : `/admin${path}`,
-              ) &&
-              !access.permissions.includes(
-                adminPathPermission(
+          </aside>
+          {open && (
+            <DashboardDialog
+              id="admin-mobile-navigation"
+              title="Admin navigation"
+              onClose={() => setOpen(false)}
+              className="admin-drawer"
+            >
+              <AdminNavigation
+                path={path}
+                permissions={access.permissions}
+                onNavigate={() => setOpen(false)}
+              />
+            </DashboardDialog>
+          )}
+          <div className="admin-workspace">
+            <header className="admin-topbar">
+              <button
+                ref={navigationTrigger}
+                className="admin-icon-button admin-mobile-nav"
+                aria-expanded={open}
+                aria-controls="admin-mobile-navigation"
+                aria-haspopup="dialog"
+                onClick={() => setOpen(!open)}
+                aria-label={
+                  open ? 'Close Admin navigation' : 'Open Admin navigation'
+                }
+              >
+                <AdminIcon name="menu" />
+              </button>
+              <span className="admin-topbar-title">
+                {adminWorkspaces.find(
+                  (w) => w.id === adminWorkspaceForPath(path),
+                )?.label || 'Admin Console'}
+              </span>
+              <div className="admin-topbar-controls">
+                <DashboardThemeToggle className="admin-icon-button" />
+                <span className="admin-role">
+                  {access.authority === 'GOVERNANCE' ? 'Governance' : 'Admin'}
+                </span>
+                <AccountMenu
+                  className="admin-account"
+                  user={user}
+                  links={[]}
+                  onSignOut={() =>
+                    signOut({ redirectUrl: adminHref('/admin') })
+                  }
+                />
+              </div>
+            </header>
+            <main id="admin-content" className="admin-content">
+              <WorkspaceNavigation
+                path={path}
+                permissions={access.permissions}
+              />
+              {!access.permissions.length ? (
+                <section className="admin-card">
+                  <h1>No permissions assigned</h1>
+                  <p>
+                    Your account can enter the Admin Console. A Governance
+                    administrator must assign permissions before you can use its
+                    operational areas.
+                  </p>
+                </section>
+              ) : adminPathPermission(
                   path.startsWith('/admin') ? path : `/admin${path}`,
-                )!,
-              ) ? (
-              <section className="admin-card">
-                <h1>Access unavailable</h1>
-                <p>Your current Admin permissions do not include this area.</p>
-                <Link href={adminHref('/admin')}>Return to Overview</Link>
-              </section>
-            ) : (
-              children
-            )}
-          </main>
+                ) &&
+                !access.permissions.includes(
+                  adminPathPermission(
+                    path.startsWith('/admin') ? path : `/admin${path}`,
+                  )!,
+                ) ? (
+                <section className="admin-card">
+                  <h1>Access unavailable</h1>
+                  <p>
+                    Your current Admin permissions do not include this area.
+                  </p>
+                  <Link href={adminHref('/admin')}>Return to Overview</Link>
+                </section>
+              ) : (
+                children
+              )}
+            </main>
+          </div>
         </div>
-      </div>
+      </IdentityContext.Provider>
     </AccessContext.Provider>
   );
 }

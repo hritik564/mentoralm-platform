@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useAdminAccess } from '../AdminShell';
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAdminData } from '../client';
 import { Table, Pager, Pill, State } from '../Primitives';
 import { Field } from '../academic/forms';
@@ -30,9 +31,45 @@ export const statuses: Record<OperationalArea, string[]> = {
   referrals: [],
 };
 export function OperationalList({ area }: { area: OperationalArea }) {
+  const search = useSearchParams();
+  const contextual = [
+    'attendance',
+    'submissions',
+    'attempts',
+    'certificates',
+  ].includes(area);
+  const initialFilters: Record<string, string> = {};
+  if (contextual) {
+    const keys = [
+      'course',
+      'status',
+      ...(area === 'attendance' ? ['batch', 'from', 'to'] : ['student']),
+      ...(area === 'submissions' || area === 'attempts' ? ['item'] : []),
+    ];
+    for (const key of keys) {
+      const value = search.get(key);
+      if (value && value.length <= 500) initialFilters[key] = value;
+    }
+  }
+  const query = contextual ? search.toString() : '';
+  return (
+    <OperationalListContent
+      key={`${area}:${query}`}
+      area={area}
+      initialFilters={initialFilters}
+    />
+  );
+}
+function OperationalListContent({
+  area,
+  initialFilters,
+}: {
+  area: OperationalArea;
+  initialFilters: Record<string, string>;
+}) {
   const access = useAdminAccess();
   const [page, setPage] = useState(1),
-    [filters, setFilters] = useState<Record<string, string>>({}),
+    [filters, setFilters] = useState<Record<string, string>>(initialFilters),
     [q, setQ] = useState(''),
     [courseQuery, setCourseQuery] = useState(''),
     [batchQuery, setBatchQuery] = useState(''),

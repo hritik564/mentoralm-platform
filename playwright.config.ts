@@ -2,6 +2,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   testIgnore: [
+    'admin-ui.spec.ts',
     'auth-dashboard.spec.ts',
     'dashboard-d2.spec.tsx',
     'dashboard-d3.spec.ts',

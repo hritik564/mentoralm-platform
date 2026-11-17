@@ -1,0 +1,263 @@
+/* Learning presentation only. Shared shell and other workspaces retain their approved styles. */
+.learning-primary-areas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.learning-area-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 150ms;
+}
+.learning-area-card:hover {
+  border-color: var(--a-accent);
+}
+.learning-area-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.learning-area-title h2 {
+  flex: 1;
+  font-size: 13px;
+}
+.learning-area-title svg {
+  width: 17px;
+  height: 17px;
+  color: var(--a-accent);
+  flex-shrink: 0;
+}
+.learning-area-title svg:last-child {
+  width: 13px;
+}
+.learning-area-count {
+  font-size: 30px;
+  line-height: 1.25;
+  margin-top: 6px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
+}
+.learning-area-card > .admin-muted {
+  font-size: 11px;
+}
+.learning-attention,
+.learning-current-courses,
+.learning-context-panel,
+.learning-provider-note,
+.learning-selected-batch,
+.learning-session-group {
+  margin-bottom: 24px;
+}
+.learning-attention > h2 {
+  margin-bottom: 8px;
+}
+.learning-caught-up {
+  color: var(--a-muted);
+  font-size: 13px;
+  padding: 12px 0 0;
+}
+.learning-context-note {
+  font-size: 11px;
+  margin-top: 14px;
+  line-height: 1.7;
+}
+.learning-current-courses th,
+.learning-current-courses td {
+  font-size: 12px;
+}
+.learning-current-courses td:first-child {
+  min-width: 180px;
+  white-space: normal;
+}
+.learning-current-courses td small {
+  margin-top: 5px;
+}
+.learning-context-nav {
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 6px;
+}
+.learning-context-nav > button {
+  font-size: 12px;
+  white-space: nowrap;
+}
+.learning-context-panel > h2 {
+  margin-bottom: 12px;
+}
+.learning-context-panel > p {
+  line-height: 1.8;
+}
+.learning-context-heading,
+.learning-selected-batch {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: flex-start;
+}
+.learning-context-heading {
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.learning-context-heading h2 {
+  margin-bottom: 7px;
+}
+.learning-context-heading p {
+  font-size: 12px;
+}
+.learning-context-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.learning-context-panel > .learning-context-actions {
+  margin-top: 20px;
+}
+.learning-context-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.learning-context-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--a-line);
+  font-size: 13px;
+}
+.learning-context-row:last-child {
+  border-bottom: 0;
+}
+.learning-context-row > div {
+  min-width: 0;
+}
+.learning-context-row strong {
+  overflow-wrap: anywhere;
+}
+.learning-context-row > .admin-button {
+  flex-shrink: 0;
+}
+.learning-context-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  color: var(--a-muted);
+  font-size: 11px;
+  margin-top: 8px;
+}
+.learning-course-overview {
+  margin: 24px 0;
+}
+.learning-context-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.learning-context-picker label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+}
+.learning-picker-heading {
+  padding: 24px 24px 0;
+}
+.learning-picker-heading p {
+  margin-top: 8px;
+  max-width: 640px;
+  font-size: 12px;
+}
+.learning-selected-batch > div {
+  min-width: 0;
+}
+.learning-selected-batch h2 {
+  margin-bottom: 8px;
+}
+.learning-selected-batch .learning-context-actions {
+  flex-shrink: 0;
+}
+.learning-provider-note h2 {
+  margin-bottom: 8px;
+}
+.learning-provider-note p {
+  max-width: 850px;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.learning-session-meta {
+  display: block;
+  color: var(--a-muted);
+  font-size: 11px;
+  line-height: 1.8;
+  margin-top: 5px;
+}
+@media (max-width: 1200px) {
+  .learning-primary-areas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .learning-selected-batch {
+    flex-direction: column;
+  }
+  .learning-selected-batch .learning-context-actions {
+    flex-shrink: 1;
+  }
+}
+@media (max-width: 540px) {
+  .learning-primary-areas {
+    gap: 10px;
+  }
+  .learning-area-card {
+    padding: 16px;
+  }
+  .learning-area-title {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .learning-area-title h2 {
+    flex: 1 0 calc(100% - 30px);
+  }
+  .learning-area-title svg:last-child {
+    display: none;
+  }
+  .learning-area-count {
+    font-size: 26px;
+  }
+  .learning-context-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .learning-context-actions {
+    align-items: flex-start;
+  }
+  .learning-context-picker {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .learning-context-nav > button {
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+  .learning-picker-heading {
+    padding: 19px 19px 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .learning-area-card {
+    transition: none;
+  }
+}
+.learning-batch-context > .admin-tabs {
+  flex-wrap: wrap;
+  overflow: visible;
+  gap: 6px;
+}
+.learning-batch-context > .admin-tabs > button {
+  min-height: 40px;
+  white-space: nowrap;
+}

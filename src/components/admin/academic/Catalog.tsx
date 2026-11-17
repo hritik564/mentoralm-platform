@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { adminHref } from '@/lib/platform/domains';
 import { useAdminData } from '../client';
 import { State, Table, Pager, Pill, Tabs } from '../Primitives';
+import { useAdminCreateDialog } from '../useCreateDialog';
 import { TitleEditor, CourseEditor, Field } from './forms';
 import type { Programs, Courses, Activities, Banks, Choices } from './types';
 export function AcademicWorkspace() {
@@ -31,7 +32,7 @@ function CourseList() {
     [status, setStatus] = useState(''),
     [program, setProgram] = useState(''),
     [programQuery, setProgramQuery] = useState(''),
-    [create, setCreate] = useState(false),
+    creation = useAdminCreateDialog('course', '/admin/courses'),
     router = useRouter();
   const list = useAdminData<Courses>(
       `academic/courses?${new URLSearchParams({ page: String(page), q, status, program })}`,
@@ -94,7 +95,7 @@ function CourseList() {
           </Field>
           <button className="admin-button secondary">Search</button>
         </form>
-        <button className="admin-button" onClick={() => setCreate(true)}>
+        <button className="admin-button" onClick={creation.show}>
           Create Course
         </button>
       </div>
@@ -129,9 +130,9 @@ function CourseList() {
           <Pager page={page} total={list.data.total} onPage={setPage} />
         </section>
       )}
-      {create && (
+      {creation.open && (
         <CourseEditor
-          onClose={() => setCreate(false)}
+          onClose={creation.close}
           onSaved={(ref) => router.push(adminHref(`/admin/courses/${ref}`))}
         />
       )}

@@ -1,0 +1,47 @@
+# Admin UI simplification changed files
+
+43 files relative to the starting clean da55937 checkout. No schema/migration, environment, auth policy, governance service, LMS domain service or dependency lockfile changed. Ignored review evidence excluded.
+
+- `docs/ADMIN-UI-SIMPLIFICATION-FILES.md`
+- `docs/ADMIN-UI-SIMPLIFICATION.md`
+- `docs/DECISIONS.md`
+- `playwright.admin-ui.config.ts`
+- `playwright.config.ts`
+- `src/app/admin/inbox/page.tsx`
+- `src/app/admin/layout.tsx`
+- `src/app/admin/learning/classes/page.tsx`
+- `src/app/admin/learning/page.tsx`
+- `src/app/admin/learning/recordings/page.tsx`
+- `src/app/admin/page.tsx`
+- `src/app/admin/people/page.tsx`
+- `src/components/admin/AdminIcon.tsx`
+- `src/components/admin/AdminShell.tsx`
+- `src/components/admin/BatchDetail.tsx`
+- `src/components/admin/Dashboard.tsx`
+- `src/components/admin/Lists.tsx`
+- `src/components/admin/Primitives.tsx`
+- `src/components/admin/WorkspacePage.tsx`
+- `src/components/admin/Workspaces.tsx`
+- `src/components/admin/academic/Catalog.tsx`
+- `src/components/admin/useCreateDialog.ts`
+- `src/components/dashboard/DashboardDialog.tsx`
+- `src/lib/admin/dashboard.ts`
+- `src/lib/admin/navigation.ts`
+- `src/lib/admin/repository.ts`
+- `src/lib/platform/domains.ts`
+- `src/styles/admin-workspaces.css`
+- `tests/admin-a1.spec.ts`
+- `tests/admin-a4.spec.ts`
+- `tests/admin-dashboard-domain.test.ts`
+- `tests/admin-navigation.test.ts`
+- `tests/admin-owner.spec.ts`
+- `tests/admin-ui.spec.ts`
+- `tests/helpers/admin-ui/build.cjs`
+- `tests/helpers/admin-ui/clerk.ts`
+- `tests/helpers/admin-ui/data.ts`
+- `tests/helpers/admin-ui/fixture.tsx`
+- `tests/helpers/admin-ui/loader.cjs`
+- `tests/helpers/admin-ui/next-image.tsx`
+- `tests/helpers/admin-ui/next-link.tsx`
+- `tests/helpers/admin-ui/runtime.tsx`
+- `tests/production-p1-runtime.test.ts`

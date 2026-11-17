@@ -208,7 +208,9 @@ test('Real Admin workflows, persisted role denial, private recording foundation 
     await signIn(admin.clerkUserId);
     await page.goto('/admin');
     await expect(
-      page.getByRole('heading', { name: 'Overview', exact: true }),
+      page.getByRole('heading', {
+        name: /(?:Good Morning|Good Afternoon|Good Evening|Welcome back),/,
+      }),
     ).toBeVisible();
     await expect(
       page.getByRole('heading', { name: 'Students', exact: true }),

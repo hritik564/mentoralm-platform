@@ -107,7 +107,9 @@ test('A4 real Clerk governance, scoped isolation, safe mutations, responsive the
     await page.goto('/admin');
     await ready();
     await expect(
-      page.getByRole('link', { name: 'Users & Access', exact: true }),
+      page
+        .getByRole('navigation', { name: 'Admin navigation', exact: true })
+        .getByRole('link', { name: 'People', exact: true }),
     ).toBeVisible();
     const userRef = f.refs.user;
     await page.goto(`/admin/users/${userRef}`);
@@ -166,16 +168,20 @@ test('A4 real Clerk governance, scoped isolation, safe mutations, responsive the
     await expect(dialog).toHaveCount(0);
     await studentPage.goto('/admin');
     await expect(
-      studentPage.getByRole('heading', { name: 'Overview', exact: true }),
+      studentPage.getByRole('heading', {
+        name: /(?:Good Morning|Good Afternoon|Good Evening|Welcome back),/,
+      }),
     ).toBeVisible();
     await expect(
-      studentPage.getByRole('heading', { name: 'Open Support', exact: true }),
+      studentPage.getByText('Open Support', { exact: true }),
     ).toBeVisible();
     await expect(
       studentPage.getByRole('link', { name: 'Students', exact: true }),
     ).toHaveCount(0);
     await expect(
-      studentPage.getByRole('link', { name: 'Support', exact: true }),
+      studentPage
+        .getByRole('navigation', { name: 'Admin navigation', exact: true })
+        .getByRole('link', { name: 'Inbox', exact: true }),
     ).toBeVisible();
     await refreshTestSession(studentPage);
     const over = await studentPage.request.get('/api/admin/overview');

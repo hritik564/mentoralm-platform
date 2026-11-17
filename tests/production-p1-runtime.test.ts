@@ -121,17 +121,30 @@ test('P1 built runtime: safe liveness/readiness, trusted hosts, correlation, hea
       assert.equal(r.status, 401);
       assert.match(r.headers.get('x-request-id')!, /^[a-f0-9-]{36}$/);
     }
-    const redirect = await fetch('http://127.0.0.1:3118/admin', {
-      headers: {
-        'x-forwarded-host': 'attacker.test',
-        'x-forwarded-proto': 'https',
-      },
-      redirect: 'manual',
-    });
-    assert.match(
-      redirect.headers.get('location')!,
-      /^http:\/\/127\.0\.0\.1:3118\/admin-auth\/sign-in/,
-    );
+    for (const path of [
+      '/admin',
+      '/admin/learning',
+      '/admin/learning/classes',
+      '/admin/learning/recordings',
+      '/admin/people',
+      '/admin/inbox',
+      '/admin/students',
+      '/admin/audit',
+      '/admin/settings',
+    ]) {
+      const redirect = await fetch('http://127.0.0.1:3118' + path, {
+        headers: {
+          'x-forwarded-host': 'attacker.test',
+          'x-forwarded-proto': 'https',
+        },
+        redirect: 'manual',
+      });
+      assert.match(
+        redirect.headers.get('location')!,
+        /^http:\/\/127\.0\.0\.1:3118\/admin-auth\/sign-in/,
+      );
+      assert.match(redirect.headers.get('x-request-id')!, /^[a-f0-9-]{36}$/);
+    }
     await f.db.$executeRawUnsafe(
       `ALTER TABLE "${f.schema}"."AcademicAudit" DISABLE TRIGGER academic_audit_no_truncate`,
     );

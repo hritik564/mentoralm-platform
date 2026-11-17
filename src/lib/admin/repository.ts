@@ -1,9 +1,7 @@
+import { readAdminDashboard } from './dashboard';
 import { safeAuditAction } from './governance/audit-projection';
 import 'server-only';
-import {
-  adminCapabilities,
-  requireAnyAdminPermission,
-} from '../auth/admin-policy';
+import { requireAnyAdminPermission } from '../auth/admin-policy';
 import type { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { StudentError } from '../student/errors';
 import { entitledStudentWhere } from '../lms/entitlement';
@@ -41,59 +39,7 @@ export class AdminRepository extends AdminOperations {
     super(db, actorId);
   }
   async overview() {
-    const c = await adminCapabilities(this.db, this.actorId),
-      allowed = (p: (typeof c.permissions)[number]) =>
-        c.permissions.includes(p);
-    const students = allowed('STUDENTS_MANAGE'),
-      batches = allowed('BATCHES_MANAGE'),
-      academics = allowed('ACADEMICS_MANAGE'),
-      support = allowed('SUPPORT_MANAGE'),
-      audit = allowed('AUDIT_VIEW');
-    const [registered, enabled, active, enrollments, courses, tickets, events] =
-      await Promise.all([
-        students ? this.db.user.count({ where: { role: 'STUDENT' } }) : -1,
-        students
-          ? this.db.user.count({
-              where: { ...entitledStudentWhere(''), id: undefined },
-            })
-          : -1,
-        batches ? this.db.batch.count({ where: { status: 'ACTIVE' } }) : -1,
-        students
-          ? this.db.enrollment.count({
-              where: { status: { in: ['ENROLLED', 'IN_PROGRESS'] } },
-            })
-          : -1,
-        academics ? this.db.course.count({ where: { published: true } }) : -1,
-        support
-          ? this.db.supportTicket.count({
-              where: { status: { in: ['OPEN', 'IN_PROGRESS'] } },
-            })
-          : -1,
-        audit
-          ? this.db.academicAudit.findMany({
-              orderBy: { createdAt: 'desc' },
-              take: 8,
-              select: { action: true, createdAt: true },
-            })
-          : [],
-      ]);
-    const metrics: Record<string, number> = Object.fromEntries(
-      Object.entries({
-        students: registered,
-        enabled,
-        batches: active,
-        enrollments,
-        courses,
-        support: tickets,
-      }).filter(([, value]) => value >= 0),
-    );
-    return {
-      metrics,
-      events: events.map((e) => ({
-        action: safeAuditAction(e.action),
-        at: e.createdAt.toISOString(),
-      })),
-    };
+    return readAdminDashboard(this.db, this.actorId);
   }
   async students(input: Record<string, string | undefined> = {}) {
     await this.authorize('STUDENTS_MANAGE');
