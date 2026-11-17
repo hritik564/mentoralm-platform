@@ -51,21 +51,21 @@ const production = (): Environment => ({
   CLERK_SECRET_KEY: syntheticSecret,
   DATABASE_URL: [
     'postgresql://',
-    'synthetic',
+    'mentoralm_runtime',
     ':',
     'synthetic',
     '@',
-    'ep-synthetic.ap-southeast-1.aws.neon.tech/mentoralm_prod?sslmode=require&sslaccept=strict',
+    'ep-synthetic.ap-southeast-1.aws.neon.tech/mentoralm?sslmode=require&sslaccept=strict',
   ].join(''),
   MIGRATION_DATABASE_URL: [
     'postgresql://',
-    'synthetic',
+    'mentoralm_migrator',
     ':',
     'synthetic',
     '@',
-    'ep-synthetic.ap-southeast-1.aws.neon.tech/mentoralm_prod?sslmode=require&sslaccept=strict',
+    'ep-synthetic.ap-southeast-1.aws.neon.tech/mentoralm?sslmode=require&sslaccept=strict',
   ].join(''),
-  PRODUCTION_DATABASE_NAME: 'mentoralm_prod',
+  PRODUCTION_DATABASE_NAME: 'mentoralm',
   RATE_LIMIT_BACKEND: 'upstash',
   UPSTASH_REDIS_REST_URL: 'https://synthetic.upstash.io',
   UPSTASH_REDIS_REST_TOKEN: 'synthetic-token',
@@ -84,13 +84,13 @@ test('selected Production config enforces direct Neon Singapore, TLS and local i
   assert.equal(databasePoolConfig(env).max, 8);
   assert.deepEqual(databasePoolConfig(env).ssl, { rejectUnauthorized: true });
   const args = [
-    '--confirm-production=mentoralm_prod',
+    '--confirm-production=mentoralm',
     '--expected-host=ep-synthetic.ap-southeast-1.aws.neon.tech',
     '--change-ticket=P1-test',
   ];
   assert.equal(
     operatorIntent(env, 'preflight', args).database,
-    'mentoralm_prod',
+    'mentoralm',
   );
   for (const url of [
     env.DATABASE_URL!.replace('ep-synthetic.', 'ep-synthetic-pooler.'),
