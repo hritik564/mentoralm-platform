@@ -52,6 +52,17 @@ register(
   'Batches',
   'Live Session',
 );
+register(
+  [
+    'MarketplaceOfferingCreated',
+    'MarketplaceOfferingUpdated',
+    'MarketplaceOfferingPublished',
+    'MarketplaceOfferingUnpublished',
+    'MarketplaceOfferingArchived',
+  ],
+  'Marketplace',
+  'Marketplace Offering',
+);
 register(['ProgramSaved'], 'Academics', 'Program');
 register(['CourseSaved', 'COURSE_RECONCILE'], 'Academics', 'Course');
 register(
@@ -129,6 +140,12 @@ export function safeAuditAction(action: string) {
 }
 const allowedWords = new Set<string>([
   ...adminPermissions,
+  'DRAFT',
+  'PUBLISHED',
+  'UNPUBLISHED',
+  'ARCHIVED',
+  'COMING_SOON',
+  'WAITLIST',
   'SCOPED',
   'GOVERNANCE',
   'STUDENT',
@@ -168,6 +185,11 @@ const allowedWords = new Set<string>([
   'revoke',
 ]);
 const fields = [
+  'publicationBefore',
+  'publicationAfter',
+  'availabilityBefore',
+  'availabilityAfter',
+  'lmsEnabled',
   'beforeStatus',
   'afterStatus',
   'beforeAuthority',
@@ -219,7 +241,7 @@ export function safeAuditSummary(action: string, raw: unknown) {
     else if (v === null) value = 'None';
     else if (
       Array.isArray(v) &&
-      v.length <= 12 &&
+      v.length <= adminPermissions.length &&
       v.every((x) => typeof x === 'string' && allowedWords.has(x))
     )
       value = v.join(', ') || 'None';

@@ -28,7 +28,8 @@ export type HandleKind =
   | 'message'
   | 'membership'
   | 'user'
-  | 'audit';
+  | 'audit'
+  | 'offering';
 function key() {
   if (!process.env.CLERK_SECRET_KEY) throw new StudentError('UNAVAILABLE');
   return createHash('sha256')

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import { navigation } from '@/content/home';
+import { websiteHref } from '@/lib/platform/domains';
 import { Brand } from '@/components/layout/Brand';
 import { Icon } from '@/components/ui/Icon';
 import { GlassSurface, type GlassTone } from '@/components/ui/GlassSurface';
@@ -20,9 +21,11 @@ const getServerScrollState = () => false;
 // Account actions are a presentation slot, with no authentication logic.
 export function Navbar({
   accountActions,
+  homeHref = '',
   tone = 'dark',
 }: {
   accountActions?: ReactNode;
+  homeHref?: string;
   tone?: GlassTone;
 }) {
   const [open, setOpen] = useState(false);
@@ -106,8 +109,8 @@ export function Navbar({
       data-menu-open={open}
     >
       <GlassSurface tone={tone} className="container nav-bar">
-        <Brand />
-        <DesktopNav />
+        <Brand href={homeHref || '#top'} />
+        <DesktopNav homeHref={homeHref} />
         <div className="nav-actions">
           <NavActions accountActions={accountActions} />
         </div>
@@ -126,6 +129,7 @@ export function Navbar({
           open={open}
           onClose={closeMenu}
           accountActions={accountActions}
+          homeHref={homeHref}
         />
       </GlassSurface>
       {open && (
@@ -141,8 +145,15 @@ export function Navbar({
           aria-label="Navigation without JavaScript"
         >
           {navigation.map((item) => (
-            <a key={item.href} href={item.href}>
-              {item.href === '#programs' ? 'Modules' : item.label}
+            <a
+              key={item.href}
+              href={
+                item.href === '#programs'
+                  ? websiteHref('/courses')
+                  : `${homeHref}${item.href}`
+              }
+            >
+              {item.href === '#programs' ? 'Courses' : item.label}
             </a>
           ))}
         </nav>

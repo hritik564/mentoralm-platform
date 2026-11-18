@@ -115,28 +115,29 @@ model Program {
 }
 
 model Course {
-  id                        String             @id @default(cuid())
+  id                        String                @id @default(cuid())
   title                     String
   description               String
   programId                 String?
-  program                   Program?           @relation(fields: [programId], references: [id], onDelete: SetNull)
+  program                   Program?              @relation(fields: [programId], references: [id], onDelete: SetNull)
   thumbnailPath             String
   thumbnailAlt              String
   publicPath                String
-  published                 Boolean            @default(false)
-  createdAt                 DateTime           @default(now())
-  updatedAt                 DateTime           @updatedAt
+  published                 Boolean               @default(false)
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
   batches                   Batch[]
   sections                  Section[]
   views                     CourseView[]
   enrollments               Enrollment[]
   resources                 Resource[]
-  academicCompletionEnabled Boolean            @default(false)
-  certificateEnabled        Boolean            @default(false)
+  academicCompletionEnabled Boolean               @default(false)
+  certificateEnabled        Boolean               @default(false)
   requiredAttendancePercent Float?
   certificates              Certificate[]
   sessions                  BatchSession[]
   discussionThreads         DiscussionThread[]
+  marketplaceOfferings      MarketplaceOffering[]
 
   @@index([programId])
 }
@@ -878,6 +879,7 @@ enum AdminPermission {
   USERS_VIEW
   AUDIT_VIEW
   SETTINGS_VIEW
+  MARKETPLACE_MANAGE
 }
 
 model AdminAuthorization {
@@ -890,4 +892,54 @@ model AdminAuthorization {
   updatedAt   DateTime          @updatedAt @db.Timestamptz(6)
 
   @@index([authority, userId])
+}
+
+// Marketplace publication is independent from LMS Course publication and access.
+enum MarketplaceDeliveryMode {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+enum MarketplacePublicationStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+enum MarketplaceAvailabilityStatus {
+  OPEN
+  COMING_SOON
+  WAITLIST
+  CLOSED
+}
+
+model MarketplaceOffering {
+  id                 String                        @id @default(cuid())
+  revision           String                        @default(uuid()) @db.Uuid
+  slug               String                        @unique
+  title              String
+  shortDescription   String
+  category           String
+  cardImage          String?
+  heroImage          String?
+  deliveryMode       MarketplaceDeliveryMode       @default(ONLINE)
+  durationLabel      String
+  priceMinor         Int?
+  currency           String                        @default("INR")
+  availabilityStatus MarketplaceAvailabilityStatus @default(COMING_SOON)
+  publicationStatus  MarketplacePublicationStatus  @default(DRAFT)
+  featured           Boolean                       @default(false)
+  sortOrder          Int                           @default(0)
+  lmsEnabled         Boolean                       @default(false)
+  courseId           String?
+  course             Course?                       @relation(fields: [courseId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  cohortStartsAt     DateTime?                     @db.Timestamptz(6)
+  publishedAt        DateTime?                     @db.Timestamptz(6)
+  createdAt          DateTime                      @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime                      @updatedAt @db.Timestamptz(6)
+
+  @@index([publicationStatus, featured, sortOrder])
+  @@index([courseId])
 }

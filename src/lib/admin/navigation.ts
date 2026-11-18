@@ -1,6 +1,12 @@
 import type { AdminPermission } from '../../generated/prisma/client';
 export type AdminWorkspaceId =
-  'overview' | 'learning' | 'students' | 'people' | 'inbox' | 'settings';
+  | 'overview'
+  | 'marketplace'
+  | 'learning'
+  | 'students'
+  | 'people'
+  | 'inbox'
+  | 'settings';
 export type AdminDestination = {
   label: string;
   href: string;
@@ -22,6 +28,22 @@ export const adminWorkspaces: {
     href: '/admin',
     description: 'Your platform, at a glance.',
     destinations: [],
+  },
+  {
+    id: 'marketplace',
+    label: 'Marketplace',
+    href: '/admin/marketplace',
+    description: 'Public offerings, pricing and catalogue publication.',
+    destinations: [
+      {
+        label: 'Offerings',
+        href: '/admin/marketplace',
+        permission: 'MARKETPLACE_MANAGE',
+        description: 'Manage the public catalogue and explicit publication.',
+        icon: 'marketplace',
+        primary: true,
+      },
+    ],
   },
   {
     id: 'learning',
@@ -252,6 +274,7 @@ export function adminWorkspaceForPath(path: string): AdminWorkspaceId | null {
   const groups: Record<string, AdminWorkspaceId> = {
     learning: 'learning',
     courses: 'learning',
+    marketplace: 'marketplace',
     batches: 'learning',
     attendance: 'learning',
     assessments: 'learning',

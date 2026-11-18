@@ -1,5 +1,12 @@
 import { defineConfig } from '@playwright/test';
 
+const preservedPublicTests = {
+  testMatch: ['home.spec.ts', 'journey.spec.ts'],
+  // The removed homepage Ecosystem and earlier cinematic Hero remain covered
+  // only by their historical tests; these cases exercise the current page.
+  grep: /seven public module positions and strict origin configuration|homepage is rendered with public SEO content before JavaScript|responsive navigation works with keyboard, escape, and anchor selection|six readable milestones follow the approved order in a light responsive journey|milestone keyboard and tap emphasis is accessible and does not create a new journey|the whole roadmap remains readable without JavaScript|active milestones illuminate the cumulative route while preserving quiet later stages|cool opening and warm destination remain distinct with tighter readable surfaces|planned opportunities disclose scope and narrow screens remain usable/,
+};
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
@@ -25,6 +32,11 @@ export default defineConfig({
     // Public presentation validation does not need a Clerk provider or session.
     // Explicit process values take precedence over local environment files.
     env: {
+      MENTORALM_ENV: 'local',
+      DATABASE_URL: '',
+      NEXT_PUBLIC_SITE_URL: 'http://127.0.0.1:3111',
+      NEXT_PUBLIC_LMS_ORIGIN: '',
+      NEXT_PUBLIC_ADMIN_ORIGIN: '',
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: '',
       CLERK_SECRET_KEY: '',
     },
@@ -50,10 +62,16 @@ export default defineConfig({
     },
     {
       name: 'unchanged-public-sections',
-      testMatch: ['home.spec.ts', 'modules.spec.ts', 'journey.spec.ts'],
-      // These existing tests cover preserved public content without depending
-      // on the superseded cinematic Hero.
-      grep: /seven public module positions and strict origin configuration|homepage is rendered with public SEO content before JavaScript|Coming Soon stays unavailable and other undelivered pathways retain honest dialogs and no-JavaScript content|pause and reduced motion stop Menti movement while preserving focus highlights and accessibility|six readable milestones follow the approved order in a light responsive journey|milestone keyboard and tap emphasis is accessible and does not create a new journey|the whole roadmap remains readable without JavaScript|active milestones illuminate the cumulative route while preserving quiet later stages|cool opening and warm destination remain distinct with tighter readable surfaces|planned opportunities disclose scope and narrow screens remain usable/,
+      ...preservedPublicTests,
+    },
+    {
+      name: 'unchanged-public-mobile',
+      ...preservedPublicTests,
+      use: {
+        viewport: { width: 390, height: 844 },
+        isMobile: true,
+        hasTouch: true,
+      },
     },
   ],
 });

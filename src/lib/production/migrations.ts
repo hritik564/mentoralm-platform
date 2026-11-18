@@ -60,4 +60,19 @@ export const migrationManifest = [
     checksum:
       '8e1f016036042ef7f82e921d100a47bfbf8333e239985217c2f86c67a14647e8',
   },
+  {
+    name: '20261118090000_marketplace_m1',
+    checksum:
+      '0de4193dfecf817b0c56a406cd671c35968d7184b366d34cefe983896ad2cb92',
+  },
+  {
+    name: '20261118100000_marketplace_permission',
+    checksum:
+      '6860e6b1866e6f58e1f301050978196d01478676862c696c588283d8dd442ded',
+  },
+  {
+    name: '20261118101000_marketplace_permission_capacity',
+    checksum:
+      'ae947122852b39ecfebc8e38682b98c88791310b83554a65330ea42d13fceb59',
+  },
 ] as const;

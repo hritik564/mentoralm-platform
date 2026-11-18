@@ -19,10 +19,12 @@ export const permissions = [
   'USERS_VIEW',
   'AUDIT_VIEW',
   'SETTINGS_VIEW',
+  'MARKETPLACE_MANAGE',
 ] as const satisfies readonly AdminPermission[];
 
 export type Profile =
   | 'governance'
+  | 'marketplace'
   | 'support'
   | 'audit'
   | 'referrals'
@@ -38,21 +40,23 @@ export function accessFor(profile: Profile) {
       profile === 'governance' ? ('GOVERNANCE' as const) : ('SCOPED' as const),
     permissions: (profile === 'governance'
       ? [...permissions]
-      : profile === 'support'
-        ? ['SUPPORT_MANAGE']
-        : profile === 'audit'
-          ? ['AUDIT_VIEW']
-          : profile === 'referrals'
-            ? ['REFERRALS_VIEW']
-            : profile === 'academics'
-              ? ['ACADEMICS_MANAGE']
-              : profile === 'batches'
-                ? ['BATCHES_MANAGE']
-                : profile === 'attendance'
-                  ? ['ATTENDANCE_MANAGE']
-                  : profile === 'certificates'
-                    ? ['CERTIFICATES_MANAGE']
-                    : []) as AdminPermission[],
+      : profile === 'marketplace'
+        ? ['MARKETPLACE_MANAGE']
+        : profile === 'support'
+          ? ['SUPPORT_MANAGE']
+          : profile === 'audit'
+            ? ['AUDIT_VIEW']
+            : profile === 'referrals'
+              ? ['REFERRALS_VIEW']
+              : profile === 'academics'
+                ? ['ACADEMICS_MANAGE']
+                : profile === 'batches'
+                  ? ['BATCHES_MANAGE']
+                  : profile === 'attendance'
+                    ? ['ATTENDANCE_MANAGE']
+                    : profile === 'certificates'
+                      ? ['CERTIFICATES_MANAGE']
+                      : []) as AdminPermission[],
   };
 }
 

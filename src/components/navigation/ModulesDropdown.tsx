@@ -1,9 +1,16 @@
 'use client';
 import { useEffect, useId, useRef, useState } from 'react';
 import { programs } from '@/content/programs';
+import { websiteHref } from '@/lib/platform/domains';
 import { Icon } from '@/components/ui/Icon';
 
-export function ModulesDropdown({ mobile = false }: { mobile?: boolean }) {
+export function ModulesDropdown({
+  mobile = false,
+  homeHref = '',
+}: {
+  mobile?: boolean;
+  homeHref?: string;
+}) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -61,7 +68,7 @@ export function ModulesDropdown({ mobile = false }: { mobile?: boolean }) {
         onClick={() => setOpen(!open)}
       >
         {mobile && <span className="mobile-navigation__number">01</span>}
-        Modules
+        Courses
         <Icon name="chevron" />
       </button>
       <div id={panelId} className="modules-panel" hidden={!open}>
@@ -70,7 +77,7 @@ export function ModulesDropdown({ mobile = false }: { mobile?: boolean }) {
             <li key={program.id}>
               {program.status === 'featured' ? (
                 <a
-                  href={program.storyId ? `#${program.storyId}` : '#programs'}
+                  href={`${homeHref}${program.storyId ? `#${program.storyId}` : '#programs'}`}
                   onClick={() => setOpen(false)}
                 >
                   <Icon name={program.symbol} />
@@ -96,10 +103,10 @@ export function ModulesDropdown({ mobile = false }: { mobile?: boolean }) {
         </ul>
         <a
           className="modules-panel__all"
-          href="#programs"
+          href={websiteHref('/courses')}
           onClick={() => setOpen(false)}
         >
-          Explore all modules
+          Explore All Courses
           <Icon name="arrow" />
         </a>
       </div>

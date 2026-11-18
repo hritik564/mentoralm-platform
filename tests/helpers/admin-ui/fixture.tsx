@@ -1,6 +1,7 @@
 // Browser-only adapters and synthetic data are never imported by application routes.
 import { createRoot } from 'react-dom/client';
 import { AdminShell } from '@/components/admin/AdminShell';
+import { MarketplaceEditor } from '@/components/admin/marketplace/MarketplaceEditor';
 import { AdminDashboard } from '@/components/admin/Dashboard';
 import {
   AdminWorkspace,
@@ -36,6 +37,7 @@ const account: AccountIdentity = {
 function Surface() {
   const path = usePathname();
   if (path === '/admin') return <AdminDashboard />;
+  if (path === '/admin/marketplace/new') return <MarketplaceEditor />;
   if (path === '/admin/learning') return <AdminWorkspace kind="learning" />;
   if (path === '/admin/people') return <AdminWorkspace kind="people" />;
   if (path === '/admin/inbox') return <AdminWorkspace kind="inbox" />;

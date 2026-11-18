@@ -8,10 +8,12 @@ export function MobileNav({
   open,
   onClose,
   accountActions,
+  homeHref = '',
 }: {
   open: boolean;
   onClose: () => void;
   accountActions?: ReactNode;
+  homeHref?: string;
 }) {
   return (
     <div id="mobile-navigation" className="mobile-navigation" hidden={!open}>
@@ -22,9 +24,9 @@ export function MobileNav({
             onClose();
         }}
       >
-        {open && <ModulesDropdown mobile />}
+        {open && <ModulesDropdown mobile homeHref={homeHref} />}
         {navigation.slice(1).map((item, index) => (
-          <a key={item.href} href={item.href}>
+          <a key={item.href} href={`${homeHref}${item.href}`}>
             <span className="mobile-navigation__number">0{index + 2}</span>
             {item.label}
             <Icon name="arrow-up" />

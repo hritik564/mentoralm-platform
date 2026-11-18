@@ -19,6 +19,7 @@ const output = resolve(
 const origin = 'http://127.0.0.1:3191';
 const primaryLabels = [
   'Overview',
+  'Marketplace',
   'Learning',
   'Students',
   'People',
@@ -70,6 +71,7 @@ test.beforeAll(async () => {
       'admin-operational.css',
       'admin-workspaces.css',
       'admin-learning.css',
+      'admin-marketplace.css',
     ].map((name) => readFile(join(repoRoot, 'src/styles', name), 'utf8')),
   );
   styles = [
@@ -270,7 +272,7 @@ async function capture(
   });
 }
 
-test('six primary destinations and existing creation/navigation workflows', async ({
+test('seven primary destinations and existing creation/navigation workflows', async ({
   page,
 }) => {
   await setup(page);
@@ -468,6 +470,7 @@ test('Learning exposes four primary areas, three creation actions and compact at
     'Recordings',
   ]);
   await expect(areas.getByRole('link')).toHaveCount(4);
+  await expect(areas.getByRole('link', { name: /Marketplace/ })).toHaveCount(0);
   const actions = page.locator('section[aria-label="Quick actions"]');
   await expect(actions.getByRole('link')).toHaveCount(3);
   for (const [label, href] of [
@@ -498,6 +501,69 @@ test('Learning exposes four primary areas, three creation actions and compact at
         .getByRole('link'),
     ).toHaveText(['Courses', 'Batches', 'Live Classes', 'Recordings']);
   }
+});
+
+test('Marketplace is a separate permission-scoped Admin domain on every retained route', async ({
+  page,
+}) => {
+  await setup(page, { profile: 'marketplace' });
+  for (const path of [
+    '/admin/marketplace',
+    '/admin/marketplace/new',
+    '/admin/marketplace/fixture_offering_1',
+  ]) {
+    await page.goto(path);
+    await ready(page);
+    await expect(primaryNav(page).getByRole('link')).toHaveText([
+      'Overview',
+      'Marketplace',
+    ]);
+    await expect(primaryNav(page).locator('[aria-current="page"]')).toHaveText(
+      'Marketplace',
+    );
+    await expect(
+      primaryNav(page).getByRole('link', { name: 'Marketplace', exact: true }),
+    ).toHaveAttribute('href', '/admin/marketplace');
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Marketplace workspace', exact: true })
+        .getByRole('link'),
+    ).toHaveText(['Offerings']);
+  }
+  expect(safety.get(page)!.api).toEqual([]);
+});
+
+test('Marketplace Price accepts human currency amounts and previews currency-specific precision', async ({
+  page,
+}) => {
+  await setup(page, { profile: 'marketplace' });
+  await page.goto('/admin/marketplace/new');
+  await ready(page);
+  const price = page.getByRole('textbox', { name: 'Price', exact: true });
+  const currency = page.getByRole('textbox', { name: 'Currency', exact: true });
+  const preview = page.locator('output[aria-label="Price preview"]');
+  await expect(preview).toHaveText('To be announced');
+  await price.fill('15000');
+  await expect(preview).toHaveText('₹15,000');
+  await price.fill('15000.50');
+  await expect(preview).toHaveText('₹15,000.50');
+  await price.fill('0');
+  await expect(preview).toHaveText('₹0');
+  await price.fill('1.001');
+  await expect(preview).toHaveText('Use at most 2 decimal places for INR.');
+  await currency.fill('JPY');
+  await expect(preview).toHaveText('Enter a whole-number price for JPY.');
+  await price.fill('15000');
+  await expect(preview).toContainText('15,000');
+  await currency.fill('KWD');
+  await price.fill('0.001');
+  await expect(preview).toContainText('0.001');
+  await price.fill('-1');
+  await expect(preview).toContainText('Enter a nonnegative price');
+  await price.fill('');
+  await expect(preview).toHaveText('To be announced');
+  await expect(page.getByText(/minor units|paise|cents/i)).toHaveCount(0);
+  expect(safety.get(page)!.api).toEqual([]);
 });
 
 test('empty Learning attention shows its honest caught-up state', async ({
@@ -803,7 +869,7 @@ test('Recordings groups actual metadata and preserves unavailable publication co
   ).toBeVisible();
 });
 
-test('academics-only scope retains Courses and excludes Batch and certificate controls', async ({
+test('academics-only scope retains Courses without Marketplace and excludes Batch and certificate controls', async ({
   page,
 }) => {
   await setup(page, { profile: 'academics' });
@@ -813,6 +879,7 @@ test('academics-only scope retains Courses and excludes Batch and certificate co
   await expect(areas.getByRole('heading', { level: 2 })).toHaveText([
     'Courses',
   ]);
+  await expect(areas.getByRole('link', { name: /Marketplace/ })).toHaveCount(0);
   await expect(
     page.locator('section[aria-label="Quick actions"]').getByRole('link'),
   ).toHaveCount(1);
@@ -836,6 +903,25 @@ test('academics-only scope retains Courses and excludes Batch and certificate co
   expect(safety.get(page)!.api).not.toContain(
     '/api/admin/batches/fixture_batch_1',
   );
+  for (const path of [
+    '/admin/marketplace',
+    '/admin/marketplace/new',
+    '/admin/marketplace/fixture_offering_1',
+  ]) {
+    await page.goto(path);
+    await ready(page);
+    await expect(
+      page.getByRole('heading', { name: 'Access unavailable', exact: true }),
+    ).toBeVisible();
+    await expect(
+      primaryNav(page).getByRole('link', { name: 'Marketplace', exact: true }),
+    ).toHaveCount(0);
+  }
+  expect(
+    safety
+      .get(page)!
+      .api.some((path) => path.startsWith('/api/admin/marketplace')),
+  ).toBe(false);
 });
 
 test('batches-only scope retains session tools and hides Attendance and Assignment tabs', async ({
@@ -870,6 +956,28 @@ test('batches-only scope retains session tools and hides Attendance and Assignme
   expect(safety.get(page)!.api).not.toContain(
     '/api/admin/academic/courses/fixture_course_1',
   );
+  for (const path of [
+    '/admin/marketplace',
+    '/admin/marketplace/new',
+    '/admin/marketplace/fixture_offering_1',
+  ]) {
+    await page.goto(path);
+    await ready(page);
+    await expect(
+      page.getByRole('heading', { name: 'Access unavailable', exact: true }),
+    ).toBeVisible();
+    await expect(primaryNav(page).locator('[aria-current="page"]')).toHaveCount(
+      0,
+    );
+    await expect(
+      page.locator('#admin-content a[href="/admin/marketplace"]'),
+    ).toHaveCount(0);
+  }
+  expect(
+    safety
+      .get(page)!
+      .api.some((path) => path.startsWith('/api/admin/marketplace')),
+  ).toBe(false);
 });
 
 for (const [profile, context, choice, action, destination] of [
@@ -931,6 +1039,9 @@ test('legacy destinations and descendants keep the correct active workflow', asy
 }) => {
   await setup(page);
   const mappings = [
+    ['Marketplace', 'marketplace'],
+    ['Marketplace', 'marketplace/new'],
+    ['Marketplace', 'marketplace/fixture_offering_1'],
     ['Learning', 'courses'],
     ['Learning', 'courses/fixture_course_1'],
     ['Learning', 'batches'],

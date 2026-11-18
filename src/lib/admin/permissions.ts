@@ -12,6 +12,7 @@ export const adminPermissions = [
   'USERS_VIEW',
   'AUDIT_VIEW',
   'SETTINGS_VIEW',
+  'MARKETPLACE_MANAGE',
 ] as const satisfies readonly AdminPermission[];
 export const legacyAdminPermissions: AdminPermission[] = adminPermissions.slice(
   0,
@@ -28,6 +29,13 @@ export const operationalPermissions = {
   referrals: 'REFERRALS_VIEW',
 } as const satisfies Record<string, AdminPermission>;
 const writes: Record<string, AdminPermission> = Object.fromEntries([
+  ...[
+    'MarketplaceOfferingCreated',
+    'MarketplaceOfferingUpdated',
+    'MarketplaceOfferingPublished',
+    'MarketplaceOfferingUnpublished',
+    'MarketplaceOfferingArchived',
+  ].map((a) => [a, 'MARKETPLACE_MANAGE']),
   ...[
     'ProgramSaved',
     'CourseSaved',
@@ -71,6 +79,7 @@ export function adminPathPermission(path: string): AdminPermission | null {
     students: 'STUDENTS_MANAGE',
     batches: 'BATCHES_MANAGE',
     courses: 'ACADEMICS_MANAGE',
+    marketplace: 'MARKETPLACE_MANAGE',
     'question-banks': 'ACADEMICS_MANAGE',
     assessments: 'ACADEMICS_MANAGE',
     assignments: 'ACADEMICS_MANAGE',

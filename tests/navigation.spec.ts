@@ -118,7 +118,7 @@ test('mobile navigation contains focus, unlocks on close/resize, and cooperates 
   ).toBeFocused();
 });
 
-test('Modules dropdown lists all seven entries, supports keyboard dismissal, and links to existing content', async ({
+test('Courses dropdown preserves seven entries, keyboard dismissal and existing content links', async ({
   page,
 }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -130,7 +130,7 @@ test('Modules dropdown lists all seven entries, supports keyboard dismissal, and
     name: mobile ? 'Mobile navigation' : 'Main navigation',
   });
   const trigger = nav.getByRole('button', {
-    name: mobile ? '01 Modules' : 'Modules',
+    name: mobile ? '01 Courses' : 'Courses',
     exact: true,
   });
   await trigger.click();
@@ -139,6 +139,12 @@ test('Modules dropdown lists all seven entries, supports keyboard dismissal, and
   await expect(panel.locator('li')).toHaveCount(7);
   await expect(panel.locator('.modules-list a')).toHaveCount(5);
   await expect(panel.getByText('Coming soon', { exact: true })).toHaveCount(2);
+  await expect(
+    panel.getByRole('link', { name: 'Explore All Courses', exact: true }),
+  ).toHaveAttribute('href', /(?:^|\/)courses$/);
+  await expect(
+    page.locator('footer').getByText('Explore All Courses', { exact: true }),
+  ).toHaveAttribute('href', /(?:^|\/)courses$/);
   expect(
     (
       await new AxeBuilder({ page })

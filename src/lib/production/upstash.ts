@@ -4,6 +4,28 @@ import { upstashConfiguration, type Environment } from './config';
 import { providerJson, type ProviderFetch } from './provider-http';
 import { limits, type MutationPolicy } from '../student/mutation-policy';
 import { StudentError } from '../student/errors';
+/** Reuse the approved bounded REST transport for server-only Redis commands. */
+export async function upstashCommand(
+  command: readonly string[],
+  env: Environment = process.env,
+  fetcher: ProviderFetch = (...args) => fetch(...args),
+  timeoutMs = 2000,
+): Promise<unknown> {
+  try {
+    const { url, token } = upstashConfiguration(env);
+    const reply = await providerJson(fetcher, url, token, command, timeoutMs);
+    if (
+      !reply ||
+      typeof reply !== 'object' ||
+      'error' in reply ||
+      !('result' in reply)
+    )
+      throw Error();
+    return reply.result;
+  } catch {
+    throw new StudentError('UNAVAILABLE');
+  }
+}
 /** Server-clock fixed window. Admission, increment and expiration are one atomic operation. */
 export const mutationWindowScript = `
 local count = tonumber(redis.call('GET', KEYS[1]) or '0')

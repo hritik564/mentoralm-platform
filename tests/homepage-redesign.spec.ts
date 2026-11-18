@@ -38,6 +38,12 @@ async function publicOnly(page: Page) {
       await route.abort('blockedbyclient');
       return;
     }
+    // Next's development-only source-map diagnostics are not application
+    // mutations. Block this exact endpoint without contacting any backend.
+    if (url.pathname === '/__nextjs_original-stack-frames') {
+      await route.abort('blockedbyclient');
+      return;
+    }
     if (!['GET', 'HEAD'].includes(request.method())) {
       state.mutations.push(`${request.method()} ${url.pathname}`);
       await route.abort('blockedbyclient');
@@ -244,7 +250,7 @@ test('carousel arrows, indicators, preview and keyboard select programs without 
   ).toBeVisible();
 });
 
-test('restored desktop navigation retains Modules, existing links and the account sheet', async ({
+test('restored desktop navigation retains Courses, existing links and the account sheet', async ({
   page,
 }) => {
   await opening(page);
@@ -257,7 +263,7 @@ test('restored desktop navigation retains Modules, existing links and the accoun
     await expect(
       nav.getByRole('link', { name: label, exact: true }),
     ).toBeVisible();
-  const modules = nav.getByRole('button', { name: 'Modules', exact: true });
+  const modules = nav.getByRole('button', { name: 'Courses', exact: true });
   await modules.focus();
   await page.keyboard.press('Enter');
   await expect(modules).toHaveAttribute('aria-expanded', 'true');
@@ -300,7 +306,7 @@ test('restored desktop navigation retains Modules, existing links and the accoun
   await expect(login).toBeFocused();
 });
 
-test('restored mobile navigation contains focus and retains Modules and the Login sheet', async ({
+test('restored mobile navigation contains focus and retains Courses and the Login sheet', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -322,14 +328,14 @@ test('restored mobile navigation contains focus and retains Modules and the Logi
   await expect(page.locator('body')).toHaveCSS('overflow', 'hidden');
   await expect(page.locator('main')).toHaveJSProperty('inert', true);
   const controls = page.locator(
-    'header a[href]:visible, header button:not([disabled]):visible',
+    '.site-header a[href]:visible, .site-header button:not([disabled]):visible',
   );
   await controls.last().focus();
   await page.keyboard.press('Tab');
   await expect(controls.first()).toBeFocused();
   await page.keyboard.press('Shift+Tab');
   await expect(controls.last()).toBeFocused();
-  const modules = nav.getByRole('button', { name: '01 Modules', exact: true });
+  const modules = nav.getByRole('button', { name: '01 Courses', exact: true });
   await modules.click();
   const panel = modules.locator('..').locator('.modules-panel');
   await expect(panel.locator('li')).toHaveCount(7);
@@ -473,21 +479,33 @@ test('server-rendered homepage remains useful without JavaScript', async ({
     await expect(
       page.getByRole('link', { name: 'Get Started Today', exact: true }),
     ).toHaveAttribute('href', /(?:^|\/)sign-up$/);
-    await expect(page.locator('#programs .module-card')).toHaveCount(7);
+    await expect(page.locator('#programs')).toBeVisible();
+    await expect(
+      page.locator('#programs').getByRole('heading', {
+        level: 2,
+        name: 'Explore MentoraLM Courses & Programs',
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      page
+        .locator('#programs')
+        .getByRole('link', { name: 'Explore All Courses', exact: true }),
+    ).toHaveAttribute('href', /(?:^|\/)courses$/);
     const fallbackNavigation = page.getByRole('navigation', {
       name: 'Navigation without JavaScript',
       exact: true,
     });
     await expect(fallbackNavigation).toBeVisible();
     await expect(fallbackNavigation.getByRole('link')).toHaveText([
-      'Modules',
+      'Courses',
       'Opportunities',
       'Resources',
       'About',
     ]);
     await expect(
-      fallbackNavigation.getByRole('link', { name: 'Modules', exact: true }),
-    ).toHaveAttribute('href', '#programs');
+      fallbackNavigation.getByRole('link', { name: 'Courses', exact: true }),
+    ).toHaveAttribute('href', /(?:^|\/)courses$/);
     await noOverflow(page);
     await page.goto(`${baseURL}/#youngminds-ai-lab`);
     await expect(page.locator('#youngminds-ai-lab')).toBeVisible();
@@ -498,4 +516,32 @@ test('server-rendered homepage remains useful without JavaScript', async ({
   } finally {
     await context.close();
   }
+});
+
+test('unavailable Marketplace keeps public catalogue recovery clear and internal details private', async ({
+  page,
+}) => {
+  // This provider-free server has DATABASE_URL explicitly blank.
+  await page.goto('/courses');
+  await expect(page.locator('link[rel=canonical]')).toHaveAttribute(
+    'href',
+    'http://127.0.0.1:3111/courses',
+  );
+  await expect(
+    page.getByRole('heading', { name: 'Courses & Programs', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', {
+      name: 'Courses are temporarily unavailable',
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(page.locator('.marketplace-card')).toHaveCount(0);
+  await expect(
+    page.getByRole('link', { name: 'Try again', exact: true }),
+  ).toHaveAttribute('href', /(?:^|\/)courses$/);
+  await expect(page.locator('main')).not.toContainText(
+    /DATABASE_URL|PrismaClient|postgresql:|CLERK_SECRET_KEY/,
+  );
+  await noOverflow(page);
 });

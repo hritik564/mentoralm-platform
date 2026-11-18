@@ -11,7 +11,7 @@ import { verifyReleaseManifest } from './manifest';
 async function main() {
   const command = process.argv[2],
     intent = operatorIntent(process.env, command, process.argv.slice(3));
-  verifyReleaseManifest();
+  const releaseMigrations = verifyReleaseManifest();
   const clientUrl = new URL(intent.url.toString());
 
   // operatorIntent() has already validated this as the exact Production
@@ -69,7 +69,7 @@ async function main() {
         command,
         target: { database: intent.database, schema: intent.schema },
         applied: rows.filter((r) => !r.rolled_back_at).length,
-        releaseMigrations: 12,
+        releaseMigrations,
         changeTicket: intent.ticket,
       }),
     );

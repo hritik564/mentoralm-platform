@@ -17,12 +17,20 @@ import {
   domainRoute,
 } from '../src/lib/platform/domains';
 
-test('Admin navigation has exactly six workflow groups with permission-filtered destinations', () => {
+test('Admin navigation has seven permission-filtered domain groups with permission-filtered destinations', () => {
   assert.deepEqual(
     adminWorkspaces.map((w) => w.label),
-    ['Overview', 'Learning', 'Students', 'People', 'Inbox', 'Settings'],
+    [
+      'Overview',
+      'Marketplace',
+      'Learning',
+      'Students',
+      'People',
+      'Inbox',
+      'Settings',
+    ],
   );
-  assert.equal(visibleAdminNavigation(adminPermissions).length, 6);
+  assert.equal(visibleAdminNavigation(adminPermissions).length, 7);
   assert.deepEqual(
     visibleAdminNavigation([]).map((w) => w.label),
     ['Overview'],
@@ -45,6 +53,34 @@ test('Admin navigation has exactly six workflow groups with permission-filtered 
     'BATCHES_MANAGE',
     'CERTIFICATES_MANAGE',
   ]);
+  assert.deepEqual(workspacePermissions('marketplace'), ['MARKETPLACE_MANAGE']);
+  assert.deepEqual(
+    visibleAdminNavigation(['MARKETPLACE_MANAGE']).map((w) => w.label),
+    ['Overview', 'Marketplace'],
+  );
+  assert.deepEqual(
+    visibleAdminNavigation(['ACADEMICS_MANAGE']).map((w) => w.label),
+    ['Overview', 'Learning'],
+  );
+  assert.deepEqual(
+    workspaceDestinations('marketplace', ['ACADEMICS_MANAGE']),
+    [],
+  );
+  assert.deepEqual(
+    workspaceDestinations('marketplace', ['MARKETPLACE_MANAGE']).map(
+      (d) => d.href,
+    ),
+    ['/admin/marketplace'],
+  );
+  assert.ok(
+    !workspaceDestinations('learning', adminPermissions).some(
+      (d) => d.href === '/admin/marketplace',
+    ),
+  );
+  assert.equal(
+    adminPathPermission('/admin/marketplace/new'),
+    'MARKETPLACE_MANAGE',
+  );
 });
 test('Audit-only and referral-only administrators retain their existing child access', () => {
   const audit = visibleAdminNavigation(['AUDIT_VIEW']);
@@ -81,6 +117,7 @@ test('Every legacy Admin area and descendant maps to one active workflow on both
       'submissions',
       'certificates',
     ],
+    marketplace: ['marketplace'],
     students: ['students', 'referrals'],
     people: ['people', 'instructors', 'users'],
     inbox: ['inbox', 'discussions', 'support', 'communications'],
@@ -114,6 +151,9 @@ test('New workspace links preserve the closed Admin redirect/host boundary', () 
     delete process.env.NEXT_PUBLIC_ADMIN_ORIGIN;
     for (const path of [
       '/admin/learning',
+      '/admin/marketplace',
+      '/admin/marketplace/new',
+      '/admin/marketplace/opaque_ref',
       '/admin/learning/classes',
       '/admin/learning/recordings',
       '/admin/people',

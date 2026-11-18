@@ -56,7 +56,12 @@
     "prod:db:status": "tsx scripts/production/database.ts status",
     "test:p1": "NODE_OPTIONS=--conditions=react-server tsx --test tests/production-p1.test.ts",
     "test:p1:runtime": "NODE_OPTIONS=--conditions=react-server tsx --test tests/production-p1-runtime.test.ts",
-    "test:p1:providers": "NODE_OPTIONS=--conditions=react-server tsx --test tests/production-providers.test.ts"
+    "test:p1:providers": "NODE_OPTIONS=--conditions=react-server tsx --test tests/production-providers.test.ts",
+    "test:m1:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-validation.test.ts tests/marketplace-scope.test.ts tests/marketplace-m1-domain.test.ts tests/marketplace-price.test.ts tests/marketplace-cache.test.ts tests/marketplace-generation.test.ts tests/marketplace-autoscale.test.ts",
+    "test:m1": "playwright test --config=playwright.marketplace.config.ts",
+    "db:migrate:m1:local": "tsx scripts/marketplace/migrate-local.ts",
+    "db:migrate:m1:permission:local": "tsx scripts/marketplace/migrate-permission-local.ts",
+    "test:m1:cache": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-generation.test.ts tests/marketplace-cache.test.ts tests/marketplace-autoscale.test.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",

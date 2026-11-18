@@ -115,7 +115,7 @@ test('responsive navigation works with keyboard, escape, and anchor selection', 
     await expect(
       page
         .getByRole('navigation', { name: 'Mobile navigation' })
-        .getByRole('button', { name: '01 Modules' }),
+        .getByRole('button', { name: '01 Courses' }),
     ).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(trigger).toBeFocused();
@@ -135,10 +135,13 @@ test('responsive navigation works with keyboard, escape, and anchor selection', 
     await expect(trigger).toBeHidden();
     await page
       .getByRole('navigation', { name: 'Main navigation' })
-      .getByRole('button', { name: 'Modules', exact: true })
+      .getByRole('button', { name: 'Courses', exact: true })
       .click();
-    await page.getByRole('link', { name: 'Explore all modules' }).click();
-    await expect(page).toHaveURL(/#programs$/);
+    await page
+      .getByRole('navigation', { name: 'Main navigation' })
+      .getByRole('link', { name: 'Explore All Courses', exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/courses$/);
   }
 });
 

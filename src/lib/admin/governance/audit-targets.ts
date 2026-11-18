@@ -40,6 +40,7 @@ export async function auditTargetDescriptions(
     'Program',
     'Section',
     'Learning item',
+    'Marketplace Offering',
   ] as const) {
     const targetIds = ids(kind);
     if (!targetIds.length) continue;
@@ -52,30 +53,35 @@ export async function auditTargetDescriptions(
               select: { id: true, name: true, code: true },
             })
           ).map((b) => ({ id: b.id, label: `${b.name} · ${b.code}` }))
-        : kind === 'Live Session'
-          ? await db.batchSession.findMany({
+        : kind === 'Marketplace Offering'
+          ? await db.marketplaceOffering.findMany({
               where,
               select: { id: true, title: true },
             })
-          : kind === 'Course'
-            ? await db.course.findMany({
+          : kind === 'Live Session'
+            ? await db.batchSession.findMany({
                 where,
                 select: { id: true, title: true },
               })
-            : kind === 'Program'
-              ? await db.program.findMany({
+            : kind === 'Course'
+              ? await db.course.findMany({
                   where,
                   select: { id: true, title: true },
                 })
-              : kind === 'Section'
-                ? await db.section.findMany({
+              : kind === 'Program'
+                ? await db.program.findMany({
                     where,
                     select: { id: true, title: true },
                   })
-                : await db.learningItem.findMany({
-                    where,
-                    select: { id: true, title: true },
-                  });
+                : kind === 'Section'
+                  ? await db.section.findMany({
+                      where,
+                      select: { id: true, title: true },
+                    })
+                  : await db.learningItem.findMany({
+                      where,
+                      select: { id: true, title: true },
+                    });
     const labels = new Map(
       targets.map((t) => [
         t.id,

@@ -1,16 +1,17 @@
 import { Brand } from './Brand';
 import { programs } from '@/content/programs';
 import { notices } from '@/content/home';
+import { websiteHref } from '@/lib/platform/domains';
 import { NoticeButton } from '@/components/ui/NoticeButton';
 import { Icon } from '@/components/ui/Icon';
 import Link from 'next/link';
-export function Footer() {
+export function Footer({ homeHref = '' }: { homeHref?: string }) {
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer__top">
           <div className="footer__brand">
-            <Brand />
+            <Brand href={homeHref || '#top'} />
             <p>
               Intelligence. Possibility.
               <br />A future that feels like you.
@@ -29,22 +30,23 @@ export function Footer() {
                     key={program.id}
                     href={
                       program.status === 'featured' && program.storyId
-                        ? `#${program.storyId}`
-                        : '#programs'
+                        ? `${homeHref}#${program.storyId}`
+                        : `${homeHref}#programs`
                     }
                   >
                     {program.name}
                   </a>
                 ))}
+              <a href={websiteHref('/courses')}>Explore All Courses</a>
             </div>
             <div>
               <h3>Explore</h3>
-              <a href="#opportunities">Opportunities</a>
-              <a href="#resources">
+              <a href={`${homeHref}#opportunities`}>Opportunities</a>
+              <a href={`${homeHref}#resources`}>
                 Resources <small>In development</small>
               </a>
-              <a href="#about">About MentoraLM</a>
-              <a href="#journey">Our approach</a>
+              <a href={`${homeHref}#about`}>About MentoraLM</a>
+              <a href={`${homeHref}#journey`}>Our approach</a>
             </div>
             <div>
               <h3>Connect</h3>

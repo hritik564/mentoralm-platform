@@ -4,7 +4,7 @@ import { Footer } from '@/components/layout/Footer';
 import { MotionObserver } from '@/components/motion/MotionObserver';
 import { HomepageHero } from '@/components/home/homepage/HomepageHero';
 import { Credibility } from '@/components/home/Credibility';
-import { Ecosystem } from '@/components/home/Ecosystem';
+import { MarketplacePreview } from '@/components/marketplace/MarketplacePreview';
 import { Purpose } from '@/components/home/Purpose';
 import { Journey } from '@/components/home/Journey';
 import { Intelligence } from '@/components/home/Intelligence';
@@ -12,6 +12,7 @@ import { FeaturedStories } from '@/components/home/FeaturedStories';
 import { Opportunities } from '@/components/home/Opportunities';
 import { HumanStories } from '@/components/home/HumanStories';
 import { FinalCta } from '@/components/home/FinalCta';
+
 export const metadata: Metadata = {
   title: { absolute: 'Your Future, Powered by MentoraLM' },
   description:
@@ -41,7 +42,7 @@ export default function Home() {
       <main id="main-content">
         <HomepageHero />
         <Credibility />
-        <Ecosystem />
+        <MarketplacePreview />
         <Purpose />
         <Journey />
         <Intelligence />

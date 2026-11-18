@@ -222,17 +222,22 @@ test('P1 operator tools default refuse and require exact intent/target/ticket/re
       operatorIntent(operatorProduction(), 'preflight', [...args, bad]),
     );
   assert.throws(() =>
-    operatorIntent({ ...operatorProduction(), MENTORALM_ENV: 'local' }, 'status', args),
+    operatorIntent(
+      { ...operatorProduction(), MENTORALM_ENV: 'local' },
+      'status',
+      args,
+    ),
   );
   assert.throws(() => operatorIntent(operatorProduction(), 'reset', args));
   assert.throws(() =>
     operatorIntent(
       {
         ...operatorProduction(),
-        MIGRATION_DATABASE_URL: operatorProduction().MIGRATION_DATABASE_URL!.replace(
-          'mentoralm',
-          'mentoralm_test',
-        ),
+        MIGRATION_DATABASE_URL:
+          operatorProduction().MIGRATION_DATABASE_URL!.replace(
+            'mentoralm',
+            'mentoralm_test',
+          ),
       },
       'preflight',
       args,
@@ -296,7 +301,7 @@ test('P1 structured logging drops body/headers/errors/queries/tokens and bounds 
   assert.ok(!(await response.text()).includes(secret));
 });
 test('P1 migration release readiness rejects checksum drift, incomplete, duplicate and unknown rows', () => {
-  assert.equal(verifyReleaseManifest(), 12);
+  assert.equal(verifyReleaseManifest(), 15);
   const rows = migrationManifest.map((m) => ({
     migration_name: m.name,
     checksum: m.checksum,
@@ -421,7 +426,7 @@ test('P1 HTTPS/host/origin and safe return controls ignore forwarded authorities
     }
   }
 });
-test('P1 clean twelve-migration installation, audit guards and schema drift on isolated Test only', async () => {
+test('P1 clean complete-migration installation, audit guards and schema drift on isolated Test only', async () => {
   const f = await isolatedDatabase();
   try {
     const rows = await f.db.$queryRawUnsafe<

@@ -25,7 +25,7 @@ export const policyChangeInput = z
     authority: z.enum(['SCOPED', 'GOVERNANCE']),
     permissions: z
       .array(z.enum(adminPermissions))
-      .max(12)
+      .max(adminPermissions.length)
       .refine((p) => new Set(p).size === p.length),
     expectedRevision: z.uuid().nullable(),
     confirmation: z.literal(true),
