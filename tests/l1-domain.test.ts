@@ -513,9 +513,13 @@ test(
               data: { batchId: batch.id, userId: I.id },
             }),
           );
-          assert.throws(() => new LmsRepository(db, I));
+          await assert.rejects(new LmsRepository(db, I).authorize(), {
+            code: 'FORBIDDEN',
+          });
           assert.throws(() => new StudentRepository(db, I));
-          assert.throws(() => new LmsRepository(db, admin));
+          await assert.rejects(new LmsRepository(db, admin).authorize(), {
+            code: 'FORBIDDEN',
+          });
           assert.equal(
             (await db.user.findUniqueOrThrow({ where: { id: A.id } })).role,
             'STUDENT',
@@ -813,7 +817,8 @@ test(
       assert.equal(rows[0].clerkUserId, 'legacy_clerk');
       assert.equal(rows[0].institution, 'Preserved institution');
       assert.match(rows[0].studentId, /^ST-\d{4}-\d{6,}$/);
-      assert.equal(rows[0].studentId, issued);
+      // Full upgrade includes the approved P1 display-prefix normalization.
+      assert.equal(rows[0].studentId, issued.replace(/^MLM-STU-/, 'ST-'));
     } finally {
       await admin.query('SET search_path TO public');
       await admin.query(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);

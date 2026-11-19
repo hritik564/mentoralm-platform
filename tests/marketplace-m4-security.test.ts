@@ -321,13 +321,12 @@ test('M4 additive migration keeps every historical checksum; old task commands r
     finished_at: new Date(),
     rolled_back_at: null,
   }));
-  assert.deepEqual(requireMarketplaceCommerceBaseline(rows.slice(0, -2)), [
-    '20261119100000_commerce_permissions',
-    '20261119101000_marketplace_commerce',
-  ]);
+  // M4 migration commands must refuse newly pending M5 work.
+  assert.throws(() => requireMarketplaceCommerceBaseline(rows.slice(0, 18)));
+  assert.throws(() => requireMarketplaceCommerceBaseline(rows.slice(0, 20)));
   assert.deepEqual(requireMarketplaceCommerceBaseline(rows), []);
-  assert.throws(() => requireMarketplaceEnrollmentBaseline(rows.slice(0, -2)));
-  assert.throws(() => requireMarketplaceCommerceBaseline(rows.slice(0, -3)));
+  assert.throws(() => requireMarketplaceEnrollmentBaseline(rows.slice(0, 20)));
+  assert.throws(() => requireMarketplaceCommerceBaseline(rows.slice(0, 19)));
   const sql = readFileSync(
     'prisma/migrations/20261119101000_marketplace_commerce/migration.sql',
     'utf8',

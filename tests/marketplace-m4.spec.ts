@@ -196,7 +196,9 @@ test('M4 real authenticated private purchase states, finance authorization and r
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.getByRole('button', { name: 'Dark mode', exact: true }).click();
     await page.goto(`/admin/marketplace/orders/${fixtures.paid.ref}`);
-    await expect(page.locator('.commerce-admin-details')).toContainText('paid');
+    await expect(page.locator('.commerce-admin-details').first()).toContainText(
+      'paid',
+    );
     await capture(page, '1440-admin-order-detail', true);
     const owner = await db.user.findUniqueOrThrow({
       where: { clerkUserId: owners.data[0].id },

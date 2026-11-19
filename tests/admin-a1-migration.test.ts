@@ -90,7 +90,8 @@ test('A1 additive upgrade preserves existing session/student/enrollment without 
     );
     assert.equal(
       (await f.db.user.findUniqueOrThrow({ where: { id: user.id } })).studentId,
-      user.studentId,
+      // Full upgrade includes the approved P1 prefix-only normalization.
+      user.studentId!.replace(/^MLM-STU-/, 'ST-'),
     );
     assert.equal(await f.db.enrollment.count(), 1);
     assert.equal(await f.db.batchSessionRecording.count(), 0);

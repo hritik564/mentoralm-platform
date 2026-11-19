@@ -36,9 +36,6 @@ export async function getAcademics() {
 export async function getDiscussions() {
   const { Discussions } = await import('./discussions');
   const student = await getCurrentStudent();
-  if (student.role !== 'STUDENT') {
-    const { StudentError } = await import('../student/errors');
-    throw new StudentError('FORBIDDEN');
-  }
+  await getLmsRepository();
   return new Discussions(getDatabase(), student.id);
 }

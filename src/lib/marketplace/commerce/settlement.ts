@@ -1,3 +1,7 @@
+import {
+  initializeDelivery,
+  requestDeliveryRevocation,
+} from '../delivery/state';
 import 'server-only';
 import type {
   PrismaClient,
@@ -121,6 +125,7 @@ export async function settleVerifiedPayment(
               reason: 'PROVIDER_DISPUTE',
             },
           });
+          await requestDeliveryRevocation(tx, o.entitlement.id);
           await commerceAudit(
             tx,
             o.intentId,
@@ -188,6 +193,7 @@ export async function settleVerifiedPayment(
                 reason: full ? 'PROVIDER_REFUND' : 'PARTIAL_REFUND',
               },
             });
+            await requestDeliveryRevocation(tx, o.entitlement.id);
             await commerceAudit(
               tx,
               o.intentId,
@@ -245,7 +251,7 @@ export async function settleVerifiedPayment(
         where: { id: o.id },
         data: { status: 'PAID', paidAt: now(), ...revised() },
       });
-      await tx.marketplaceEntitlement.create({
+      const entitlement = await tx.marketplaceEntitlement.create({
         data: {
           userId: o.userId,
           offeringId: o.offeringId,
@@ -253,6 +259,7 @@ export async function settleVerifiedPayment(
           grantedAt: now(),
         },
       });
+      await initializeDelivery(tx, entitlement.id);
       await commerceAudit(tx, o.intentId, o.id, 'PaymentConfirmed', actorId);
       await commerceAudit(tx, o.intentId, o.id, 'EntitlementGranted', actorId);
       if (actorId)

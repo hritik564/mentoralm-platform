@@ -1,4 +1,5 @@
 import 'server-only';
+import { learnerIdentityWhere } from './entitlement';
 import { requireAdminPermission } from '../auth/admin-policy';
 import type {
   Prisma,
@@ -38,7 +39,7 @@ export async function applyLmsAccessChange(
     if (![null, 'ENABLED', 'DISABLED'].includes(command.value))
       throw new StudentError('INVALID_INPUT');
     const user = await db.user.findFirst({
-      where: { id: command.userId, role: 'STUDENT' },
+      where: { id: command.userId, ...learnerIdentityWhere() },
       select: { lmsAccessOverride: true },
     });
     if (!user) throw new StudentError('NOT_FOUND');
@@ -67,7 +68,7 @@ export async function applyLmsAccessChange(
       throw new StudentError('INVALID_INPUT');
     if (
       !(await db.user.findFirst({
-        where: { id: command.userId, role: 'STUDENT' },
+        where: { id: command.userId, ...learnerIdentityWhere() },
         select: { id: true },
       }))
     )
@@ -80,7 +81,17 @@ export async function applyLmsAccessChange(
     targetId = `${command.userId}:${command.courseId}`;
     if (command.value === 'COMPLETED') throw new StudentError('INVALID_INPUT');
     if (command.value === null) {
-      if (enrollment) await db.enrollment.delete({ where });
+      if (enrollment) {
+        // Commercial provenance and academic history must survive financial revocation.
+        if (
+          await db.marketplaceDelivery.findFirst({
+            where: { enrollmentId: enrollment.id },
+            select: { id: true },
+          })
+        )
+          throw new StudentError('CONFLICT');
+        await db.enrollment.delete({ where });
+      }
     } else
       await db.enrollment.upsert({
         where,

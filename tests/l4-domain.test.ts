@@ -268,7 +268,8 @@ test(
           assert.equal(
             (await db.user.findUniqueOrThrow({ where: { id: A.id } }))
               .studentId,
-            A.studentId,
+            // Full upgrade includes P1's intentional display-prefix normalization.
+            A.studentId?.replace(/^MLM-STU-/, 'ST-'),
           );
           assert.equal(
             (

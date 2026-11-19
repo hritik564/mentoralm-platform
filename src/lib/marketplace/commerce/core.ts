@@ -21,11 +21,19 @@ export async function commerceTransaction<T>(
       if (
         error &&
         typeof error === 'object' &&
-        'code' in error &&
-        ['P2034', 'P2002'].includes(String(error.code)) &&
+        (('code' in error && ['P2034', 'P2002'].includes(String(error.code))) ||
+          ('cause' in error &&
+            error.cause &&
+            typeof error.cause === 'object' &&
+            'originalCode' in error.cause &&
+            ['40001', '40P01'].includes(String(error.cause.originalCode)))) &&
         i < 9
-      )
+      ) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 10 + Math.floor(Math.random() * 40)),
+        );
         continue;
+      }
       throw error;
     }
   }

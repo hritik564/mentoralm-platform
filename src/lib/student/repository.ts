@@ -1,14 +1,11 @@
+import { readStudentProfile, writeStudentProfile } from './profile';
+import { CustomerSupportRepository } from './support';
+import { enrollmentAccessWhere } from '../lms/enrollment-access';
 import 'server-only';
 import { randomBytes } from 'node:crypto';
 import type { PrismaClient, Prisma } from '../../generated/prisma/client';
 import { StudentError } from './errors';
-import {
-  profileInput,
-  replyInput,
-  ticketInput,
-  viewInput,
-  referralInput,
-} from './validation';
+import { viewInput, referralInput } from './validation';
 
 export async function provisionUser(db: PrismaClient, clerkUserId: string) {
   if (!clerkUserId || clerkUserId.length > 200)
@@ -56,32 +53,10 @@ export class StudentRepository {
     if (actor.role !== 'STUDENT') throw new StudentError('FORBIDDEN');
   }
   profile() {
-    return this.db.studentProfile.findUnique({
-      where: { userId: this.actor.id },
-      select: {
-        educationLevel: true,
-        institution: true,
-        graduationYear: true,
-        interests: true,
-        careerGoals: true,
-      },
-    });
+    return readStudentProfile(this.db, this.actor.id);
   }
-  async updateProfile(input: unknown) {
-    const data = parse(profileInput, input);
-    const writable = {
-      educationLevel: data.educationLevel,
-      institution: data.institution,
-      graduationYear: data.graduationYear,
-      interests: data.interests,
-      careerGoals: data.careerGoals,
-    };
-    await this.db.studentProfile.upsert({
-      where: { userId: this.actor.id },
-      create: { userId: this.actor.id, ...writable },
-      update: writable,
-    });
-    return this.profile();
+  updateProfile(input: unknown) {
+    return writeStudentProfile(this.db, this.actor.id, input);
   }
   async courses() {
     const [views, enrollments] = await Promise.all([
@@ -92,7 +67,7 @@ export class StudentRepository {
         take: 100,
       }),
       this.db.enrollment.findMany({
-        where: { userId: this.actor.id },
+        where: { ...enrollmentAccessWhere(), userId: this.actor.id },
         include: { course: { include: { program: true } } },
         orderBy: { updatedAt: 'desc' },
         take: 100,
@@ -120,16 +95,26 @@ export class StudentRepository {
       published: true,
       OR: [
         { audience: 'STUDENTS' },
-        { assignments: { some: { userId: this.actor.id } } },
+        {
+          assignments: { some: { userId: this.actor.id } },
+        },
         {
           audience: 'COURSE',
-          course: { enrollments: { some: { userId: this.actor.id } } },
+          course: {
+            enrollments: {
+              some: { ...enrollmentAccessWhere(), userId: this.actor.id },
+            },
+          },
         },
         {
           audience: 'PROGRAM',
           program: {
             courses: {
-              some: { enrollments: { some: { userId: this.actor.id } } },
+              some: {
+                enrollments: {
+                  some: { ...enrollmentAccessWhere(), userId: this.actor.id },
+                },
+              },
             },
           },
         },
@@ -155,65 +140,18 @@ export class StudentRepository {
     return resource;
   }
   tickets() {
-    return this.db.supportTicket.findMany({
-      where: { userId: this.actor.id },
-      orderBy: { updatedAt: 'desc' },
-      take: 100,
-    });
+    return new CustomerSupportRepository(this.db, this.actor).tickets();
   }
-  async ticket(id: string) {
-    const ticket = await this.db.supportTicket.findFirst({
-      where: { id, userId: this.actor.id },
-      include: { messages: { orderBy: { createdAt: 'desc' }, take: 200 } },
-    });
-    if (!ticket) throw new StudentError('NOT_FOUND');
-    return ticket;
+  ticket(id: string) {
+    return new CustomerSupportRepository(this.db, this.actor).ticket(id);
   }
-  async createTicket(input: unknown) {
-    const draft = parse(ticketInput, input);
-    return this.db.supportTicket.create({
-      data: {
-        userId: this.actor.id,
-        reference: `MT-${randomBytes(8).toString('hex').toUpperCase()}`,
-        category: draft.category,
-        subject: draft.subject,
-        messages: {
-          create: {
-            senderId: this.actor.id,
-            actor: 'STUDENT',
-            body: draft.message,
-          },
-        },
-      },
-      select: { id: true },
-    });
-  }
-  async reply(id: string, input: unknown) {
-    const { message } = parse(replyInput, input);
-    // Serializable transaction coordinates reply permission with future status changes.
-    await this.db.$transaction(
-      async (transaction) => {
-        const ticket = await transaction.supportTicket.findFirst({
-          where: { id, userId: this.actor.id },
-        });
-        if (!ticket) throw new StudentError('NOT_FOUND');
-        if (!['OPEN', 'IN_PROGRESS'].includes(ticket.status))
-          throw new StudentError('CONFLICT');
-        await transaction.supportMessage.create({
-          data: {
-            ticketId: id,
-            senderId: this.actor.id,
-            actor: 'STUDENT',
-            body: message,
-          },
-        });
-        await transaction.supportTicket.update({
-          where: { id },
-          data: { updatedAt: new Date() },
-        });
-      },
-      { isolationLevel: 'Serializable' },
+  createTicket(input: unknown) {
+    return new CustomerSupportRepository(this.db, this.actor).createTicket(
+      input,
     );
+  }
+  reply(id: string, input: unknown) {
+    return new CustomerSupportRepository(this.db, this.actor).reply(id, input);
   }
   async referral() {
     const identity = await uniqueUpsert(() =>

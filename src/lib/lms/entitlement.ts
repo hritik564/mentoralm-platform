@@ -1,13 +1,15 @@
 import type { Prisma } from '../../generated/prisma/client';
 
-/** Business-data entitlement, never Clerk metadata or a course access grant. */
-export function entitledStudentWhere(
-  id: string,
+/** Identity is retained after commercial revocation; identity alone grants nothing. */
+export function learnerIdentityWhere(): Prisma.UserWhereInput {
+  return { OR: [{ role: 'STUDENT' }, { marketplaceLearner: { isNot: null } }] };
+}
+
+/** Independent business authority, without claiming Marketplace provenance. */
+export function independentLmsAccessWhere(
   now = new Date(),
 ): Prisma.UserWhereInput {
   return {
-    id,
-    role: 'STUDENT',
     OR: [
       { lmsAccessOverride: 'ENABLED' },
       {
@@ -27,6 +29,38 @@ export function entitledStudentWhere(
             },
           },
         },
+      },
+    ],
+  };
+}
+
+/** Public authorization requires final ACTIVE delivery. Explicit administrative denial wins. */
+export function entitledStudentWhere(
+  id: string,
+  now = new Date(),
+): Prisma.UserWhereInput {
+  return {
+    id,
+    studentId: { not: null },
+    AND: [
+      learnerIdentityWhere(),
+      {
+        OR: [
+          independentLmsAccessWhere(now),
+          {
+            lmsAccessOverride: null,
+            marketplaceEntitlements: {
+              some: {
+                status: 'ACTIVE',
+                delivery: {
+                  type: 'LMS',
+                  status: 'ACTIVE',
+                  lmsAccessProvenance: { not: 'NONE' },
+                },
+              },
+            },
+          },
+        ],
       },
     ],
   };

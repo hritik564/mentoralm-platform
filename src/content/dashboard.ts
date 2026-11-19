@@ -1,5 +1,6 @@
 export const dashboardNavigation = [
   { href: '/dashboard', label: 'Overview', icon: 'overview' },
+  { href: '/dashboard/programs', label: 'My Programs', icon: 'courses' },
   { href: '/dashboard/courses', label: 'My Courses', icon: 'courses' },
   { href: '/dashboard/resources', label: 'Resources', icon: 'resources' },
   { href: '/dashboard/support', label: 'Support', icon: 'support' },

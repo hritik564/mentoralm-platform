@@ -1,3 +1,4 @@
+import { enrollmentAccessWhere } from './enrollment-access';
 import 'server-only';
 import type { Prisma, PrismaClient } from '../../generated/prisma/client';
 import { StudentError } from '../student/errors';
@@ -27,7 +28,13 @@ function validId(id: string) {
 export function courseAccessWhere(id: string): Prisma.CourseWhereInput {
   return {
     published: true,
-    enrollments: { some: { userId: id, user: entitledStudentWhere(id) } },
+    enrollments: {
+      some: {
+        ...enrollmentAccessWhere(),
+        userId: id,
+        user: entitledStudentWhere(id),
+      },
+    },
   };
 }
 export type LearningCourse = ReturnType<typeof finalizeCourseProjection>;
@@ -35,9 +42,7 @@ export class LearningRepository {
   constructor(
     private db: PrismaClient,
     private actor: Actor,
-  ) {
-    if (actor.role !== 'STUDENT') throw new StudentError('FORBIDDEN');
-  }
+  ) {}
   private async entitled(db: DB = this.db) {
     if (
       !(await db.user.findFirst({

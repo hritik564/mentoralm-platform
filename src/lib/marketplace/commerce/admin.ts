@@ -1,3 +1,4 @@
+import { deliveryDetail } from '../delivery/read';
 import 'server-only';
 import type { PrismaClient } from '../../../generated/prisma/client';
 import { requireAdminPermission } from '../../auth/admin-policy';
@@ -62,6 +63,9 @@ export class CommerceAdmin {
     const identity = (await this.directory.lookup([row.user.clerkUserId])).get(
       row.user.clerkUserId,
     );
+    const delivery = row.entitlement
+      ? await deliveryDetail(this.db, row.entitlement.id)
+      : null;
     await this.authorize();
     return {
       ...orderDTO(row),
@@ -70,6 +74,7 @@ export class CommerceAdmin {
         name: identity?.name || 'Account unavailable',
         email: identity?.email || null,
       },
+      delivery,
       events: row.events.map((e) => ({
         ...e,
         createdAt: e.createdAt.toISOString(),

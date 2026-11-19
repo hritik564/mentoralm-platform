@@ -301,7 +301,7 @@ test('P1 structured logging drops body/headers/errors/queries/tokens and bounds 
   assert.ok(!(await response.text()).includes(secret));
 });
 test('P1 migration release readiness rejects checksum drift, incomplete, duplicate and unknown rows', () => {
-  assert.equal(verifyReleaseManifest(), 20);
+  assert.equal(verifyReleaseManifest(), 24);
   const rows = migrationManifest.map((m) => ({
     migration_name: m.name,
     checksum: m.checksum,

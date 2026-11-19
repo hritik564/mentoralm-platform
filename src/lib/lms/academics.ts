@@ -13,7 +13,6 @@ export class Academics {
     private db: PrismaClient,
     private actor: { id: string; role: 'STUDENT' | 'ADMIN' | 'INSTRUCTOR' },
   ) {
-    if (actor.role !== 'STUDENT') throw new StudentError('FORBIDDEN');
     this.attempts = new Attempts(db, actor.id);
     this.assignments = new Assignments(db, actor.id);
   }

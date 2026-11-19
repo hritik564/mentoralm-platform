@@ -15,6 +15,7 @@ export const adminPermissions = [
   'MARKETPLACE_MANAGE',
   'COMMERCE_VIEW',
   'COMMERCE_MANAGE',
+  'DELIVERY_MANAGE',
 ] as const satisfies readonly AdminPermission[];
 export const legacyAdminPermissions: AdminPermission[] = adminPermissions.slice(
   0,

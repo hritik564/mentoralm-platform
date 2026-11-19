@@ -1,0 +1,74 @@
+.my-programs {
+  margin-bottom: 1.5rem;
+}
+.my-programs > p {
+  color: var(--dash-muted, #667085);
+}
+.my-programs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+.my-program-card {
+  min-width: 0;
+  border: 1px solid var(--dash-border, #ccd1e0);
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--dash-surface, #fff);
+}
+.my-program-image {
+  position: relative;
+  height: 150px;
+  background: #151a36;
+}
+.my-program-image img {
+  object-fit: cover;
+}
+.my-program-body {
+  padding: 1.25rem;
+}
+.my-program-body h3 {
+  margin: 0.6rem 0;
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+.my-program-body p {
+  line-height: 1.6;
+}
+.my-program-status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--dash-text, #20243b);
+}
+.my-program-date {
+  font-size: 0.8rem;
+}
+.my-program-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.my-program-actions a {
+  color: var(--dash-accent, #5c39b5);
+  font-weight: 600;
+  text-underline-offset: 4px;
+}
+.my-program-actions .my-program-primary {
+  background: var(--dash-action, #6743bd);
+  color: var(--dash-action-text, #fff);
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  text-decoration: none;
+}
+.my-programs nav {
+  display: flex;
+  gap: 1rem;
+  padding-top: 1rem;
+}
+.my-programs a:focus-visible {
+  outline: 3px solid #8960df;
+  outline-offset: 4px;
+}

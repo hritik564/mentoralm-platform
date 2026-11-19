@@ -1,3 +1,8 @@
+import { learnerProfile } from '@/lib/lms/profile';
+import { getCurrentStudent } from '@/lib/student/session';
+import { getDatabase } from '@/lib/db/client';
+import { mutationLimiter } from '@/lib/student/abuse';
+import { privateJson, requestBody } from '@/lib/student/http';
 import { withRequestContext } from '@/lib/production/request-context';
 import { GET as sharedStudentRoute } from '@/app/api/student/[...path]/route';
 import { getLmsRepository } from '@/lib/lms/services';
@@ -13,6 +18,21 @@ async function route(
     studentResponse(async () => {
       await getLmsRepository();
       const { path } = await context.params;
+      if (path.length === 1 && path[0] === 'profile') {
+        if (new URL(request.url).search)
+          throw new StudentError('INVALID_INPUT');
+        const actor = await getCurrentStudent();
+        if (request.method === 'GET')
+          return privateJson(await learnerProfile(getDatabase(), actor.id));
+        if (request.method === 'PATCH') {
+          const body = await requestBody(request);
+          await mutationLimiter.check(actor.id, 'learning');
+          return privateJson(
+            await learnerProfile(getDatabase(), actor.id, body),
+          );
+        }
+        throw new StudentError('NOT_FOUND');
+      }
       const allowed =
         (path.length === 1 && ['profile', 'tickets'].includes(path[0])) ||
         (path[0] === 'tickets' &&

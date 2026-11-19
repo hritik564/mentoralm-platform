@@ -56,7 +56,7 @@ export function EnrollButton({
     return (
       <Link
         className="program-action-label enrollment-primary"
-        href="/dashboard"
+        href="/dashboard/programs"
       >
         Go to Dashboard
       </Link>

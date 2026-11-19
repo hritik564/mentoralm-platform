@@ -49,6 +49,7 @@ enum MessageActor {
 model User {
   id                        String                        @id @default(cuid())
   clerkUserId               String                        @unique
+  marketplaceLearner        MarketplaceLearnerIdentity?
   studentId                 String?                       @unique
   lmsAccessOverride         LmsAccessOverride?
   memberships               BatchMembership[]
@@ -143,6 +144,7 @@ model Course {
   sessions                  BatchSession[]
   discussionThreads         DiscussionThread[]
   marketplaceOfferings      MarketplaceOffering[]
+  marketplaceDeliveries     MarketplaceDelivery[]
 
   @@index([programId])
 }
@@ -168,6 +170,9 @@ model Enrollment {
   completedAt DateTime?        @db.Timestamptz(6)
   enrolledAt  DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+
+  marketplaceDeliveries MarketplaceDelivery[] @relation("DeliveryEnrollment")
+  marketplaceCreator    MarketplaceDelivery?  @relation("CreatedEnrollment")
 
   @@unique([userId, courseId])
   @@index([userId, updatedAt])
@@ -887,6 +892,7 @@ enum AdminPermission {
   MARKETPLACE_MANAGE
   COMMERCE_VIEW
   COMMERCE_MANAGE
+  DELIVERY_MANAGE
 }
 
 model AdminAuthorization {
@@ -1133,6 +1139,16 @@ enum MarketplaceEntitlementStatus {
 }
 
 enum MarketplaceCommerceEventKind {
+  MarketplaceLearnerProvisioned
+  MarketplaceLmsAccessGranted
+  MarketplaceLmsAccessReused
+  MarketplaceDeliveryRevoked
+  MarketplaceDeliveryRevocationStarted
+  MarketplaceDeliveryReusedEnrollment
+  MarketplaceDeliveryProvisioningFailed
+  MarketplaceDeliveryProvisioned
+  MarketplaceDeliveryProvisioningStarted
+  MarketplaceDeliveryCreated
   OrderExpired
   OrderCreated
   PaymentAttemptCreated
@@ -1237,6 +1253,8 @@ model MarketplaceEntitlement {
   createdAt  DateTime                     @default(now()) @db.Timestamptz(6)
   updatedAt  DateTime                     @updatedAt @db.Timestamptz(6)
 
+  delivery MarketplaceDelivery?
+
   @@index([userId, offeringId, status])
 }
 
@@ -1254,4 +1272,65 @@ model MarketplaceCommerceEvent {
 
   @@index([orderId, createdAt])
   @@index([intentId, createdAt])
+}
+
+enum MarketplaceDeliveryType {
+  EXTERNAL
+  LMS
+}
+
+enum MarketplaceDeliveryStatus {
+  NOT_REQUIRED
+  PENDING
+  PROVISIONING
+  ACTIVE
+  FAILED
+  REVOKE_PENDING
+  REVOKED
+  REVIEW
+}
+
+enum MarketplaceEnrollmentProvenance {
+  NONE
+  CREATED
+  REUSED
+}
+
+model MarketplaceLearnerIdentity {
+  userId              String              @id
+  user                User                @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdByDeliveryId String              @unique
+  createdByDelivery   MarketplaceDelivery @relation(fields: [createdByDeliveryId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdAt           DateTime            @default(now()) @db.Timestamptz(6)
+}
+
+model MarketplaceDelivery {
+  learnerIdentity           MarketplaceLearnerIdentity?
+  learnerIdentityProvenance MarketplaceEnrollmentProvenance @default(NONE)
+  lmsAccessProvenance       MarketplaceEnrollmentProvenance @default(NONE)
+  id                        String                          @id @default(cuid())
+  publicRef                 String                          @unique
+  entitlementId             String                          @unique
+  entitlement               MarketplaceEntitlement          @relation(fields: [entitlementId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  type                      MarketplaceDeliveryType
+  status                    MarketplaceDeliveryStatus       @default(PENDING)
+  courseId                  String?
+  course                    Course?                         @relation(fields: [courseId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  enrollmentId              String?
+  enrollment                Enrollment?                     @relation("DeliveryEnrollment", fields: [enrollmentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdEnrollmentId       String?                         @unique
+  createdEnrollment         Enrollment?                     @relation("CreatedEnrollment", fields: [createdEnrollmentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  provenance                MarketplaceEnrollmentProvenance @default(NONE)
+  attemptCount              Int                             @default(0)
+  lastAttemptAt             DateTime?                       @db.Timestamptz(6)
+  lastErrorCode             String?
+  provisionedAt             DateTime?                       @db.Timestamptz(6)
+  revokedAt                 DateTime?                       @db.Timestamptz(6)
+  revision                  String                          @default(uuid()) @db.Uuid
+  createdAt                 DateTime                        @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime                        @updatedAt @db.Timestamptz(6)
+
+  @@index([status, lastAttemptAt])
+  @@index([enrollmentId])
+  @@index([courseId])
 }

@@ -133,7 +133,8 @@ test('A3 populated upgrade defaults false without response, enrollment or certif
     );
     assert.deepEqual(
       await db.user.findUniqueOrThrow({ where: { id: user.id } }),
-      user,
+      // Full upgrade includes P1's approved prefix-only change; all other fields remain exact.
+      { ...user, studentId: user.studentId!.replace(/^MLM-STU-/, 'ST-') },
     );
     assert.deepEqual(
       await db.academicResponse.findUniqueOrThrow({

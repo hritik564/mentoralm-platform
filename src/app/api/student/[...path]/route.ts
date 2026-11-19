@@ -1,7 +1,10 @@
 import { withRequestContext } from '@/lib/production/request-context';
 import { mutationLimiter } from '@/lib/student/abuse';
 import { getCurrentStudent } from '@/lib/student/session';
-import { studentRepository } from '@/lib/student/session';
+import {
+  studentRepository,
+  customerSupportRepository,
+} from '@/lib/student/session';
 import { privateJson, requestBody, studentResponse } from '@/lib/student/http';
 import { StudentError } from '@/lib/student/errors';
 import {
@@ -19,7 +22,6 @@ async function route(
 ) {
   return withRequestContext(request, () =>
     studentResponse(async () => {
-      const repo = await studentRepository();
       const { path } = await context.params;
       if (
         new URL(request.url).search ||
@@ -27,6 +29,31 @@ async function route(
       )
         throw new StudentError('INVALID_INPUT');
       const key = path.join('/');
+      if (path[0] === 'tickets') {
+        const support = await customerSupportRepository();
+        if (request.method === 'GET') {
+          if (path.length === 1)
+            return privateJson((await support.tickets()).map(ticketView));
+          if (path.length === 2)
+            return privateJson(ticketView(await support.ticket(path[1])));
+        }
+        if (request.method === 'POST') {
+          const body = await requestBody(request);
+          await mutationLimiter.check(
+            (await getCurrentStudent()).id,
+            'support',
+          );
+          if (path.length === 1)
+            return privateJson(await support.createTicket(body), 201);
+          if (path.length === 3 && path[2] === 'reply') {
+            await support.reply(path[1], body);
+            return privateJson({ saved: true });
+          }
+        }
+        throw new StudentError('NOT_FOUND');
+      }
+      const repo = await studentRepository();
+
       if (request.method !== 'GET')
         await mutationLimiter.check(
           (await getCurrentStudent()).id,
@@ -40,11 +67,7 @@ async function route(
         if (key === 'profile') return privateJson(await repo.profile());
         if (key === 'courses') return privateJson(await getStudentCourses());
         if (key === 'resources') return privateJson(await getResources());
-        if (key === 'tickets')
-          return privateJson((await repo.tickets()).map(ticketView));
         if (key === 'referral') return privateJson(await getReferral());
-        if (path[0] === 'tickets' && path.length === 2)
-          return privateJson(ticketView(await repo.ticket(path[1])));
         if (
           path[0] === 'resources' &&
           path.length === 3 &&
@@ -92,12 +115,6 @@ async function route(
         const body = await requestBody(request);
         if (key === 'courses/view') {
           await repo.recordView(body);
-          return privateJson({ saved: true });
-        }
-        if (key === 'tickets')
-          return privateJson(await repo.createTicket(body), 201);
-        if (path[0] === 'tickets' && path.length === 3 && path[2] === 'reply') {
-          await repo.reply(path[1], body);
           return privateJson({ saved: true });
         }
         if (key === 'referral/attribute') {

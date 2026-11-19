@@ -1,3 +1,4 @@
+import { enrollmentAccessWhere } from './enrollment-access';
 import 'server-only';
 import { entitledStudentWhere } from './entitlement';
 import type { Prisma } from '../../generated/prisma/client';
@@ -15,7 +16,11 @@ export async function attendanceMemberships(
             course: {
               published: true,
               enrollments: {
-                some: { userId, user: entitledStudentWhere(userId) },
+                some: {
+                  ...enrollmentAccessWhere(),
+                  userId,
+                  user: entitledStudentWhere(userId),
+                },
               },
             },
           },
@@ -42,7 +47,11 @@ export async function attendanceMemberships(
                   course: {
                     published: true,
                     enrollments: {
-                      some: { userId, user: entitledStudentWhere(userId) },
+                      some: {
+                        ...enrollmentAccessWhere(),
+                        userId,
+                        user: entitledStudentWhere(userId),
+                      },
                     },
                   },
                 },

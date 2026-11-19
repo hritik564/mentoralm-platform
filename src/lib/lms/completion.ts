@@ -1,3 +1,4 @@
+import { enrollmentAccessWhere } from './enrollment-access';
 import 'server-only';
 import { learningEvent } from './events';
 import { randomBytes } from 'node:crypto';
@@ -39,7 +40,13 @@ export async function completionProjection(
     where: {
       id: courseId,
       published: true,
-      enrollments: { some: { userId, user: entitledStudentWhere(userId) } },
+      enrollments: {
+        some: {
+          ...enrollmentAccessWhere(),
+          userId,
+          user: entitledStudentWhere(userId),
+        },
+      },
     },
     select: outlineSelect(userId),
   });

@@ -21,3 +21,11 @@ export async function studentRepository() {
   const actor = await getCurrentStudent();
   return new StudentRepository(getDatabase(), actor);
 }
+
+export async function customerSupportRepository() {
+  const { CustomerSupportRepository } = await import('./support');
+  return new CustomerSupportRepository(
+    getDatabase(),
+    await getCurrentStudent(),
+  );
+}

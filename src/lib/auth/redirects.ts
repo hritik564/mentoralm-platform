@@ -6,6 +6,7 @@ import {
 const destinations = new Set([
   '/dashboard',
   '/dashboard/courses',
+  '/dashboard/programs',
   '/dashboard/resources',
   '/dashboard/support',
   '/dashboard/referral',

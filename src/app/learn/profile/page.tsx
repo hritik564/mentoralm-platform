@@ -9,7 +9,7 @@ export default function Page() {
       load={async () => {
         const repo = await getLmsRepository();
         const [profile, identity, courses] = await Promise.all([
-          requireStudentProfile(),
+          requireStudentProfile('lms'),
           getLmsIdentity(),
           repo.courses(),
         ]);

@@ -8,7 +8,11 @@ export const fixturePurchasePolicy = {
   termsPath: '/fixture-terms',
   privacyPath: '/fixture-privacy',
 };
-export async function readyPurchase(db: PrismaClient, userId?: string) {
+export async function readyPurchase(
+  db: PrismaClient,
+  userId?: string,
+  title = 'Practical AI Foundations',
+) {
   if (!userId)
     userId = (
       await db.user.create({
@@ -20,7 +24,7 @@ export async function readyPurchase(db: PrismaClient, userId?: string) {
   const offering = await db.marketplaceOffering.create({
     data: {
       ...data,
-      title: 'Practical AI Foundations',
+      title,
       publicationStatus: 'PUBLISHED',
       publishedAt: new Date(),
     },

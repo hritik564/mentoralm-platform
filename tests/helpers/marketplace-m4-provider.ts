@@ -83,7 +83,7 @@ export function providerFixture() {
   function payment(sessionId: string, patch: Partial<Payment> = {}) {
     const row = sessions.get(sessionId)!;
     const p = {
-      id: `pay_fixture${creates}`,
+      id: row.payments[0]?.id || `pay_${row.id}`,
       order_id: row.id,
       amount: row.amount,
       currency: row.currency,

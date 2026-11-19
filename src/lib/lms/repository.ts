@@ -1,3 +1,4 @@
+import { enrollmentAccessWhere } from './enrollment-access';
 import 'server-only';
 import type { PrismaClient } from '../../generated/prisma/client';
 import { StudentError } from '../student/errors';
@@ -7,9 +8,7 @@ export class LmsRepository {
   constructor(
     private db: PrismaClient,
     private actor: { id: string; role: 'STUDENT' | 'ADMIN' | 'INSTRUCTOR' },
-  ) {
-    if (actor.role !== 'STUDENT') throw new StudentError('FORBIDDEN');
-  }
+  ) {}
   async authorize() {
     const allowed = await this.db.user.findFirst({
       where: entitledStudentWhere(this.actor.id),
@@ -60,6 +59,7 @@ export class LmsRepository {
     await this.authorize();
     const enrollments = await this.db.enrollment.findMany({
       where: {
+        ...enrollmentAccessWhere(),
         userId: this.actor.id,
         user: entitledStudentWhere(this.actor.id),
         course: { published: true },
@@ -94,6 +94,7 @@ export class LmsRepository {
         published: true,
         enrollments: {
           some: {
+            ...enrollmentAccessWhere(),
             userId: this.actor.id,
             user: entitledStudentWhere(this.actor.id),
           },

@@ -54,3 +54,18 @@ export function requireMarketplaceCommerceBaseline(rows: MigrationRow[]) {
     '20261119101000_marketplace_commerce',
   ]);
 }
+
+export function requireMarketplaceDeliveryBaseline(rows: MigrationRow[]) {
+  return requireOnlyPending(rows, [
+    '20261119110000_delivery_permission',
+    '20261119111000_marketplace_delivery',
+    '20261119112000_delivery_provenance_constraint',
+  ]);
+}
+
+/** Follow-up may apply only its one new migration after the approved 23. */
+export function requireMarketplaceLearnerBaseline(rows: MigrationRow[]) {
+  return requireOnlyPending(rows, [
+    '20261119113000_marketplace_learner_capability',
+  ]);
+}

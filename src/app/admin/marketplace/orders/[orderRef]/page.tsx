@@ -1,3 +1,5 @@
+import { RetryDelivery } from '@/components/marketplace/delivery/RetryDelivery';
+import { adminCapabilities } from '@/lib/auth/admin-policy';
 import { clerkDirectory } from '@/lib/admin/directory';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -32,6 +34,7 @@ export default async function OrderDetail({
       );
     throw e;
   }
+  const capabilities = await adminCapabilities(getDatabase(), actor.id);
   return (
     <section className="admin-card">
       <Link href={adminHref('/admin/marketplace/orders')}>← Orders</Link>
@@ -71,6 +74,57 @@ export default async function OrderDetail({
         Purchased access is separate from learning delivery. Settlement comes
         only from verified provider evidence.
       </p>
+      <h2>Delivery</h2>
+      {row.delivery ? (
+        <>
+          <dl className="commerce-admin-details">
+            <dt>Delivery status</dt>
+            <dd>{row.delivery.status.replaceAll('_', ' ').toLowerCase()}</dd>
+            <dt>LMS Course</dt>
+            <dd>{row.delivery.course || 'Not configured'}</dd>
+            <dt>Learner identity</dt>
+            <dd>
+              {row.delivery.learnerIdentityProvenance === 'CREATED'
+                ? 'Marketplace provisioned'
+                : row.delivery.learnerIdentityProvenance === 'REUSED'
+                  ? 'Existing'
+                  : 'Not provisioned'}
+            </dd>
+            <dt>LMS account access</dt>
+            <dd>
+              {row.delivery.lmsAccessProvenance === 'CREATED'
+                ? 'Marketplace granted'
+                : row.delivery.lmsAccessProvenance === 'REUSED'
+                  ? 'Existing'
+                  : 'Not provisioned'}
+            </dd>
+            <dt>Enrollment provenance</dt>
+            <dd>{row.delivery.provenance.toLowerCase()}</dd>
+            <dt>Provisioning attempts</dt>
+            <dd>{row.delivery.attemptCount}</dd>
+            <dt>Last attempt</dt>
+            <dd>{row.delivery.lastAttemptAt || 'Not started'}</dd>
+            <dt>Provisioned</dt>
+            <dd>{row.delivery.provisionedAt || 'Not provisioned'}</dd>
+            <dt>Revoked</dt>
+            <dd>{row.delivery.revokedAt || 'Not revoked'}</dd>
+            <dt>Safe failure category</dt>
+            <dd>
+              {row.delivery.lastErrorCode?.replaceAll('_', ' ').toLowerCase() ||
+                'None'}
+            </dd>
+          </dl>
+          {capabilities.permissions.includes('DELIVERY_MANAGE') &&
+            ['PENDING', 'FAILED', 'REVIEW', 'PROVISIONING'].includes(
+              row.delivery.status,
+            ) && <RetryDelivery reference={row.delivery.ref} />}
+        </>
+      ) : (
+        <p>
+          Delivery is being prepared. The reconciliation operator can initialize
+          missing records.
+        </p>
+      )}
       <h2>Commerce activity</h2>
       <ul>
         {row.events.map((event, index) => (

@@ -3,7 +3,7 @@ import { Academics } from '../lms/academics';
 import { LearningRepository } from '../lms/learning';
 import { getDatabase } from '../db/client';
 import { getCurrentStudent } from './session';
-import { studentRepository } from './session';
+import { studentRepository, customerSupportRepository } from './session';
 import { referralOrigin } from '../db/config';
 import {
   publicCourseDestination,
@@ -209,10 +209,10 @@ export function ticketView(
   };
 }
 export async function getTickets() {
-  return (await (await studentRepository()).tickets()).map(ticketView);
+  return (await (await customerSupportRepository()).tickets()).map(ticketView);
 }
 export async function getTicket(id: string) {
-  return ticketView(await (await studentRepository()).ticket(id));
+  return ticketView(await (await customerSupportRepository()).ticket(id));
 }
 export async function getReferral(): Promise<{
   summary: ReferralSummary;

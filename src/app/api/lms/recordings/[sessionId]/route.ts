@@ -15,7 +15,6 @@ export async function GET(
   return withRequestContext(request, () =>
     studentResponse(async () => {
       const actor = await getCurrentStudent();
-      if (actor.role !== 'STUDENT') throw new StudentError('FORBIDDEN');
       const { sessionId } = await params,
         url = new URL(request.url),
         course = url.searchParams.get('course') || '',

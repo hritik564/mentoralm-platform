@@ -73,7 +73,12 @@
     "test:m4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-m4*.test.ts",
     "test:m4": "playwright test --config=playwright.marketplace-m4.config.ts",
     "dev:marketplace-cleanup": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/cleanup-local.ts",
-    "dev:marketplace-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/reconcile-local.ts"
+    "dev:marketplace-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/reconcile-local.ts",
+    "db:migrate:m5:learner:local": "tsx scripts/marketplace/migrate-learner-local.ts",
+    "db:migrate:m5:local": "tsx scripts/marketplace/migrate-delivery-local.ts",
+    "test:m5:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-m5*.test.ts",
+    "test:m5": "playwright test --config=playwright.marketplace-m5.config.ts",
+    "dev:marketplace-delivery": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/delivery-local.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",
