@@ -68,7 +68,12 @@
     "db:migrate:m2:editorial:local": "tsx scripts/marketplace/migrate-editorial-local.ts",
     "db:migrate:m3:local": "tsx scripts/marketplace/migrate-enrollment-local.ts",
     "test:m3:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-m3-domain.test.ts tests/marketplace-m3-security.test.ts",
-    "test:m3": "playwright test --config=playwright.marketplace-m3.config.ts"
+    "test:m3": "playwright test --config=playwright.marketplace-m3.config.ts",
+    "db:migrate:m4:local": "tsx scripts/marketplace/migrate-commerce-local.ts",
+    "test:m4:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-m4*.test.ts",
+    "test:m4": "playwright test --config=playwright.marketplace-m4.config.ts",
+    "dev:marketplace-cleanup": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/cleanup-local.ts",
+    "dev:marketplace-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/reconcile-local.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",

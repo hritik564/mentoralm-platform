@@ -1,7 +1,12 @@
 import 'server-only';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { cookies } from 'next/headers';
-import { createHash, randomBytes } from 'node:crypto';
+import {
+  createHash,
+  createHmac,
+  timingSafeEqual,
+  randomBytes,
+} from 'node:crypto';
 import { getDatabase } from '../../db/client';
 import { isAuthConfigured } from '../../auth/config';
 import { provisionUser } from '../../student/repository';
@@ -27,16 +32,41 @@ export async function enrollmentBrowser(create = false) {
     if (!create) return null;
     secret = randomBytes(32).toString('base64url');
   }
-  // A later start must keep its proof alive for that intent's full lifetime.
-  // Refreshing the cookie never extends any server-owned quote expiry.
   if (create) {
-    jar.set(name, secret, {
+    const key = process.env.CLERK_SECRET_KEY;
+    if (!key) throw new StudentError('UNAVAILABLE');
+    const sign = (value: string) =>
+      createHmac('sha256', key)
+        .update(`mentoralm-browser-proof:v1:${value}`)
+        .digest('base64url');
+    const supplied = jar.get(`${name}-signature`)?.value,
+      expected = sign(secret);
+    const valid =
+      !!supplied &&
+      supplied.length === expected.length &&
+      timingSafeEqual(Buffer.from(supplied), Buffer.from(expected));
+    // Preserve issued M3 proofs only when a persisted, active anonymous intent backs them.
+    if (!valid && jar.get(name)?.value) {
+      const legacy = await getDatabase().marketplaceEnrollmentIntent.findFirst({
+        where: {
+          browserHash: browserHash(secret),
+          userId: null,
+          expiresAt: { gt: new Date() },
+          state: 'ACCOUNT_REQUIRED',
+        },
+        select: { id: true },
+      });
+      if (!legacy) secret = randomBytes(32).toString('base64url');
+    }
+    const options = {
       httpOnly: true,
       secure,
-      sameSite: 'lax',
+      sameSite: 'lax' as const,
       path: '/',
       maxAge: 86400,
-    });
+    };
+    jar.set(name, secret, options);
+    jar.set(`${name}-signature`, sign(secret), options);
   }
   return browserHash(secret);
 }

@@ -47,42 +47,45 @@ enum MessageActor {
 }
 
 model User {
-  id                       String                        @id @default(cuid())
-  clerkUserId              String                        @unique
-  studentId                String?                       @unique
-  lmsAccessOverride        LmsAccessOverride?
-  memberships              BatchMembership[]
-  teaching                 BatchInstructor[]
-  lessonStates             LessonState[]
-  academicAttempts         AcademicAttempt[]
-  submissions              AssignmentSubmission[]
-  attendance               AttendanceRecord[]
-  certificates             Certificate[]
-  academicResponseReviews  AcademicResponseReview[]
-  reviews                  AssignmentReview[]
-  academicAudit            AcademicAudit[]
-  discussionThreads        DiscussionThread[]
-  discussionPosts          DiscussionPost[]
-  communicationPreferences CommunicationPreference[]
-  communicationDeliveries  CommunicationDelivery[]
-  communicationMessages    CommunicationMessage[]
-  taughtSessions           BatchSession[]                @relation("SessionInstructor")
-  roleAssignments          UserRoleAssignment[]
-  adminAuthorization       AdminAuthorization?
-  role                     Role                          @default(STUDENT)
-  createdAt                DateTime                      @default(now())
-  updatedAt                DateTime                      @updatedAt
-  profile                  StudentProfile?
-  views                    CourseView[]
-  enrollments              Enrollment[]
-  assignments              ResourceAssignment[]
-  tickets                  SupportTicket[]
-  messages                 SupportMessage[]
-  referral                 ReferralIdentity?
-  referred                 ReferralAttribution?          @relation("Referred")
-  referrals                ReferralAttribution[]         @relation("Referrer")
-  marketplaceIntents       MarketplaceEnrollmentIntent[]
-  marketplaceIntentEvents  MarketplaceEnrollmentEvent[]
+  id                        String                        @id @default(cuid())
+  clerkUserId               String                        @unique
+  studentId                 String?                       @unique
+  lmsAccessOverride         LmsAccessOverride?
+  memberships               BatchMembership[]
+  teaching                  BatchInstructor[]
+  lessonStates              LessonState[]
+  academicAttempts          AcademicAttempt[]
+  submissions               AssignmentSubmission[]
+  attendance                AttendanceRecord[]
+  certificates              Certificate[]
+  academicResponseReviews   AcademicResponseReview[]
+  reviews                   AssignmentReview[]
+  academicAudit             AcademicAudit[]
+  discussionThreads         DiscussionThread[]
+  discussionPosts           DiscussionPost[]
+  communicationPreferences  CommunicationPreference[]
+  communicationDeliveries   CommunicationDelivery[]
+  communicationMessages     CommunicationMessage[]
+  taughtSessions            BatchSession[]                @relation("SessionInstructor")
+  roleAssignments           UserRoleAssignment[]
+  adminAuthorization        AdminAuthorization?
+  role                      Role                          @default(STUDENT)
+  createdAt                 DateTime                      @default(now())
+  updatedAt                 DateTime                      @updatedAt
+  profile                   StudentProfile?
+  views                     CourseView[]
+  enrollments               Enrollment[]
+  assignments               ResourceAssignment[]
+  tickets                   SupportTicket[]
+  messages                  SupportMessage[]
+  referral                  ReferralIdentity?
+  referred                  ReferralAttribution?          @relation("Referred")
+  referrals                 ReferralAttribution[]         @relation("Referrer")
+  marketplaceOrders         MarketplaceOrder[]
+  marketplaceEntitlements   MarketplaceEntitlement[]
+  marketplaceCommerceEvents MarketplaceCommerceEvent[]
+  marketplaceIntents        MarketplaceEnrollmentIntent[]
+  marketplaceIntentEvents   MarketplaceEnrollmentEvent[]
 
   @@unique([id, role])
 }
@@ -882,6 +885,8 @@ enum AdminPermission {
   AUDIT_VIEW
   SETTINGS_VIEW
   MARKETPLACE_MANAGE
+  COMMERCE_VIEW
+  COMMERCE_MANAGE
 }
 
 model AdminAuthorization {
@@ -943,6 +948,8 @@ model MarketplaceOffering {
   publishedAt        DateTime?                     @db.Timestamptz(6)
   createdAt          DateTime                      @default(now()) @db.Timestamptz(6)
   updatedAt          DateTime                      @updatedAt @db.Timestamptz(6)
+  orders             MarketplaceOrder[]
+  entitlements       MarketplaceEntitlement[]
 
   @@index([publicationStatus, featured, sortOrder])
   @@index([courseId])
@@ -1041,6 +1048,9 @@ model MarketplaceEnrollmentIntent {
   updatedAt      DateTime                         @updatedAt @db.Timestamptz(6)
   onboarding     MarketplaceEnrollmentOnboarding?
   events         MarketplaceEnrollmentEvent[]
+  order          MarketplaceOrder?
+  commerceEvents MarketplaceCommerceEvent[]
+  redactedAt     DateTime?                        @db.Timestamptz(6)
 
   @@index([userId, offeringId, expiresAt])
   @@index([browserHash, offeringId, expiresAt])
@@ -1078,5 +1088,170 @@ model MarketplaceEnrollmentEvent {
   changedFields String[]                       @default([])
   createdAt     DateTime                       @default(now()) @db.Timestamptz(6)
 
+  @@index([intentId, createdAt])
+}
+
+enum MarketplaceOrderStatus {
+  PENDING_PAYMENT
+  PAYMENT_PROCESSING
+  PAID
+  REVIEW
+  CANCELLED
+  EXPIRED
+  REFUND_PENDING
+  REFUNDED
+}
+
+enum MarketplacePaymentStatus {
+  CREATED
+  CREATING
+  PROVIDER_PENDING
+  AUTHORIZED
+  CAPTURED
+  UNKNOWN
+  REFUNDED
+}
+
+enum MarketplacePaymentEventKind {
+  PAYMENT_UPDATED
+  REFUND_UPDATED
+  DISPUTE
+  IGNORED
+}
+
+enum MarketplacePaymentEventStatus {
+  RECEIVED
+  PROCESSED
+  UNRESOLVED
+  REJECTED
+}
+
+enum MarketplaceEntitlementStatus {
+  ACTIVE
+  REVOKED
+  REFUNDED
+}
+
+enum MarketplaceCommerceEventKind {
+  OrderExpired
+  OrderCreated
+  PaymentAttemptCreated
+  PaymentPending
+  PaymentConfirmed
+  PaymentFailed
+  PaymentReconciled
+  PaymentReviewRequired
+  EntitlementGranted
+  EntitlementRevoked
+  OnboardingRedacted
+}
+
+model MarketplaceOrder {
+  id             String                      @id @default(cuid())
+  publicRef      String                      @unique
+  intentId       String                      @unique
+  intent         MarketplaceEnrollmentIntent @relation(fields: [intentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  userId         String
+  user           User                        @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  offeringId     String
+  offering       MarketplaceOffering         @relation(fields: [offeringId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  titleSnapshot  String
+  subtotalMinor  Int
+  totalMinor     Int
+  currency       String
+  durationLabel  String
+  deliveryMode   MarketplaceDeliveryMode
+  cohortStartsAt DateTime?                   @db.Timestamptz(6)
+  status         MarketplaceOrderStatus      @default(PENDING_PAYMENT)
+  revision       String                      @default(uuid()) @db.Uuid
+  termsVersion   String?
+  acknowledgedAt DateTime?                   @db.Timestamptz(6)
+  expiresAt      DateTime                    @db.Timestamptz(6)
+  paidAt         DateTime?                   @db.Timestamptz(6)
+  createdAt      DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime                    @updatedAt @db.Timestamptz(6)
+  attempt        MarketplacePaymentAttempt?
+  entitlement    MarketplaceEntitlement?
+  events         MarketplaceCommerceEvent[]
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+model MarketplacePaymentAttempt {
+  id                String                   @id @default(cuid())
+  publicRef         String                   @unique
+  orderId           String                   @unique
+  order             MarketplaceOrder         @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  provider          String
+  merchantRef       String
+  providerSessionId String?
+  providerPaymentId String?
+  idempotencyKey    String                   @unique @default(uuid()) @db.Uuid
+  amountMinor       Int
+  currency          String
+  status            MarketplacePaymentStatus @default(CREATED)
+  failureCode       String?
+  revision          String                   @default(uuid()) @db.Uuid
+  createdAt         DateTime                 @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime                 @updatedAt @db.Timestamptz(6)
+
+  @@unique([provider, merchantRef, providerSessionId])
+  @@unique([provider, merchantRef, providerPaymentId])
+  @@index([status, updatedAt])
+}
+
+model MarketplacePaymentEvent {
+  id                String                        @id @default(cuid())
+  provider          String
+  merchantRef       String
+  providerEventId   String
+  eventType         String
+  providerSessionId String?
+  providerPaymentId String?
+  payloadDigest     String
+  status            MarketplacePaymentEventStatus @default(RECEIVED)
+  safeCode          String?
+  receivedAt        DateTime                      @default(now()) @db.Timestamptz(6)
+  processedAt       DateTime?                     @db.Timestamptz(6)
+  kind              MarketplacePaymentEventKind
+
+  @@unique([provider, merchantRef, providerEventId])
+  @@unique([provider, merchantRef, payloadDigest], map: "marketplace_payment_event_digest")
+  @@index([status, receivedAt])
+  @@index([provider, merchantRef, providerSessionId])
+}
+
+model MarketplaceEntitlement {
+  id         String                       @id @default(cuid())
+  userId     String
+  user       User                         @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  offeringId String
+  offering   MarketplaceOffering          @relation(fields: [offeringId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  orderId    String                       @unique
+  order      MarketplaceOrder             @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  status     MarketplaceEntitlementStatus @default(ACTIVE)
+  grantedAt  DateTime                     @db.Timestamptz(6)
+  revokedAt  DateTime?                    @db.Timestamptz(6)
+  reason     String?
+  createdAt  DateTime                     @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime                     @updatedAt @db.Timestamptz(6)
+
+  @@index([userId, offeringId, status])
+}
+
+model MarketplaceCommerceEvent {
+  id        String                       @id @default(cuid())
+  orderId   String?
+  order     MarketplaceOrder?            @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  intentId  String
+  intent    MarketplaceEnrollmentIntent  @relation(fields: [intentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  actorId   String?
+  actor     User?                        @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  kind      MarketplaceCommerceEventKind
+  safeCode  String?
+  createdAt DateTime                     @default(now()) @db.Timestamptz(6)
+
+  @@index([orderId, createdAt])
   @@index([intentId, createdAt])
 }

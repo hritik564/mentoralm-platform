@@ -1,4 +1,5 @@
 export type MutationPolicy =
+  | 'commerce-payment'
   | 'marketplace-start'
   | 'marketplace-onboarding'
   | 'marketplace-anonymous'
@@ -12,7 +13,8 @@ export type MutationPolicy =
 export const limits: Record<MutationPolicy, number> = {
   'marketplace-start': 20,
   'marketplace-onboarding': 60,
-  'marketplace-anonymous': 120,
+  'marketplace-anonymous': 12000,
+  'commerce-payment': 20,
   learning: 120,
   academic: 120,
   upload: 10,

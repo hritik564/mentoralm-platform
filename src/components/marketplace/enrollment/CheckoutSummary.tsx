@@ -1,4 +1,6 @@
 'use client';
+import { PaymentAction } from '../commerce/PaymentAction';
+import type { PurchasePolicy } from '@/lib/marketplace/commerce/orders';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { EnrollmentView } from '@/lib/marketplace/enrollment/types';
@@ -11,9 +13,13 @@ import {
 export function CheckoutSummary({
   view,
   identity,
+  availability,
+  policy,
 }: {
   view: EnrollmentView;
   identity: Identity;
+  availability: string;
+  policy: PurchasePolicy | null;
 }) {
   const router = useRouter();
   const [error, setError] = useState(''),
@@ -45,7 +51,9 @@ export function CheckoutSummary({
       <header className="enrollment-heading">
         <p className="enrollment-eyebrow">Your next chapter, in focus</p>
         <h1>Review your enrollment</h1>
-        <p>Your details are saved. Payment integration is coming next.</p>
+        <p>
+          Your details are saved. Review the selected program before continuing.
+        </p>
       </header>
       <div className="enrollment-layout">
         <section className="enrollment-card">
@@ -56,13 +64,11 @@ export function CheckoutSummary({
           <Details view={view} />
           <a href={`/enroll/${view.ref}`}>Edit enrollment details</a>
           <hr />
-          <button type="button" className="enrollment-primary" disabled>
-            Continue to Payment
-          </button>
-          <p>
-            Payment integration coming next. No payment has been taken and no
-            course access has been granted.
-          </p>
+          <PaymentAction
+            view={view}
+            availability={availability}
+            policy={policy}
+          />
           <button
             type="button"
             className="enrollment-secondary"

@@ -182,13 +182,13 @@ test('M3 guarded migration allows only approved enrollment addition over exact M
     finished_at: new Date(),
     rolled_back_at: null,
   }));
-  assert.deepEqual(requireMarketplaceEnrollmentBaseline(rows.slice(0, -1)), [
-    '20261119090000_marketplace_enrollment_intents',
-  ]);
+  // Historical M3 tooling must refuse the newly pending M4 migrations.
+  assert.throws(() => requireMarketplaceEnrollmentBaseline(rows.slice(0, 17)));
+  assert.throws(() => requireMarketplaceEnrollmentBaseline(rows.slice(0, 18)));
   assert.deepEqual(requireMarketplaceEnrollmentBaseline(rows), []);
   for (const bad of [
     [],
-    rows.slice(0, -2),
+    rows.slice(0, -1),
     [...rows, rows[0]],
     [{ ...rows[0], checksum: 'tampered' }],
   ])

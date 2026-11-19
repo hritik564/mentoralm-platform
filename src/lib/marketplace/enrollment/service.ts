@@ -209,6 +209,13 @@ export class EnrollmentService {
       });
       if (!offering) throw new StudentError('NOT_FOUND');
       if (
+        actorId &&
+        (await tx.marketplaceEntitlement.findFirst({
+          where: { userId: actorId, offeringId: offering.id, status: 'ACTIVE' },
+        }))
+      )
+        throw new StudentError('CONFLICT');
+      if (
         offering.availabilityStatus !== 'OPEN' ||
         offering.priceMinor === null
       )
@@ -309,6 +316,15 @@ export class EnrollmentService {
     const row = await transaction(this.db, async (tx) => {
       const before = await this.owned(tx, ref, actorId, null);
       this.usable(before);
+      if (
+        await tx.marketplaceOrder.findFirst({
+          where: {
+            intentId: before.id,
+            status: { notIn: ['CANCELLED', 'EXPIRED', 'REFUNDED'] },
+          },
+        })
+      )
+        throw new StudentError('CONFLICT');
       if (before.revision !== data.revision) throw new StudentError('CONFLICT');
       const old = before.onboarding;
       if (data.step > (old?.completedStep || 0) + 1)
@@ -387,6 +403,15 @@ export class EnrollmentService {
     const row = await transaction(this.db, async (tx) => {
       const before = await this.owned(tx, ref, actorId, null);
       this.usable(before);
+      if (
+        await tx.marketplaceOrder.findFirst({
+          where: {
+            intentId: before.id,
+            status: { notIn: ['CANCELLED', 'EXPIRED', 'REFUNDED'] },
+          },
+        })
+      )
+        throw new StudentError('CONFLICT');
       if (before.revision !== revision) throw new StudentError('CONFLICT');
       await tx.marketplaceEnrollmentIntent.update({
         where: { id: before.id },

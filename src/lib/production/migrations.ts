@@ -90,4 +90,14 @@ export const migrationManifest = [
     checksum:
       '1e02ac02df16437b79c45d0619c13c78baa8a74986f35dd5f985bdb2abba85de',
   },
+  {
+    name: '20261119100000_commerce_permissions',
+    checksum:
+      '8e1e52d6a9a5ff81415206a48b002b873ed3d4be82f5a48c00f63086785f9086',
+  },
+  {
+    name: '20261119101000_marketplace_commerce',
+    checksum:
+      '696ddf39586e11901a9586ee95af93d9051fdc2295bd6d6aca7dd08dbe94e249',
+  },
 ] as const;

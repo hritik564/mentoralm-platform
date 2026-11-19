@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 export function EnrollButton({
   slug,
   label = 'Enroll Now',
@@ -7,6 +8,22 @@ export function EnrollButton({
   slug: string;
   label?: string;
 }) {
+  const [owned, setOwned] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void fetch(
+      `/api/marketplace/commerce/ownership/${encodeURIComponent(slug)}`,
+      { cache: 'no-store' },
+    )
+      .then(async (r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (active) setOwned(data?.owned === true);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [slug]);
   const [pending, setPending] = useState(false),
     [error, setError] = useState('');
   async function start() {
@@ -35,6 +52,15 @@ export function EnrollButton({
       setPending(false);
     }
   }
+  if (owned)
+    return (
+      <Link
+        className="program-action-label enrollment-primary"
+        href="/dashboard"
+      >
+        Go to Dashboard
+      </Link>
+    );
   return (
     <div>
       <button

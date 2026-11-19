@@ -88,7 +88,15 @@ test('A4 populated upgrade preserves history and backfills exactly legacy operat
       audit = await db.academicAudit.findMany();
     execFileSync(
       process.execPath,
-      ['node_modules/prisma/build/index.js', 'migrate', 'deploy'],
+      // Apply only the A4 migration under test. Later P1 intentionally rewrites
+      // legacy Student ID display format and is verified by its own upgrade test.
+      [
+        'node_modules/prisma/build/index.js',
+        'db',
+        'execute',
+        '--file',
+        `prisma/migrations/${migration}/migration.sql`,
+      ],
       { env: { ...process.env, DATABASE_URL: f.url }, stdio: 'pipe' },
     );
     for (const u of [primary, student]) {

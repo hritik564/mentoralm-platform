@@ -13,6 +13,8 @@ export const adminPermissions = [
   'AUDIT_VIEW',
   'SETTINGS_VIEW',
   'MARKETPLACE_MANAGE',
+  'COMMERCE_VIEW',
+  'COMMERCE_MANAGE',
 ] as const satisfies readonly AdminPermission[];
 export const legacyAdminPermissions: AdminPermission[] = adminPermissions.slice(
   0,
@@ -84,6 +86,11 @@ export function adminWritePermission(
   return writes[action];
 }
 export function adminPathPermission(path: string): AdminPermission | null {
+  if (
+    path === '/admin/marketplace/orders' ||
+    path.startsWith('/admin/marketplace/orders/')
+  )
+    return 'COMMERCE_VIEW';
   const segment = path.replace(/^\/admin\/?/, '').split('/')[0];
   if (!segment) return null;
   const map: Record<string, AdminPermission> = {

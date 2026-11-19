@@ -43,6 +43,14 @@ export const adminWorkspaces: {
         icon: 'marketplace',
         primary: true,
       },
+      {
+        label: 'Orders',
+        href: '/admin/marketplace/orders',
+        permission: 'COMMERCE_VIEW',
+        description: 'Inspect verified payments and purchased access.',
+        icon: 'document',
+        primary: true,
+      },
     ],
   },
   {
@@ -254,7 +262,9 @@ export function visibleAdminNavigation(
     if (w.id !== 'overview' && !destinations.length) return [];
     // Preserve access for referral-only and audit-only administrators without broadening a page guard.
     const href =
-      w.id === 'students' || w.id === 'settings'
+      w.id === 'students' ||
+      w.id === 'settings' ||
+      (w.id === 'marketplace' && !permissions.includes('MARKETPLACE_MANAGE'))
         ? destinations[0].href
         : w.href;
     return [{ ...w, href }];

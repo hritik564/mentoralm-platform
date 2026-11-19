@@ -1,7 +1,7 @@
 import 'server-only';
 import Link from 'next/link';
 import { requireAdminActor } from '@/lib/admin/session';
-import { requireAdminPermission } from '@/lib/auth/admin-policy';
+import { requireAnyAdminPermission } from '@/lib/auth/admin-policy';
 import { getDatabase } from '@/lib/db/client';
 import { adminHref } from '@/lib/platform/domains';
 import { StudentError } from '@/lib/student/errors';
@@ -14,7 +14,10 @@ export default async function MarketplaceLayout({
 }) {
   try {
     const actor = await requireAdminActor();
-    await requireAdminPermission(getDatabase(), actor.id, 'MARKETPLACE_MANAGE');
+    await requireAnyAdminPermission(getDatabase(), actor.id, [
+      'MARKETPLACE_MANAGE',
+      'COMMERCE_VIEW',
+    ]);
   } catch (error) {
     if (!(error instanceof StudentError) || error.code !== 'FORBIDDEN')
       throw error;

@@ -1,3 +1,7 @@
+import {
+  paymentAvailability,
+  purchasePolicy,
+} from '@/lib/marketplace/commerce/config';
 import { EnrollmentShell } from '@/components/marketplace/enrollment/EnrollmentShell';
 import { CheckoutSummary } from '@/components/marketplace/enrollment/CheckoutSummary';
 import { enrollmentPage } from '@/lib/marketplace/enrollment/page';
@@ -16,7 +20,11 @@ export default async function CheckoutPage({
   const data = await enrollmentPage(intentRef, true);
   return (
     <EnrollmentShell>
-      <CheckoutSummary {...data} />
+      <CheckoutSummary
+        {...data}
+        availability={paymentAvailability(data.view.quote)}
+        policy={purchasePolicy()}
+      />
     </EnrollmentShell>
   );
 }

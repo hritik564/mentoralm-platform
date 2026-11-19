@@ -22,12 +22,13 @@ async function route(
           actor = await enrollmentActor(false),
           proof = await enrollmentBrowser(true);
         if (!proof) throw new StudentError('UNAVAILABLE');
+        // Per-identity admission precedes the high emergency circuit breaker.
+        await mutationLimiter.check(actor?.id || proof, 'marketplace-start');
         if (!actor)
           await mutationLimiter.check(
             'anonymous-enrollment-global',
             'marketplace-anonymous',
           );
-        await mutationLimiter.check(actor?.id || proof, 'marketplace-start');
         const view = await enrollmentService().start(
             actor?.id || null,
             proof,

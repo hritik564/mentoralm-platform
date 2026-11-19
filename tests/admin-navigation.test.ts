@@ -53,7 +53,10 @@ test('Admin navigation has seven permission-filtered domain groups with permissi
     'BATCHES_MANAGE',
     'CERTIFICATES_MANAGE',
   ]);
-  assert.deepEqual(workspacePermissions('marketplace'), ['MARKETPLACE_MANAGE']);
+  assert.deepEqual(workspacePermissions('marketplace'), [
+    'MARKETPLACE_MANAGE',
+    'COMMERCE_VIEW',
+  ]);
   assert.deepEqual(
     visibleAdminNavigation(['MARKETPLACE_MANAGE']).map((w) => w.label),
     ['Overview', 'Marketplace'],

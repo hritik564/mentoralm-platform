@@ -47,3 +47,10 @@ export function requireMarketplaceEnrollmentBaseline(rows: MigrationRow[]) {
     '20261119090000_marketplace_enrollment_intents',
   ]);
 }
+
+export function requireMarketplaceCommerceBaseline(rows: MigrationRow[]) {
+  return requireOnlyPending(rows, [
+    '20261119100000_commerce_permissions',
+    '20261119101000_marketplace_commerce',
+  ]);
+}
