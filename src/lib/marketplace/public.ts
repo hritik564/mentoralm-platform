@@ -37,3 +37,5 @@ export function getPublicOfferings(options: PublicOfferingsQuery = {}) {
 export function getCachedPublicOfferings(options: PublicOfferingsQuery = {}) {
   return publicResult(() => cachedPublishedOfferings(options));
 }
+
+export { getPublicProgram } from './program-public';

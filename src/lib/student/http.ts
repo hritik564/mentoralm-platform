@@ -2,7 +2,10 @@ import 'server-only';
 import { sameOrigin } from '../production/origin';
 import { logUnavailable } from '../production/request-context';
 import { StudentError, errorMessages, errorStatus } from './errors';
-export async function requestBody(request: Request): Promise<unknown> {
+export async function requestBody(
+  request: Request,
+  maxBytes: 16384 | 65536 = 16384,
+): Promise<unknown> {
   if (!sameOrigin(request)) throw new StudentError('FORBIDDEN');
   if (!request.headers.get('content-type')?.startsWith('application/json'))
     throw new StudentError('INVALID_INPUT');
@@ -14,7 +17,7 @@ export async function requestBody(request: Request): Promise<unknown> {
     const { done, value } = await reader.read();
     if (done) break;
     bytes += value.length;
-    if (bytes > 16384) {
+    if (bytes > maxBytes) {
       await reader.cancel();
       throw new StudentError('INVALID_INPUT');
     }

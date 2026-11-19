@@ -16,6 +16,16 @@ export function requireMarketplacePermissionBaseline(rows: MigrationRow[]) {
   ]);
 }
 
+export function requireMarketplacePageBaseline(rows: MigrationRow[]) {
+  return requireOnlyPending(rows, ['20261118110000_marketplace_page_content']);
+}
+
+export function requireMarketplaceEditorialBaseline(rows: MigrationRow[]) {
+  return requireOnlyPending(rows, [
+    '20261118120000_marketplace_editorial_versions',
+  ]);
+}
+
 function requireOnlyPending(rows: MigrationRow[], allowed: readonly string[]) {
   if (!migrationsReady(rows, false))
     throw Error('Local history must match the approved release prefix.');

@@ -357,11 +357,21 @@ test('Admin creates, edits, publishes, unpublishes and archives through existing
     await expect(card).toContainText('14 weeks');
     await expect(card).toContainText('Coming soon');
     await expect(card).toContainText('₹15,000');
-    await card.getByRole('button', { name: 'Details Coming Soon' }).click();
+    const programLink = card.getByRole('link', {
+      name: `View ${prefix} CareerIgnite program`,
+    });
+    await expect(programLink).toHaveAttribute(
+      'href',
+      /\/courses\/owner-review-careerignite$/,
+    );
+    await programLink.click();
+    await expect(page).toHaveURL(/\/courses\/owner-review-careerignite$/);
     await expect(
-      page.getByRole('dialog', { name: `${prefix} CareerIgnite`, exact: true }),
-    ).toContainText('No application or payment is collected here.');
-    await page.keyboard.press('Escape');
+      page.getByRole('heading', { name: `${prefix} CareerIgnite`, level: 1 }),
+    ).toBeVisible();
+    await expect(
+      page.locator('.program-hero .program-action-label'),
+    ).toHaveText('Coming Soon');
     await page.goto('/');
     await expect(
       page
@@ -664,9 +674,14 @@ test('published fixtures share one public data source and retain responsive hier
           getComputedStyle(element).gridTemplateColumns.split(' ').length,
       );
     expect(columns).toBe(width > 1024 ? 3 : width > 640 ? 2 : 1);
-    expect(
-      await page.locator('.marketplace-card a[href^="/courses/"]').count(),
-    ).toBe(0);
+    const cards = page.locator('.marketplace-card');
+    for (let index = 0; index < (await cards.count()); index++) {
+      const card = cards.nth(index);
+      const title = await card.getByRole('heading').textContent();
+      await expect(
+        card.getByRole('link', { name: `View ${title} program` }),
+      ).toHaveAttribute('href', /\/courses\/visual-fixture-[0-6]$/);
+    }
     await capture(page, `${width}-catalogue-populated`, true);
     await page.goto('/');
     await expect(page.locator('#programs .marketplace-card')).toHaveCount(6);

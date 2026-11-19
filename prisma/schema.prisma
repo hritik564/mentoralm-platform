@@ -935,6 +935,7 @@ model MarketplaceOffering {
   lmsEnabled         Boolean                       @default(false)
   courseId           String?
   course             Course?                       @relation(fields: [courseId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  page               MarketplaceOfferingPage?
   cohortStartsAt     DateTime?                     @db.Timestamptz(6)
   publishedAt        DateTime?                     @db.Timestamptz(6)
   createdAt          DateTime                      @default(now()) @db.Timestamptz(6)
@@ -942,4 +943,60 @@ model MarketplaceOffering {
 
   @@index([publicationStatus, featured, sortOrder])
   @@index([courseId])
+}
+
+enum MarketplaceSectionType {
+  OVERVIEW
+  OUTCOMES
+  CURRICULUM
+  ELIGIBILITY
+  WHO_IS_IT_FOR
+  HIGHLIGHTS
+  FAQ
+  TEXT
+}
+
+model MarketplaceOfferingPage {
+  offeringId        String                           @id
+  offering          MarketplaceOffering              @relation(fields: [offeringId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  revision          String                           @default(uuid()) @db.Uuid
+  publishedRevision String?                          @db.Uuid
+  publishedVersion  MarketplaceOfferingPageVersion?  @relation("MarketplacePublishedPageVersion", fields: [offeringId, publishedRevision], references: [pageId, revision], onDelete: Restrict, onUpdate: Restrict, map: "MarketplaceOfferingPage_published_version_fkey")
+  versions          MarketplaceOfferingPageVersion[] @relation("MarketplacePageVersionHistory")
+  eyebrow           String?
+  heroHeadline      String?
+  heroSummary       String?
+  seoTitle          String?
+  seoDescription    String?
+  createdAt         DateTime                         @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime                         @updatedAt @db.Timestamptz(6)
+  sections          MarketplaceOfferingSection[]
+}
+
+model MarketplaceOfferingSection {
+  id          String                  @id @default(cuid())
+  pageId      String
+  page        MarketplaceOfferingPage @relation(fields: [pageId], references: [offeringId], onDelete: Restrict, onUpdate: Restrict)
+  type        MarketplaceSectionType
+  title       String
+  subtitle    String?
+  position    Int
+  enabled     Boolean                 @default(true)
+  contentJson Json                    @db.JsonB
+  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime                @updatedAt @db.Timestamptz(6)
+
+  @@unique([pageId, position])
+  @@index([pageId, enabled, position])
+}
+
+model MarketplaceOfferingPageVersion {
+  pageId           String
+  revision         String                    @db.Uuid
+  page             MarketplaceOfferingPage   @relation("MarketplacePageVersionHistory", fields: [pageId], references: [offeringId], onDelete: Restrict, onUpdate: Restrict)
+  publishedByPages MarketplaceOfferingPage[] @relation("MarketplacePublishedPageVersion")
+  snapshotJson     Json                      @db.JsonB
+  publishedAt      DateTime                  @default(now()) @db.Timestamptz(6)
+
+  @@id([pageId, revision])
 }

@@ -1,0 +1,97 @@
+# Marketplace M2 exact file inventory
+
+Base: `bf63880` on `marketplace-v1`. No commit, push or site publication. The first list includes approved M2 plus its editorial correction; the second is the exact editorial follow-up delta against the saved pre-correction workspace hashes. Ignored review evidence and the untouched owner reference are excluded.
+
+59 cumulative files changed/added:
+
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/MARKETPLACE-M2-FILES.md`
+- `docs/MARKETPLACE-M2.md`
+- `package.json`
+- `playwright.marketplace-m2.config.ts`
+- `prisma/migrations/20261118110000_marketplace_page_content/migration.sql`
+- `prisma/migrations/20261118120000_marketplace_editorial_versions/migration.sql`
+- `prisma/schema.prisma`
+- `scripts/marketplace/migrate-editorial-local.ts`
+- `scripts/marketplace/migrate-page-local.ts`
+- `scripts/marketplace/safety.ts`
+- `src/app/api/admin/marketplace/[[...path]]/route.ts`
+- `src/app/courses/[slug]/page.tsx`
+- `src/components/admin/marketplace/MarketplaceEditor.tsx`
+- `src/components/admin/marketplace/MarketplacePageEditor.tsx`
+- `src/components/admin/marketplace/MarketplacePageFields.tsx`
+- `src/components/admin/marketplace/MarketplacePageSettings.tsx`
+- `src/components/admin/marketplace/MarketplaceSectionContentFields.tsx`
+- `src/components/admin/marketplace/MarketplaceSectionEditor.tsx`
+- `src/components/marketplace/MarketplaceCard.tsx`
+- `src/components/marketplace/program/ProgramAction.tsx`
+- `src/components/marketplace/program/ProgramCurriculumSection.tsx`
+- `src/components/marketplace/program/ProgramFaqSection.tsx`
+- `src/components/marketplace/program/ProgramHero.tsx`
+- `src/components/marketplace/program/ProgramListSection.tsx`
+- `src/components/marketplace/program/ProgramPage.tsx`
+- `src/components/marketplace/program/ProgramSectionRenderer.tsx`
+- `src/components/marketplace/program/ProgramSummary.tsx`
+- `src/components/marketplace/program/ProgramTextSection.tsx`
+- `src/components/marketplace/program/metadata.ts`
+- `src/components/marketplace/program/presentation.ts`
+- `src/lib/admin/governance/audit-projection.ts`
+- `src/lib/admin/handles.ts`
+- `src/lib/admin/permissions.ts`
+- `src/lib/marketplace/admin-pages.ts`
+- `src/lib/marketplace/cache.ts`
+- `src/lib/marketplace/offering-projection.ts`
+- `src/lib/marketplace/page-types.ts`
+- `src/lib/marketplace/page-validation.ts`
+- `src/lib/marketplace/program-public.ts`
+- `src/lib/marketplace/program-queries.ts`
+- `src/lib/marketplace/public.ts`
+- `src/lib/marketplace/queries.ts`
+- `src/lib/production/migrations.ts`
+- `src/lib/student/http.ts`
+- `src/styles/admin-marketplace.css`
+- `src/styles/marketplace-program.css`
+- `tests/helpers/marketplace-m2.ts`
+- `tests/marketplace-editorial-security.test.ts`
+- `tests/marketplace-editorial.test.ts`
+- `tests/marketplace-m1.spec.ts`
+- `tests/marketplace-m2-admin.spec.ts`
+- `tests/marketplace-m2-cache.test.ts`
+- `tests/marketplace-m2-domain.test.ts`
+- `tests/marketplace-m2-security.test.ts`
+- `tests/marketplace-m2.spec.ts`
+- `tests/marketplace-scope.test.ts`
+- `tests/production-p1.test.ts`
+
+29 files changed/added by the editorial follow-up:
+
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/MARKETPLACE-M2-FILES.md`
+- `docs/MARKETPLACE-M2.md`
+- `package.json`
+- `prisma/migrations/20261118120000_marketplace_editorial_versions/migration.sql`
+- `prisma/schema.prisma`
+- `scripts/marketplace/migrate-editorial-local.ts`
+- `scripts/marketplace/safety.ts`
+- `src/app/api/admin/marketplace/[[...path]]/route.ts`
+- `src/components/admin/marketplace/MarketplacePageEditor.tsx`
+- `src/components/admin/marketplace/MarketplacePageSettings.tsx`
+- `src/components/admin/marketplace/MarketplaceSectionEditor.tsx`
+- `src/lib/admin/governance/audit-projection.ts`
+- `src/lib/admin/permissions.ts`
+- `src/lib/marketplace/admin-pages.ts`
+- `src/lib/marketplace/cache.ts`
+- `src/lib/marketplace/page-types.ts`
+- `src/lib/marketplace/page-validation.ts`
+- `src/lib/marketplace/program-queries.ts`
+- `src/lib/production/migrations.ts`
+- `src/styles/admin-marketplace.css`
+- `tests/marketplace-editorial-security.test.ts`
+- `tests/marketplace-editorial.test.ts`
+- `tests/marketplace-m2-admin.spec.ts`
+- `tests/marketplace-m2-cache.test.ts`
+- `tests/marketplace-m2-domain.test.ts`
+- `tests/marketplace-m2.spec.ts`
+- `tests/production-p1.test.ts`

@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import { Icon } from '@/components/ui/Icon';
-import { NoticeButton } from '@/components/ui/NoticeButton';
+import { websiteHref } from '@/lib/platform/domains';
 import type { PublicOffering } from '@/lib/marketplace/types';
 
 const availabilityLabels = {
@@ -140,14 +140,13 @@ export function MarketplaceCard({
             <span>Program fee</span>
             <strong>{priceLabel(offering)}</strong>
           </div>
-          <NoticeButton
+          <a
             className="marketplace-card-action"
-            title={offering.title}
-            description={`${offering.shortDescription} Full program details and enrollment options will be shared in a future update. No application or payment is collected here.`}
-            arrow
+            href={websiteHref(`/courses/${offering.slug}`)}
+            aria-label={`View ${offering.title} program`}
           >
-            Details Coming Soon
-          </NoticeButton>
+            View program <Icon name="arrow" />
+          </a>
         </div>
       </div>
     </article>

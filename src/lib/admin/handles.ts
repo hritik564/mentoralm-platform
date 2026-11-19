@@ -29,7 +29,8 @@ export type HandleKind =
   | 'membership'
   | 'user'
   | 'audit'
-  | 'offering';
+  | 'offering'
+  | 'offering-section';
 function key() {
   if (!process.env.CLERK_SECRET_KEY) throw new StudentError('UNAVAILABLE');
   return createHash('sha256')

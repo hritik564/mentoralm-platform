@@ -103,19 +103,32 @@ test('M1 Marketplace has a dedicated permitted route as its own first-class Admi
 });
 
 test('M1 local deployment permits only its own pending migration and refuses unrelated baseline work', () => {
-  const applied = migrationManifest.map((migration) => ({
+  const applied = migrationManifest
+    .filter(
+      (migration) =>
+        migration.name !== '20261118110000_marketplace_page_content',
+    )
+    .map((migration) => ({
+      migration_name: migration.name,
+      checksum: migration.checksum,
+      finished_at: new Date(),
+      rolled_back_at: null,
+    }));
+  // Historical task-specific commands must refuse new M2 pending work.
+  assert.throws(() => requireMarketplaceBaseline(applied));
+  const complete = migrationManifest.map((migration) => ({
     migration_name: migration.name,
     checksum: migration.checksum,
     finished_at: new Date(),
     rolled_back_at: null,
   }));
-  assert.deepEqual(requireMarketplaceBaseline(applied), []);
+  assert.deepEqual(requireMarketplaceBaseline(complete), []);
   assert.throws(() => requireMarketplaceBaseline(applied.slice(0, -1)));
-  assert.deepEqual(requireMarketplacePermissionBaseline(applied), []);
-  assert.deepEqual(requireMarketplacePermissionBaseline(applied.slice(0, -2)), [
-    '20261118100000_marketplace_permission',
-    '20261118101000_marketplace_permission_capacity',
-  ]);
+  assert.throws(() => requireMarketplacePermissionBaseline(applied));
+  assert.deepEqual(requireMarketplacePermissionBaseline(complete), []);
+  assert.throws(() =>
+    requireMarketplacePermissionBaseline(applied.slice(0, -2)),
+  );
   for (const rows of [
     applied.slice(0, -3),
     [],

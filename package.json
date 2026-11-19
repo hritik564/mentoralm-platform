@@ -61,7 +61,11 @@
     "test:m1": "playwright test --config=playwright.marketplace.config.ts",
     "db:migrate:m1:local": "tsx scripts/marketplace/migrate-local.ts",
     "db:migrate:m1:permission:local": "tsx scripts/marketplace/migrate-permission-local.ts",
-    "test:m1:cache": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-generation.test.ts tests/marketplace-cache.test.ts tests/marketplace-autoscale.test.ts"
+    "test:m1:cache": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-generation.test.ts tests/marketplace-cache.test.ts tests/marketplace-autoscale.test.ts",
+    "test:m2:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-m2-domain.test.ts tests/marketplace-m2-cache.test.ts tests/marketplace-m2-security.test.ts tests/marketplace-editorial.test.ts tests/marketplace-editorial-security.test.ts",
+    "test:m2": "playwright test --config=playwright.marketplace-m2.config.ts",
+    "db:migrate:m2:local": "tsx scripts/marketplace/migrate-page-local.ts",
+    "db:migrate:m2:editorial:local": "tsx scripts/marketplace/migrate-editorial-local.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.9.8",
