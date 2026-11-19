@@ -5,7 +5,7 @@ import {
   UpstashMarketplaceGeneration,
   type MarketplaceGeneration,
 } from '../production/marketplace-generation';
-import { logUnavailable } from '../production/request-context';
+import { marketplaceDiagnostic } from './diagnostics';
 import { StudentError } from '../student/errors';
 import { expirePublicOfferings } from './cache';
 
@@ -27,7 +27,13 @@ export function createMarketplaceMutationRunner(
   return async function run<T>(work: () => Promise<T>): Promise<T> {
     // A durable pending marker must be acknowledged before a DB write starts.
     // Missing/unavailable shared authority refuses the write before work runs.
-    const ticket = await generation.begin(randomUUID());
+    let ticket;
+    try {
+      ticket = await generation.begin(randomUUID());
+    } catch (error) {
+      unavailable();
+      throw error;
+    }
     let value: T;
     try {
       value = await work();
@@ -71,7 +77,8 @@ const coordinatedMutation = createMarketplaceMutationRunner(
   new UpstashMarketplaceGeneration(),
   {
     afterCommit: expirePublicOfferings,
-    onCoordinationFailure: () => logUnavailable('ADMIN_API_UNAVAILABLE'),
+    onCoordinationFailure: () =>
+      marketplaceDiagnostic('MARKETPLACE_COORDINATION_UNAVAILABLE'),
   },
 );
 

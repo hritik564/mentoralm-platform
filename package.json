@@ -76,6 +76,9 @@
     "dev:marketplace-reconcile": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/reconcile-local.ts",
     "db:migrate:m5:learner:local": "tsx scripts/marketplace/migrate-learner-local.ts",
     "db:migrate:m5:local": "tsx scripts/marketplace/migrate-delivery-local.ts",
+    "db:migrate:m6:local": "tsx scripts/marketplace/migrate-hardening-local.ts",
+    "test:m6": "playwright test --config=playwright.marketplace-m6.config.ts",
+    "test:m6:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-m6*.test.ts",
     "test:m5:domain": "NODE_OPTIONS=--conditions=react-server tsx --test tests/marketplace-m5*.test.ts",
     "test:m5": "playwright test --config=playwright.marketplace-m5.config.ts",
     "dev:marketplace-delivery": "NODE_OPTIONS=--conditions=react-server tsx scripts/marketplace/delivery-local.ts"

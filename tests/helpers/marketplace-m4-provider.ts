@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { RazorpayGateway } from '../../src/lib/marketplace/commerce/razorpay';
-export function providerFixture() {
+export function providerFixture(namespace = 'fixture') {
   const config = {
     keyId: ['rzp', '_', 'test', '_', 'SyntheticOnly'].join(''),
     keySecret: 'm4-synthetic-api-secret-not-operational',
@@ -46,7 +46,7 @@ export function providerFixture() {
       const input = JSON.parse(String(init.body));
       creates++;
       const row = {
-        id: `order_fixture${creates}`,
+        id: `order_${namespace}${creates}`,
         receipt: input.receipt,
         amount: input.amount,
         currency: input.currency,

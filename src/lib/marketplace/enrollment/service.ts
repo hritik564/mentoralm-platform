@@ -29,6 +29,13 @@ const activeStates: MarketplaceIntentState[] = [
   'ONBOARDING_REQUIRED',
   'READY_FOR_CHECKOUT',
 ];
+// A completed financial commitment cannot be reused for a new acquisition.
+const reusableOrder: Prisma.MarketplaceEnrollmentIntentWhereInput = {
+  OR: [
+    { order: null },
+    { order: { status: { notIn: ['CANCELLED', 'EXPIRED', 'REFUNDED'] } } },
+  ],
+};
 const include = {
   offering: {
     select: {
@@ -57,11 +64,19 @@ async function transaction<T>(
       if (
         e &&
         typeof e === 'object' &&
-        'code' in e &&
-        ['P2034', 'P2002'].includes(String(e.code)) &&
+        (('code' in e && ['P2034', 'P2002'].includes(String(e.code))) ||
+          ('cause' in e &&
+            e.cause &&
+            typeof e.cause === 'object' &&
+            'originalCode' in e.cause &&
+            ['40001', '40P01'].includes(String(e.cause.originalCode)))) &&
         i < 7
-      )
+      ) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, 10 + Math.floor(Math.random() * 40)),
+        );
         continue;
+      }
       throw e;
     }
   }
@@ -144,6 +159,47 @@ export class EnrollmentService {
       throw new StudentError('NOT_FOUND');
     return row;
   }
+  private compatibleOwned(tx: TX, row: Row, actorId: string) {
+    return tx.marketplaceEnrollmentIntent.findFirst({
+      where: {
+        id: { not: row.id },
+        userId: actorId,
+        offeringId: row.offeringId,
+        titleSnapshot: row.titleSnapshot,
+        priceMinor: row.priceMinor,
+        currency: row.currency,
+        durationLabel: row.durationLabel,
+        deliveryMode: row.deliveryMode,
+        cohortStartsAt: row.cohortStartsAt,
+        state: { in: activeStates },
+        expiresAt: { gt: this.now() },
+        redactedAt: null,
+        ...reusableOrder,
+      },
+      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include,
+    });
+  }
+  private async canonicalClaim(tx: TX, row: Row, actorId: string | null) {
+    if (
+      !actorId ||
+      row.userId !== actorId ||
+      row.state !== 'CANCELLED' ||
+      row.redactedAt ||
+      row.expiresAt <= this.now()
+    )
+      return null;
+    const marker = await tx.marketplaceEnrollmentEvent.findFirst({
+      where: {
+        intentId: row.id,
+        actorId,
+        kind: 'EnrollmentIntentClaimed',
+        afterState: 'CANCELLED',
+      },
+      select: { id: true },
+    });
+    return marker ? this.compatibleOwned(tx, row, actorId) : null;
+  }
   private usable(row: Row) {
     if (access(row, this.now()) !== 'active')
       throw new StudentError('CONFLICT');
@@ -187,8 +243,9 @@ export class EnrollmentService {
     };
   }
   async view(ref: string, actorId: string | null, browserHash: string | null) {
+    const row = await this.owned(this.db, ref, actorId, browserHash);
     return this.dto(
-      await this.owned(this.db, ref, actorId, browserHash),
+      (await this.canonicalClaim(this.db, row, actorId)) || row,
       actorId,
     );
   }
@@ -237,6 +294,7 @@ export class EnrollmentService {
         where: {
           ...identity,
           ...commercial,
+          ...reusableOrder,
           state: { in: activeStates },
           expiresAt: { gt: this.now() },
         },
@@ -278,9 +336,48 @@ export class EnrollmentService {
     const { revision } = parseInput(intentRevisionInput, input);
     const row = await transaction(this.db, async (tx) => {
       const before = await this.owned(tx, ref, actorId, browserHash);
+      const canonical = await this.canonicalClaim(tx, before, actorId);
+      if (canonical) return canonical;
       this.usable(before);
       if (before.userId === actorId) return before;
       if (before.revision !== revision) throw new StudentError('CONFLICT');
+      // Shares the authenticated start lock across Autoscale instances.
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`marketplace-intent:${actorId}:${before.offeringId}`},0))::text`;
+      const compatible = await this.compatibleOwned(tx, before, actorId);
+      if (compatible) {
+        const retired = await tx.marketplaceEnrollmentIntent.updateMany({
+          where: {
+            id: before.id,
+            userId: null,
+            revision,
+            browserHash: before.browserHash,
+          },
+          data: {
+            userId: actorId,
+            browserHash: null,
+            state: 'CANCELLED',
+            revision: randomUUID(),
+          },
+        });
+        if (retired.count !== 1) throw new StudentError('CONFLICT');
+        await event(
+          tx,
+          before,
+          actorId,
+          'EnrollmentIntentClaimed',
+          'CANCELLED',
+          ['account'],
+        );
+        await event(
+          tx,
+          before,
+          actorId,
+          'EnrollmentIntentCancelled',
+          'CANCELLED',
+          [],
+        );
+        return compatible;
+      }
       const claimed = await tx.marketplaceEnrollmentIntent.updateMany({
         where: {
           id: before.id,

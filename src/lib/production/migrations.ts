@@ -120,4 +120,9 @@ export const migrationManifest = [
     checksum:
       '2587f940dd26daabcd7e9c8047890a7521ad0f95434500895239018be47ca383',
   },
+  {
+    name: '20261119120000_marketplace_delivery_activation_guard',
+    checksum:
+      'cc47eba37a962c018efe8d56d703b54d127dd1b95d34853058745d753f5cc827',
+  },
 ] as const;

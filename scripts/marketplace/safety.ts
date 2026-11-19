@@ -69,3 +69,9 @@ export function requireMarketplaceLearnerBaseline(rows: MigrationRow[]) {
     '20261119113000_marketplace_learner_capability',
   ]);
 }
+
+export function requireMarketplaceHardeningBaseline(rows: MigrationRow[]) {
+  return requireOnlyPending(rows, [
+    '20261119120000_marketplace_delivery_activation_guard',
+  ]);
+}

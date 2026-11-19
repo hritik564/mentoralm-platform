@@ -1,6 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
+import { paymentUnavailableMessage } from '@/lib/marketplace/commerce/razorpay-amount';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { EnrollmentView } from '@/lib/marketplace/enrollment/types';
 import type { PurchasePolicy } from '@/lib/marketplace/commerce/orders';
@@ -59,6 +60,10 @@ export function PaymentAction({
     [pending, setPending] = useState(false),
     [message, setMessage] = useState(''),
     [orderRef, setOrderRef] = useState<string | null>(null);
+  const paymentButton = useRef<HTMLButtonElement>(null);
+  function restoreFocus() {
+    requestAnimationFrame(() => paymentButton.current?.focus());
+  }
   async function post(path: string, data: unknown) {
     const response = await fetch(`/api/marketplace/commerce/${path}`, {
       method: 'POST',
@@ -109,11 +114,13 @@ export function PaymentAction({
             .catch((e) => {
               setMessage(e.message);
               setPending(false);
+              restoreFocus();
             });
         },
         modal: {
           ondismiss: () => {
             setPending(false);
+            restoreFocus();
             setMessage(
               'Payment window closed. Verify the current status before trying again.',
             );
@@ -125,6 +132,7 @@ export function PaymentAction({
           'The payment was not completed. Verify the current status before trying again.',
         );
         setPending(false);
+        restoreFocus();
       });
       checkout.open();
     } catch (e) {
@@ -134,6 +142,7 @@ export function PaymentAction({
           : 'Please verify payment status or contact Support.',
       );
       setPending(false);
+      restoreFocus();
     }
   }
   return (
@@ -153,15 +162,18 @@ export function PaymentAction({
           </span>
         </label>
       ) : (
-        <p>
-          Payments are not available yet. Your saved enrollment details are
-          preserved.
+        <p id="payment-unavailable">
+          {paymentUnavailableMessage(availability)}
         </p>
       )}
       <button
+        ref={paymentButton}
         type="button"
         className="enrollment-primary"
         disabled={pending || availability !== 'available' || !acknowledge}
+        aria-describedby={
+          availability !== 'available' ? 'payment-unavailable' : undefined
+        }
         onClick={start}
       >
         {pending ? 'Verifying payment…' : 'Continue to Payment'}

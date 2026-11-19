@@ -4,7 +4,8 @@ export type LogEvent =
   | 'request_error'
   | 'startup'
   | 'configuration_invalid'
-  | 'dependency_unavailable';
+  | 'dependency_unavailable'
+  | 'marketplace_operation';
 export interface LogContext {
   requestId?: string;
   domain?: string;
@@ -14,6 +15,19 @@ export interface LogContext {
   code?: string;
 }
 const codes = new Set([
+  'MARKETPLACE_WEBHOOK_REJECTED',
+  'MARKETPLACE_WEBHOOK_FAILED',
+  'MARKETPLACE_RECONCILIATION_NEEDED',
+  'MARKETPLACE_RECONCILE_COMPLETE',
+  'MARKETPLACE_PROVIDER_UNKNOWN',
+  'MARKETPLACE_SETTLEMENT_REVIEW',
+  'MARKETPLACE_DELIVERY_FAILED',
+  'MARKETPLACE_DELIVERY_REVIEW',
+  'MARKETPLACE_LEASE_STALE',
+  'MARKETPLACE_CLEANUP_COMPLETE',
+  'MARKETPLACE_COORDINATION_UNAVAILABLE',
+  'MARKETPLACE_CATALOGUE_UNAVAILABLE',
+
   'CONFIG_VALID',
   'CONFIG_INVALID',
   'UNHANDLED',
@@ -28,6 +42,11 @@ export function safeRoute(path: string) {
   const p = path.split('?')[0];
   if (p === '/api/health' || p === '/api/readiness') return p;
   for (const family of [
+    '/api/marketplace',
+    '/api/payments',
+    '/enroll',
+    '/checkout',
+    '/orders',
     '/api/admin',
     '/api/lms',
     '/api/student',
@@ -56,6 +75,7 @@ export function logRecord(
       'startup',
       'configuration_invalid',
       'dependency_unavailable',
+      'marketplace_operation',
     ].includes(event)
       ? event
       : 'request_error',

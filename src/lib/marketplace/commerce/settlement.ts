@@ -1,3 +1,4 @@
+import { marketplaceDiagnostic } from '../diagnostics';
 import {
   initializeDelivery,
   requestDeliveryRevocation,
@@ -25,7 +26,7 @@ export async function settleVerifiedPayment(
   eventId?: string,
   adminActorId?: string,
 ) {
-  await commerceTransaction(db, async (tx) => {
+  const outcome = await commerceTransaction(db, async (tx) => {
     if (adminActorId) {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19748962,4)`;
       await requireAdminPermission(tx, adminActorId, 'COMMERCE_VIEW');
@@ -83,10 +84,10 @@ export async function settleVerifiedPayment(
         code,
       );
       await finish('REJECTED', code);
+      return 'REVIEW' as const;
     };
     if (mismatch) {
-      await review('EVIDENCE_MISMATCH');
-      return;
+      return review('EVIDENCE_MISMATCH');
     }
     const event = eventId
       ? await tx.marketplacePaymentEvent.findUnique({
@@ -98,8 +99,7 @@ export async function settleVerifiedPayment(
         !event.providerPaymentId ||
         !e.payments.some((p) => p.id === event.providerPaymentId)
       ) {
-        await review('DISPUTE_PAYMENT_MISMATCH');
-        return;
+        return review('DISPUTE_PAYMENT_MISMATCH');
       }
       if (o.status !== 'REFUNDED') {
         await tx.marketplaceOrder.update({
@@ -142,12 +142,10 @@ export async function settleVerifiedPayment(
     const payment = captured[0];
     if (payment) {
       if (!e.paid) {
-        await review('ORDER_NOT_SETTLED');
-        return;
+        return review('ORDER_NOT_SETTLED');
       }
       if (a.providerPaymentId && a.providerPaymentId !== payment.id) {
-        await review('PAYMENT_REBIND');
-        return;
+        return review('PAYMENT_REBIND');
       }
       const consumed = await tx.marketplacePaymentAttempt.findFirst({
         where: {
@@ -158,8 +156,7 @@ export async function settleVerifiedPayment(
         },
       });
       if (consumed) {
-        await review('PAYMENT_ALREADY_USED');
-        return;
+        return review('PAYMENT_ALREADY_USED');
       }
       if (payment.refundedMinor > 0) {
         const full = payment.refundedMinor === payment.amountMinor;
@@ -223,8 +220,7 @@ export async function settleVerifiedPayment(
         o.expiresAt <= now() ||
         !['PENDING_PAYMENT', 'PAYMENT_PROCESSING'].includes(o.status)
       ) {
-        await review('SETTLEMENT_REQUIRES_REVIEW');
-        return;
+        return review('SETTLEMENT_REQUIRES_REVIEW');
       }
       if (
         await tx.marketplaceEntitlement.findFirst({
@@ -235,8 +231,7 @@ export async function settleVerifiedPayment(
           },
         })
       ) {
-        await review('ALREADY_ENTITLED');
-        return;
+        return review('ALREADY_ENTITLED');
       }
       await tx.marketplacePaymentAttempt.update({
         where: { id: a.id },
@@ -294,4 +289,6 @@ export async function settleVerifiedPayment(
     }
     await finish('PROCESSED');
   });
+  if (outcome === 'REVIEW')
+    marketplaceDiagnostic('MARKETPLACE_SETTLEMENT_REVIEW');
 }

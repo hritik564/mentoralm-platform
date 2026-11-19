@@ -1,3 +1,4 @@
+import { marketplaceDiagnostic } from '../diagnostics';
 import { deliveryDetail } from '../delivery/read';
 import 'server-only';
 import type { PrismaClient } from '../../../generated/prisma/client';
@@ -159,5 +160,10 @@ export async function reconcilePendingCommerce(
       unresolved++;
     }
   }
+  marketplaceDiagnostic(
+    unresolved
+      ? 'MARKETPLACE_RECONCILIATION_NEEDED'
+      : 'MARKETPLACE_RECONCILE_COMPLETE',
+  );
   return { examined: events.length + attempts.length, reconciled, unresolved };
 }

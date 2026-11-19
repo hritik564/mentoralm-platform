@@ -695,9 +695,8 @@ test('learner local migration guard permits only the new forward migration and p
     finished_at: new Date(),
     rolled_back_at: null,
   }));
-  assert.deepEqual(requireMarketplaceLearnerBaseline(rows.slice(0, 23)), [
-    '20261119113000_marketplace_learner_capability',
-  ]);
+  // Historical local runner cannot also apply the unrelated pending M6 guard.
+  assert.throws(() => requireMarketplaceLearnerBaseline(rows.slice(0, 23)));
   assert.deepEqual(requireMarketplaceLearnerBaseline(rows), []);
   assert.throws(() => requireMarketplaceLearnerBaseline(rows.slice(0, 22)));
   for (const migration of migrationManifest)

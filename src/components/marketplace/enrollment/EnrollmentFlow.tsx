@@ -87,6 +87,10 @@ export function EnrollmentFlow({
     claimStarted.current = true;
     void mutate('claim', { revision: initial.revision })
       .then((next) => {
+        if (next.ref !== initial.ref) {
+          router.replace(`/enroll/${next.ref}`);
+          return;
+        }
         setView(next);
         setValues((old) => ({
           ...next.values,
@@ -96,7 +100,7 @@ export function EnrollmentFlow({
       })
       .catch((e) => setError(e.message))
       .finally(() => setPending(false));
-  }, [initial, mutate]);
+  }, [initial, mutate, router]);
   function go(next: number) {
     setStep(next);
     setErrors({});

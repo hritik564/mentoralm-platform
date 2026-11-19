@@ -27,6 +27,8 @@ export async function enrollmentPage(ref: string, checkout = false) {
   const view = await safeRead(async () =>
     enrollmentService().view(ref, actor.id, await enrollmentBrowser()),
   );
+  if (view.ref !== ref)
+    redirect(`/${checkout ? 'checkout' : 'enroll'}/${view.ref}`);
   if (
     checkout &&
     view.access === 'active' &&

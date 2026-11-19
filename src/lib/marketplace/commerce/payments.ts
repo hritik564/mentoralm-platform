@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { marketplaceDiagnostic } from '../diagnostics';
 import { settleVerifiedPayment } from './settlement';
 import 'server-only';
 import { requireAdminPermission } from '../../auth/admin-policy';
@@ -115,6 +116,7 @@ export class CommercePayments extends CommerceOrders {
             ...revised(),
           },
         });
+        marketplaceDiagnostic('MARKETPLACE_PROVIDER_UNKNOWN');
         throw new StudentError('UNAVAILABLE');
       }
     }
@@ -316,6 +318,7 @@ export class CommercePayments extends CommerceOrders {
         where: { id },
         data: { status: 'UNRESOLVED', safeCode: 'NO_SESSION' },
       });
+      marketplaceDiagnostic('MARKETPLACE_RECONCILIATION_NEEDED');
       return;
     }
     const evidence = evidenceInput.safeParse(
@@ -336,6 +339,7 @@ export class CommercePayments extends CommerceOrders {
           where: { id },
           data: { status: 'UNRESOLVED', safeCode: 'NO_LOCAL_RECEIPT' },
         });
+        marketplaceDiagnostic('MARKETPLACE_RECONCILIATION_NEEDED');
         return;
       }
       attempt = await this.db.marketplacePaymentAttempt.findFirst({
@@ -351,6 +355,7 @@ export class CommercePayments extends CommerceOrders {
           where: { id },
           data: { status: 'UNRESOLVED', safeCode: 'UNMATCHED_SESSION' },
         });
+        marketplaceDiagnostic('MARKETPLACE_RECONCILIATION_NEEDED');
         return;
       }
       await this.bind(attempt, {

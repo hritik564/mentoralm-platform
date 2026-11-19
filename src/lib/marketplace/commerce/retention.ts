@@ -1,3 +1,4 @@
+import { marketplaceDiagnostic } from '../diagnostics';
 import 'server-only';
 import { randomBytes } from 'node:crypto';
 import type { PrismaClient } from '../../../generated/prisma/client';
@@ -30,7 +31,7 @@ export async function cleanupMarketplace(
     batchSize > retentionPolicy.maxBatch
   )
     throw new StudentError('INVALID_INPUT');
-  return commerceTransaction(db, async (tx) => {
+  const result = await commerceTransaction(db, async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(19748962,4)`;
     await requireAdminPermission(tx, actorId, 'COMMERCE_MANAGE');
     const candidates = await tx.marketplaceEnrollmentIntent.findMany({
@@ -142,4 +143,6 @@ export async function cleanupMarketplace(
       redacted: apply ? eligible : 0,
     };
   });
+  marketplaceDiagnostic('MARKETPLACE_CLEANUP_COMPLETE');
+  return result;
 }

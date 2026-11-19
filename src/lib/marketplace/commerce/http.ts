@@ -1,4 +1,5 @@
 import 'server-only';
+import { marketplaceDiagnostic } from '../diagnostics';
 import { StudentError, errorStatus } from '../../student/errors';
 import { logUnavailable } from '../../production/request-context';
 import type { CommercePayments } from './payments';
@@ -36,10 +37,15 @@ export async function paymentWebhook(
   request: Request,
   payments: Pick<CommercePayments, 'consumeWebhook'>,
 ) {
-  if (!request.headers.get('content-type')?.startsWith('application/json'))
+  if (!request.headers.get('content-type')?.startsWith('application/json')) {
+    marketplaceDiagnostic('MARKETPLACE_WEBHOOK_REJECTED');
     throw new StudentError('INVALID_INPUT');
+  }
   const reader = request.body?.getReader();
-  if (!reader) throw new StudentError('INVALID_INPUT');
+  if (!reader) {
+    marketplaceDiagnostic('MARKETPLACE_WEBHOOK_REJECTED');
+    throw new StudentError('INVALID_INPUT');
+  }
   const parts: Uint8Array[] = [];
   let bytes = 0;
   for (;;) {
@@ -48,11 +54,22 @@ export async function paymentWebhook(
     bytes += value.length;
     if (bytes > 65536) {
       await reader.cancel();
+      marketplaceDiagnostic('MARKETPLACE_WEBHOOK_REJECTED');
       throw new StudentError('INVALID_INPUT');
     }
     parts.push(value);
   }
-  await payments.consumeWebhook(Buffer.concat(parts), request.headers);
+  try {
+    await payments.consumeWebhook(Buffer.concat(parts), request.headers);
+  } catch (error) {
+    marketplaceDiagnostic(
+      error instanceof StudentError &&
+        ['FORBIDDEN', 'INVALID_INPUT'].includes(error.code)
+        ? 'MARKETPLACE_WEBHOOK_REJECTED'
+        : 'MARKETPLACE_WEBHOOK_FAILED',
+    );
+    throw error;
+  }
   return Response.json(
     { received: true },
     { headers: { 'Cache-Control': 'private, no-store' } },

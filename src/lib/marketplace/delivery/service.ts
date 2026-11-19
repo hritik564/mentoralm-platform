@@ -1,3 +1,4 @@
+import { marketplaceDiagnostic } from '../diagnostics';
 import 'server-only';
 import type { Prisma, PrismaClient } from '../../../generated/prisma/client';
 import { StudentError } from '../../student/errors';
@@ -99,6 +100,8 @@ export class MarketplaceDeliveryService {
         return null;
       const age = this.now().getTime() - (d.lastAttemptAt?.getTime() || 0);
       if (d.status === 'PROVISIONING' && age < 10 * 60000) return null;
+      if (d.status === 'PROVISIONING')
+        marketplaceDiagnostic('MARKETPLACE_LEASE_STALE');
       if (d.status === 'PROVISIONING' && d.attemptCount >= 3 && !manual) {
         await tx.marketplaceDelivery.update({
           where: { id: d.id },
@@ -142,7 +145,7 @@ export class MarketplaceDeliveryService {
     if (!claim) return;
     try {
       await this.beforeProvision();
-      await commerceTransaction(this.db, async (tx) => {
+      const outcome = await commerceTransaction(this.db, async (tx) => {
         const d = await tx.marketplaceDelivery.findUniqueOrThrow({
           where: { id: claim.id },
           include,
@@ -176,6 +179,7 @@ export class MarketplaceDeliveryService {
             data: { status: 'REVIEW', lastErrorCode: code, ...revised() },
           });
           await audit('MarketplaceDeliveryProvisioningFailed', code);
+          return 'REVIEW' as const;
         };
         if (d.type === 'EXTERNAL') {
           await tx.marketplaceDelivery.update({
@@ -189,8 +193,7 @@ export class MarketplaceDeliveryService {
           d.courseId ||
           (manual && authority.adminActorId ? e.offering.courseId : null);
         if (!courseId) {
-          await review('COURSE_CONFIGURATION');
-          return;
+          return review('COURSE_CONFIGURATION');
         }
         const course = await tx.course.findUnique({
           where: { id: courseId },
@@ -201,8 +204,7 @@ export class MarketplaceDeliveryService {
           },
         });
         if (!course?.published) {
-          await review('COURSE_UNAVAILABLE');
-          return;
+          return review('COURSE_UNAVAILABLE');
         }
         if (
           course.requiredAttendancePercent !== null &&
@@ -232,8 +234,7 @@ export class MarketplaceDeliveryService {
             select: { id: true },
           }))
         ) {
-          await review('BATCH_REQUIRED');
-          return;
+          return review('BATCH_REQUIRED');
         }
         const learner = await ensureMarketplaceLearner(
           tx,
@@ -242,8 +243,7 @@ export class MarketplaceDeliveryService {
           this.now(),
         );
         if (!learner) {
-          await review('LMS_ACCESS_DISABLED');
-          return;
+          return review('LMS_ACCESS_DISABLED');
         }
         // Serializes different Offerings that resolve to the same User/Course.
         await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtextextended(${`marketplace-enrollment:${e.userId}:${courseId}`},0))::text`;
@@ -272,9 +272,11 @@ export class MarketplaceDeliveryService {
         if (!created) await audit('MarketplaceDeliveryReusedEnrollment');
         await audit('MarketplaceDeliveryProvisioned');
       });
+      if (outcome === 'REVIEW')
+        marketplaceDiagnostic('MARKETPLACE_DELIVERY_REVIEW');
     } catch {
       // Financial settlement and ownership are never in this transaction.
-      await commerceTransaction(this.db, async (tx) => {
+      const failed = await commerceTransaction(this.db, async (tx) => {
         const d = await tx.marketplaceDelivery.findUniqueOrThrow({
           where: { id: claim.id },
           include,
@@ -299,7 +301,9 @@ export class MarketplaceDeliveryService {
           authority.adminActorId || null,
           'PROVISIONING_UNAVAILABLE',
         );
+        return true;
       });
+      if (failed) marketplaceDiagnostic('MARKETPLACE_DELIVERY_FAILED');
     }
   }
   async reconcile(authority: Authority, limit = 5) {

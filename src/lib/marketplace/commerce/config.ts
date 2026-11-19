@@ -1,4 +1,5 @@
 import 'server-only';
+import { razorpayAmountIssue } from './razorpay-amount';
 import { RazorpayGateway } from './razorpay';
 import { StudentError } from '../../student/errors';
 import { platformEnvironment } from '../../production/config';
@@ -43,6 +44,10 @@ export function paymentAvailability(quote?: {
   priceMinor: number;
   currency: string;
 }) {
+  if (quote) {
+    const issue = razorpayAmountIssue(quote);
+    if (issue) return issue;
+  }
   try {
     const gateway = razorpayGateway();
     if (quote && !gateway.supports(quote.priceMinor, quote.currency))

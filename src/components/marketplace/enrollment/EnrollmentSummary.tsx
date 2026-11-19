@@ -60,7 +60,7 @@ export function Unavailable({ view }: { view: EnrollmentView }) {
       <p>
         {view.access === 'expired'
           ? 'Start again to see the current program price and availability. Your previous submission has been preserved.'
-          : 'You have not been charged. No course access has been granted.'}
+          : 'This enrollment cannot continue here. If you already started a payment, check its status in your Dashboard before trying again.'}
       </p>
       {view.access !== 'unavailable' && (
         <EnrollButton slug={view.quote.slug} label="Start a new enrollment" />

@@ -1,4 +1,5 @@
 import 'server-only';
+import { razorpayAmountIssue } from './razorpay-amount';
 import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { StudentError } from '../../student/errors';
@@ -53,13 +54,9 @@ export class RazorpayGateway implements PaymentGateway {
     this.merchantRef = config.merchantRef;
   }
   supports(minor: number, currency: string) {
-    return (
-      currency === 'INR' &&
-      Number.isInteger(minor) &&
-      minor >= 100 &&
-      minor <= 2147483647
-    );
+    return razorpayAmountIssue({ priceMinor: minor, currency }) === null;
   }
+
   private async request(path: string, body?: unknown): Promise<unknown> {
     try {
       const response = await this.fetcher(
