@@ -47,9 +47,9 @@ enum MessageActor {
 }
 
 model User {
-  id                       String                    @id @default(cuid())
-  clerkUserId              String                    @unique
-  studentId                String?                   @unique
+  id                       String                        @id @default(cuid())
+  clerkUserId              String                        @unique
+  studentId                String?                       @unique
   lmsAccessOverride        LmsAccessOverride?
   memberships              BatchMembership[]
   teaching                 BatchInstructor[]
@@ -66,12 +66,12 @@ model User {
   communicationPreferences CommunicationPreference[]
   communicationDeliveries  CommunicationDelivery[]
   communicationMessages    CommunicationMessage[]
-  taughtSessions           BatchSession[]            @relation("SessionInstructor")
+  taughtSessions           BatchSession[]                @relation("SessionInstructor")
   roleAssignments          UserRoleAssignment[]
   adminAuthorization       AdminAuthorization?
-  role                     Role                      @default(STUDENT)
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
+  role                     Role                          @default(STUDENT)
+  createdAt                DateTime                      @default(now())
+  updatedAt                DateTime                      @updatedAt
   profile                  StudentProfile?
   views                    CourseView[]
   enrollments              Enrollment[]
@@ -79,8 +79,10 @@ model User {
   tickets                  SupportTicket[]
   messages                 SupportMessage[]
   referral                 ReferralIdentity?
-  referred                 ReferralAttribution?      @relation("Referred")
-  referrals                ReferralAttribution[]     @relation("Referrer")
+  referred                 ReferralAttribution?          @relation("Referred")
+  referrals                ReferralAttribution[]         @relation("Referrer")
+  marketplaceIntents       MarketplaceEnrollmentIntent[]
+  marketplaceIntentEvents  MarketplaceEnrollmentEvent[]
 
   @@unique([id, role])
 }
@@ -935,6 +937,7 @@ model MarketplaceOffering {
   lmsEnabled         Boolean                       @default(false)
   courseId           String?
   course             Course?                       @relation(fields: [courseId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  enrollmentIntents  MarketplaceEnrollmentIntent[]
   page               MarketplaceOfferingPage?
   cohortStartsAt     DateTime?                     @db.Timestamptz(6)
   publishedAt        DateTime?                     @db.Timestamptz(6)
@@ -999,4 +1002,81 @@ model MarketplaceOfferingPageVersion {
   publishedAt      DateTime                  @default(now()) @db.Timestamptz(6)
 
   @@id([pageId, revision])
+}
+
+enum MarketplaceIntentState {
+  ACCOUNT_REQUIRED
+  ONBOARDING_REQUIRED
+  READY_FOR_CHECKOUT
+  EXPIRED
+  CANCELLED
+}
+
+enum MarketplaceEnrollmentEventKind {
+  EnrollmentIntentCreated
+  EnrollmentIntentClaimed
+  EnrollmentOnboardingUpdated
+  EnrollmentReadyForCheckout
+  EnrollmentIntentCancelled
+}
+
+model MarketplaceEnrollmentIntent {
+  id             String                           @id @default(cuid())
+  publicRef      String                           @unique
+  revision       String                           @default(uuid()) @db.Uuid
+  userId         String?
+  user           User?                            @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  browserHash    String?
+  offeringId     String
+  offering       MarketplaceOffering              @relation(fields: [offeringId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  titleSnapshot  String
+  priceMinor     Int
+  currency       String
+  durationLabel  String
+  deliveryMode   MarketplaceDeliveryMode
+  cohortStartsAt DateTime?                        @db.Timestamptz(6)
+  state          MarketplaceIntentState
+  expiresAt      DateTime                         @db.Timestamptz(6)
+  createdAt      DateTime                         @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime                         @updatedAt @db.Timestamptz(6)
+  onboarding     MarketplaceEnrollmentOnboarding?
+  events         MarketplaceEnrollmentEvent[]
+
+  @@index([userId, offeringId, expiresAt])
+  @@index([browserHash, offeringId, expiresAt])
+}
+
+model MarketplaceEnrollmentOnboarding {
+  intentId       String                      @id
+  intent         MarketplaceEnrollmentIntent @relation(fields: [intentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  completedStep  Int                         @default(0)
+  fullName       String?
+  phone          String?
+  city           String?
+  region         String?
+  country        String?
+  educationLevel String?
+  currentStatus  String?
+  institution    String?
+  goal           String?
+  source         String?
+  consentVersion String?
+  completedAt    DateTime?                   @db.Timestamptz(6)
+  createdAt      DateTime                    @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime                    @updatedAt @db.Timestamptz(6)
+}
+
+model MarketplaceEnrollmentEvent {
+  id            String                         @id @default(cuid())
+  intentId      String
+  intent        MarketplaceEnrollmentIntent    @relation(fields: [intentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  actorId       String?
+  actor         User?                          @relation(fields: [actorId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  kind          MarketplaceEnrollmentEventKind
+  beforeState   MarketplaceIntentState?
+  afterState    MarketplaceIntentState
+  changedFields String[]                       @default([])
+  createdAt     DateTime                       @default(now()) @db.Timestamptz(6)
+
+  @@index([intentId, createdAt])
 }

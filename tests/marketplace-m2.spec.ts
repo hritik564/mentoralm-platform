@@ -461,11 +461,13 @@ test('basic and partial Published pages have honest status, fallback artwork and
     '₹0.00',
   );
   await expect(page.locator('.program-hero .program-action-label')).toHaveText(
-    'Enrollment Coming Soon',
+    'Enroll Now',
   );
   await expect(
-    page.locator('main').getByRole('button', { name: /enroll|buy|checkout/i }),
-  ).toHaveCount(0);
+    page
+      .locator('main')
+      .getByRole('button', { name: 'Enroll Now', exact: true }),
+  ).toHaveCount(2);
   await capture(page, '1440-program-basic', true);
   await db.marketplaceOffering.update({
     where: { slug: basicSlug },

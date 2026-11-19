@@ -36,7 +36,8 @@ const approvedHero = {
   'src/components/home/homepage/programs.ts':
     'b4f0861c06a328fef08c9ce2fecc82be74b9c06c6d8a128c01b5a38a6ba62955',
   'src/styles/homepage-hero.css':
-    'e08c0b326f40ff41a64895e7f35e73083b3e1e9bfd8a4f6cb7f1fbce44807016',
+    // Owner-approved independent spacing adjustment, preserved during M3.
+    'ba7b1fa3bd7c4b4c98f7baa4d35bdb6b7e254a73edd005a604b981ca7b31c04b',
 } as const;
 test('M1 preserves every approved hero/carousel source, data, style and artwork byte', () => {
   for (const [path, hash] of Object.entries(approvedHero)) {

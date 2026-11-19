@@ -20,7 +20,9 @@ export const programActionLabels = {
   CLOSED: 'Enrollment Closed',
 } as const;
 
-export function programPrice(offering: PublicOffering) {
+export function programPrice(
+  offering: Pick<PublicOffering, 'priceMinor' | 'currency'>,
+) {
   if (offering.priceMinor === null) return 'To be announced';
   const formatter = new Intl.NumberFormat('en-IN', {
     style: 'currency',

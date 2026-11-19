@@ -45,16 +45,39 @@ test('editorial migration only adds nullable publication pointer, owned immutabl
     sql,
     /ALTER TABLE "(?:MarketplaceOffering"|Course|Enrollment|User)/,
   );
-  const rows = migrationManifest.map((m) => ({
-    migration_name: m.name,
-    checksum: m.checksum,
-    finished_at: new Date(),
-    rolled_back_at: null,
-  }));
-  assert.deepEqual(requireMarketplaceEditorialBaseline(rows.slice(0, -1)), [
-    migration,
-  ]);
-  assert.deepEqual(requireMarketplaceEditorialBaseline(rows), []);
+  const rows = migrationManifest
+    .filter((m) => m.name <= migration)
+    .map((m) => ({
+      migration_name: m.name,
+      checksum: m.checksum,
+      finished_at: new Date(),
+      rolled_back_at: null,
+    }));
+  // Historical task commands must refuse the newly pending M3 migration.
+  assert.throws(() => requireMarketplaceEditorialBaseline(rows.slice(0, -1)));
+  assert.throws(() => requireMarketplaceEditorialBaseline(rows));
+  assert.deepEqual(
+    requireMarketplaceEditorialBaseline(
+      migrationManifest.map((m) => ({
+        migration_name: m.name,
+        checksum: m.checksum,
+        finished_at: new Date(),
+        rolled_back_at: null,
+      })),
+    ),
+    [],
+  );
+  assert.throws(() =>
+    requireMarketplaceEditorialBaseline([
+      ...rows,
+      {
+        migration_name: '20261119090000_marketplace_enrollment_intents',
+        checksum: 'untrusted',
+        finished_at: new Date(),
+        rolled_back_at: null,
+      },
+    ]),
+  );
   assert.throws(() => requireMarketplaceEditorialBaseline(rows.slice(0, -2)));
   assert.throws(() => requireMarketplacePageBaseline(rows.slice(0, -1)));
 });

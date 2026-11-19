@@ -41,3 +41,9 @@ function requireOnlyPending(rows: MigrationRow[], allowed: readonly string[]) {
     );
   return pending.map((migration) => migration.name);
 }
+
+export function requireMarketplaceEnrollmentBaseline(rows: MigrationRow[]) {
+  return requireOnlyPending(rows, [
+    '20261119090000_marketplace_enrollment_intents',
+  ]);
+}

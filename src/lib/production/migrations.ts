@@ -85,4 +85,9 @@ export const migrationManifest = [
     checksum:
       'b475eb9e25ce627c0e13723762f7ff0a397bdcd3bfe75c645e44d0c509ebe2c7',
   },
+  {
+    name: '20261119090000_marketplace_enrollment_intents',
+    checksum:
+      '1e02ac02df16437b79c45d0619c13c78baa8a74986f35dd5f985bdb2abba85de',
+  },
 ] as const;
