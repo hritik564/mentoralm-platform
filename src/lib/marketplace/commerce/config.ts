@@ -6,7 +6,12 @@ import { platformEnvironment } from '../../production/config';
 /** Legal documents must be owner-approved and published before this registry gains a version. */
 export const purchaseTerms: Readonly<
   Record<string, { termsPath: string; privacyPath: string }>
-> = Object.freeze({});
+> = Object.freeze({
+  '2026-11-19-v1': Object.freeze({
+    termsPath: '/terms',
+    privacyPath: '/privacy',
+  }),
+});
 export function purchasePolicy() {
   const version = process.env.MARKETPLACE_PURCHASE_TERMS_VERSION || '';
   return Object.hasOwn(purchaseTerms, version)

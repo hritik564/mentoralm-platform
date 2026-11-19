@@ -67,8 +67,8 @@ export function Footer({ homeHref = '' }: { homeHref?: string }) {
         <div className="footer__bottom">
           <p>© {new Date().getFullYear()} MentoraLM. All rights reserved.</p>
           <div>
-            <NoticeButton {...notices.legal}>Privacy</NoticeButton>
-            <NoticeButton {...notices.legal}>Terms</NoticeButton>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
             <a href="#top">
               Back to top
               <Icon name="arrow-up" />

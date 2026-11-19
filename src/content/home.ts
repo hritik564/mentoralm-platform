@@ -69,11 +69,6 @@ export const notices = {
     description:
       'Sign-in is not available in this website preview. The future MentoraLM account is intended to connect your website, student portal, and learning experience.',
   },
-  legal: {
-    title: 'Policies are being prepared.',
-    description:
-      'Approved privacy and terms documents will be published before account creation or enrollment becomes available. This preview does not collect applications or account information.',
-  },
   support: {
     title: 'Let’s connect. Soon.',
     description:
